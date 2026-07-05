@@ -108,6 +108,17 @@
   <div class="container">
     <h1>สร้างรูปคอลลาจ</h1>
 
+    <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
+      <div style="font-weight:700;margin-bottom:10px;color:#06c755;font-size:15px">📋 วิธีใช้งาน</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:14px;color:#444;line-height:1.4">
+        <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
+        <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
+        <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
+        <div>4️⃣ กดปุ่ม <strong>"สร้างและส่ง"</strong> รอแป๊บเดียว</div>
+        <div>📤 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
+      </div>
+    </div>
+
     <div class="card">
       <label for="nameInput">ชื่อ / คำอธิบาย</label>
       <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
@@ -129,7 +140,7 @@
 
       <div class="preview-grid" id="previewGrid"></div>
 
-      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">สร้างและส่งเข้ากลุ่ม</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างและส่งเข้ากลุ่ม</button>
 
       <div class="status" id="status"></div>
     </div>
@@ -146,7 +157,7 @@
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     }).catch(err => {
       document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = 'ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
+      document.getElementById('status').textContent = '⚠️ ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
     });
 
     // Preset picker
@@ -182,12 +193,12 @@
       const btn = document.getElementById('submitBtn');
 
       if (!files.length) {
-        setStatus('กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
+        setStatus('📸 กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
         return;
       }
 
       btn.disabled = true;
-      setStatus('กำลังสร้างรูปคอลลาจ...', 'loading');
+      setStatus('⏳ กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
 
       try {
         const fd = new FormData();
@@ -203,10 +214,10 @@
         const data = await res.json();
 
         if (!data.success) {
-          throw new Error(data.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ');
+          throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
         }
 
-        setStatus('กำลังส่งเข้ากลุ่ม...', 'loading');
+        setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
 
         await liff.sendMessages([{
           type: 'image',
@@ -214,11 +225,11 @@
           previewImageUrl: data.imageUrl,
         }]);
 
-        setStatus('ส่งสำเร็จ!', 'success');
+        setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        setStatus('ข้อผิดพลาด: ' + err.message, 'error');
+        setStatus('❌ ' + err.message, 'error');
         btn.disabled = false;
       }
     }
