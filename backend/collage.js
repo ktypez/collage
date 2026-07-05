@@ -5,10 +5,9 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 2000;
-const CANVAS_HEIGHT = 2000;
 const HEADER_HEIGHT = 260;
-const IMAGE_AREA_HEIGHT = CANVAS_HEIGHT - HEADER_HEIGHT;
 const PADDING = 25;
+const CELL_RATIO = 1;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
@@ -16,62 +15,61 @@ const font = opentype.parse(readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
 ));
 
-function getImageBoxes(count) {
-  const W = CANVAS_WIDTH;
-  const H = IMAGE_AREA_HEIGHT;
-  const P = PADDING;
-
-  if (count === 0) return [];
-
+function getGrid(count) {
   const cols = Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / cols);
-  const cellW = (W - (cols + 1) * P) / cols;
-  const cellH = (H - (rows + 1) * P) / rows;
+  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PADDING) / cols);
+  const cellH = Math.floor(cellW * CELL_RATIO);
+  const gridH = rows * cellH + (rows + 1) * PADDING;
+  const totalH = HEADER_HEIGHT + gridH;
 
-  return Array.from({ length: count }, (_, i) => ({
-    left: P + (i % cols) * (cellW + P),
-    top: P + Math.floor(i / cols) * (cellH + P),
+  const boxes = Array.from({ length: count }, (_, i) => ({
+    left: PADDING + (i % cols) * (cellW + PADDING),
+    top: PADDING + Math.floor(i / cols) * (cellH + PADDING),
     width: cellW,
     height: cellH,
   }));
+
+  return { boxes, totalH };
 }
 
-function buildTextSvg(name, date, nameSize, dateSize) {
-  const svgParts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
+function buildTextSvg(name, date, nameSize, dateSize, canvasH) {
+  const parts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
 
-  svgParts.push(`<defs>
-    <linearGradient id="headerGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f0f0f0"/>
+  parts.push(`<defs>
+    <linearGradient id="hGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f5f5"/>
       <stop offset="100%" stop-color="#e0e0e0"/>
     </linearGradient>
   </defs>`);
 
-  svgParts.push(`<rect width="100%" height="100%" fill="url(#headerGrad)"/>`);
+  parts.push(`<rect width="100%" height="100%" fill="url(#hGrad)"/>`);
 
   if (name) {
     const w = font.getAdvanceWidth(name, nameSize);
-    const x = (CANVAS_WIDTH - w) / 2;
+    const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
     const path = font.getPath(name, x, 155, nameSize);
-    svgParts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
+    parts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
-    const x = (CANVAS_WIDTH - w) / 2;
+    const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
     const path = font.getPath(date, x, 215, dateSize);
-    svgParts.push(`<g fill="#888888">${path.toSVG(2)}</g>`);
+    parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
   }
 
-  svgParts.push(`<line x1="30" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 30}" y2="${HEADER_HEIGHT - 2}" stroke="#c8c8c8" stroke-width="2"/>`);
-  svgParts.push('</svg>');
-  return svgParts.join('\n');
+  parts.push(`<line x1="40" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 40}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="1"/>`);
+  parts.push('</svg>');
+  return parts.join('\n');
 }
 
 export async function createCollage(files, name, date) {
-  const boxes = getImageBoxes(files.length);
+  const count = files.length;
+  const { boxes, totalH } = getGrid(count);
   const composites = [];
 
-  for (let i = 0; i < files.length; i++) {
+  for (let i = 0; i < count; i++) {
     const file = files[i];
     const box = boxes[i];
     const meta = await sharp(file.path).metadata();
@@ -92,7 +90,7 @@ export async function createCollage(files, name, date) {
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 76, 44)),
+    input: Buffer.from(buildTextSvg(name, date, 76, 44, totalH)),
     top: 0,
     left: 0,
   });
@@ -100,7 +98,7 @@ export async function createCollage(files, name, date) {
   const base = sharp({
     create: {
       width: CANVAS_WIDTH,
-      height: CANVAS_HEIGHT,
+      height: totalH,
       channels: 4,
       background: BG,
     },
