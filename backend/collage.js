@@ -12,7 +12,7 @@ const GAP_Y = 24;
 const BORDER_WIDTH = 4;
 const SHADOW_OFFSET = 4;
 const SHADOW_BLUR = 5;
-const IMG_SCALE = 0.88;
+const IMG_SCALE = 0.90;
 
 const BG = { r: 232, g: 234, b: 237, alpha: 1 };
 
