@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 2000;
 const CANVAS_HEIGHT = 2000;
-const TEXT_HEIGHT = 200;
-const IMAGE_AREA_HEIGHT = CANVAS_HEIGHT - TEXT_HEIGHT;
+const HEADER_HEIGHT = 260;
+const IMAGE_AREA_HEIGHT = CANVAS_HEIGHT - HEADER_HEIGHT;
 const PADDING = 25;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
@@ -36,37 +36,35 @@ function getImageBoxes(count) {
   }));
 }
 
-function escapeXml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+function buildTextSvg(name, date, nameSize, dateSize) {
+  const svgParts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
 
-function buildTextSvg(name, date) {
-  const margin = 50;
-  const baselineY = 135;
-  const nameSize = 64;
-  const dateSize = 52;
+  svgParts.push(`<defs>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0f0f0"/>
+      <stop offset="100%" stop-color="#e0e0e0"/>
+    </linearGradient>
+  </defs>`);
 
-  let namePathData = '';
-  let datePathData = '';
+  svgParts.push(`<rect width="100%" height="100%" fill="url(#headerGrad)"/>`);
 
   if (name) {
-    const path = font.getPath(name, margin, baselineY, nameSize);
-    namePathData = path.toSVG(2);
+    const w = font.getAdvanceWidth(name, nameSize);
+    const x = (CANVAS_WIDTH - w) / 2;
+    const path = font.getPath(name, x, 155, nameSize);
+    svgParts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
-    const advance = font.getAdvanceWidth(date, dateSize);
-    const x = CANVAS_WIDTH - margin - advance;
-    const path = font.getPath(date, x, baselineY, dateSize);
-    datePathData = path.toSVG(2);
+    const w = font.getAdvanceWidth(date, dateSize);
+    const x = (CANVAS_WIDTH - w) / 2;
+    const path = font.getPath(date, x, 215, dateSize);
+    svgParts.push(`<g fill="#888888">${path.toSVG(2)}</g>`);
   }
 
-  return `<svg width="${CANVAS_WIDTH}" height="${TEXT_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100%" height="100%" fill="#E5E6E6"/>
-    <line x1="0" y1="0" x2="${CANVAS_WIDTH}" y2="0" stroke="#d0d0d0" stroke-width="2"/>
-    <g fill="#333333">${namePathData}</g>
-    <g fill="#666666">${datePathData}</g>
-  </svg>`;
+  svgParts.push(`<line x1="30" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 30}" y2="${HEADER_HEIGHT - 2}" stroke="#c8c8c8" stroke-width="2"/>`);
+  svgParts.push('</svg>');
+  return svgParts.join('\n');
 }
 
 export async function createCollage(files, name, date) {
@@ -88,14 +86,14 @@ export async function createCollage(files, name, date) {
 
     composites.push({
       input: buf,
-      top: Math.round(box.top + (box.height - rh) / 2),
+      top: Math.round(box.top + (box.height - rh) / 2) + HEADER_HEIGHT,
       left: Math.round(box.left + (box.width - rw) / 2),
     });
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date)),
-    top: IMAGE_AREA_HEIGHT,
+    input: Buffer.from(buildTextSvg(name, date, 76, 44)),
+    top: 0,
     left: 0,
   });
 
