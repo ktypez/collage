@@ -4,6 +4,8 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+sharp.concurrency(1);
+
 const CANVAS_WIDTH = 1920;
 const HEADER_HEIGHT = 300;
 const OUTER_MARGIN = 20;
@@ -11,7 +13,7 @@ const GAP_X = 24;
 const GAP_Y = 24;
 const BORDER_WIDTH = 4;
 const SHADOW_OFFSET = 4;
-const SHADOW_BLUR = 5;
+const SHADOW_BLUR = 3;
 const IMG_SCALE = 0.90;
 
 const THAI_MONTHS = [
@@ -133,8 +135,7 @@ export async function createCollage(files, name, date, preset = 'ocean') {
     }).jpeg().toBuffer(),
   ]);
 
-  // Process all images in parallel
-  const imgTasks = [];
+  // Process images one at a time to limit peak memory
   for (let i = 0; i < count; i++) {
     const meta = metas[i];
     const col = i % cols;
@@ -154,17 +155,13 @@ export async function createCollage(files, name, date, preset = 'ocean') {
     const scale = Math.min(innerW / meta.width, innerH / meta.height);
     const rw = Math.round(meta.width * scale);
     const rh = Math.round(meta.height * scale);
-    imgTasks.push(
-      sharp(files[i].path).resize(rw, rh, { fit: 'inside' }).toBuffer()
-        .then(buf => ({
-          input: buf,
-          top: Math.round(box.top + (cellH - rh) / 2) + HEADER_HEIGHT,
-          left: Math.round(box.left + (cellW - rw) / 2),
-        }))
-    );
+    const buf = await sharp(files[i].path).resize(rw, rh, { fit: 'inside' }).toBuffer();
+    composites.push({
+      input: buf,
+      top: Math.round(box.top + (cellH - rh) / 2) + HEADER_HEIGHT,
+      left: Math.round(box.left + (cellW - rw) / 2),
+    });
   }
-
-  composites.push(...await Promise.all(imgTasks));
 
   composites.push({
     input: Buffer.from(buildTextSvg(name, date, 92, 34, HEADER_HEIGHT - 3, colors)),
@@ -191,5 +188,5 @@ export async function createCollage(files, name, date, preset = 'ocean') {
     },
   });
 
-  return base.composite(composites).jpeg({ quality: 90 }).toBuffer();
+  return base.composite(composites).jpeg({ quality: 85 }).toBuffer();
 }
