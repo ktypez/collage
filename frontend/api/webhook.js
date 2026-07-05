@@ -48,20 +48,25 @@ async function handleEvent(event) {
 
   const text = event.message.text.trim();
 
-  if (text === '!ส่งรูป' || text === '!รูป') {
+  const match = text.match(/^([!*])(.+)/);
+  if (!match) return;
+
+  const [, prefix, cmd] = match;
+
+  if (cmd === 'ส่งรูป' || cmd === 'รูป') {
     return client.replyMessage(event.replyToken, collageMenu());
   }
 
-  if (text === '!เมนู') {
+  if (cmd === 'เมนู') {
     return client.replyMessage(event.replyToken, mainMenu());
   }
 
-  if (text.startsWith('!ลูกค้า')) {
-    const q = text.slice('!ลูกค้า'.length).trim();
+  if (cmd.startsWith('ลูกค้า')) {
+    const q = cmd.slice('ลูกค้า'.length).trim();
     if (!q) {
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: '⚠️ ระบุชื่อหรือร้านที่ต้องการค้นหา เช่น\n!ลูกค้า เจ๊ฟ้า',
+        text: `⚠️ ระบุชื่อหรือร้านที่ต้องการค้นหา เช่น\n${prefix}ลูกค้า เจ๊ฟ้า`,
       });
     }
     return handleSearchClient(event.replyToken, q);
