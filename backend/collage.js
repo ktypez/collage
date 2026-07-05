@@ -4,9 +4,9 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const CANVAS_WIDTH = 2000;
-const HEADER_HEIGHT = 260;
-const PADDING = 25;
+const CANVAS_WIDTH = 3840;
+const HEADER_HEIGHT = 500;
+const PADDING = 48;
 const CELL_RATIO = 1;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
@@ -48,18 +48,18 @@ function buildTextSvg(name, date, nameSize, dateSize, canvasH) {
   if (name) {
     const w = font.getAdvanceWidth(name, nameSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(name, x, 155, nameSize);
+    const path = font.getPath(name, x, 298, nameSize);
     parts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(date, x, 215, dateSize);
+    const path = font.getPath(date, x, 413, dateSize);
     parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="40" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 40}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="1"/>`);
+  parts.push(`<line x1="77" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 77}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="2"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
@@ -79,7 +79,7 @@ export async function createCollage(files, name, date) {
     const rh = Math.round(meta.height * scale);
 
     const buf = await sharp(file.path)
-      .resize(rw, rh, { fit: 'inside', withoutEnlargement: true })
+      .resize(rw, rh, { fit: 'inside' })
       .toBuffer();
 
     composites.push({
@@ -90,7 +90,7 @@ export async function createCollage(files, name, date) {
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 76, 44, totalH)),
+    input: Buffer.from(buildTextSvg(name, date, 146, 84, totalH)),
     top: 0,
     left: 0,
   });
@@ -104,5 +104,5 @@ export async function createCollage(files, name, date) {
     },
   });
 
-  return base.composite(composites).jpeg({ quality: 90 }).toBuffer();
+  return base.composite(composites).jpeg({ quality: 95 }).toBuffer();
 }
