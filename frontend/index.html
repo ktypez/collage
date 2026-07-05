@@ -176,21 +176,7 @@
     const resultImage = document.getElementById('resultImage');
     const downloadLink = document.getElementById('downloadLink');
 
-    liff.init({ liffId: LIFF_ID }).then(() => {
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
-        return;
-      }
-      isLiff = true;
-      badge.style.display = 'inline';
-      badge.textContent = '💬 LINE — ส่งเข้าแชท';
-      badge.className = 'badge-line';
-      step4.textContent = '4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว';
-      outputDesc.textContent = '💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ';
-      submitBtn.textContent = '✨ สร้างและส่งเข้ากลุ่ม';
-      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-    }).catch(() => {
-      // Web mode (browser)
+    function setWebMode() {
       isLiff = false;
       badge.style.display = 'inline';
       badge.textContent = '🌐 เว็บ — ดาวน์โหลดรูป';
@@ -199,7 +185,27 @@
       outputDesc.textContent = '💾 รูปคอลลาจจะแสดงให้ดาวน์โหลด';
       submitBtn.textContent = '✨ สร้างคอลลาจ';
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-    });
+    }
+
+    // LINE browser check — skip LIFF entirely if not in LINE
+    if (/LINE|LIFF/i.test(navigator.userAgent)) {
+      liff.init({ liffId: LIFF_ID }).then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
+        isLiff = true;
+        badge.style.display = 'inline';
+        badge.textContent = '💬 LINE — ส่งเข้าแชท';
+        badge.className = 'badge-line';
+        step4.textContent = '4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว';
+        outputDesc.textContent = '💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ';
+        submitBtn.textContent = '✨ สร้างและส่งเข้ากลุ่ม';
+        document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+      }).catch(setWebMode);
+    } else {
+      setWebMode();
+    }
 
     // Preset picker
     let selectedPreset = 'ocean';
