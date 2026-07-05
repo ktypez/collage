@@ -80,7 +80,7 @@ export async function createCollage(files, name, date) {
   const avgRatio = metas.reduce((sum, m) => sum + m.width / m.height, 0) / count;
   const cellRatio = Math.max(0.3, Math.min(3.0, avgRatio));
 
-  const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
+  const cols = count <= 2 ? count : Math.max(3, Math.ceil(Math.sqrt(count)));
   const rows = Math.ceil(count / cols);
   const cellW = Math.floor((CANVAS_WIDTH - 2 * OUTER_MARGIN - (cols - 1) * GAP_X) / cols);
   const cellH = Math.floor(cellW / cellRatio);
