@@ -139,7 +139,7 @@ export async function createCollage(files, name, date, preset = 'crimson') {
   }
 
   const rest = contentH + DH + PT + PB;
-  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.25 / 0.75));
+  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.19 / 0.81));
   let totalH = headerH + rest;
   if (totalH < MIN_H) {
     headerH = Math.max(HEADER_MIN, MIN_H - rest);
