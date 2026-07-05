@@ -166,9 +166,9 @@ function buildClientFlex(clients, query) {
 
   if (isSingle) {
     bodyContents.push(
-      { type: 'text', text: `📋 ${c.name}`, weight: 'bold', size: 'lg' },
-      { type: 'text', text: `🏪 ${c.shopName}`, size: 'sm', color: '#666666', wrap: true },
-      { type: 'text', text: `📍 ${c.address}`, size: 'sm', color: '#666666', wrap: true },
+      { type: 'text', text: `👤 : ${c.name}`, weight: 'bold', size: 'lg' },
+      { type: 'text', text: `🛒 : ${c.shopName}`, size: 'sm', color: '#666666', wrap: true },
+      { type: 'text', text: `📌 : ${c.address}`, size: 'sm', color: '#666666', wrap: true },
     );
 
   } else {
@@ -178,7 +178,7 @@ function buildClientFlex(clients, query) {
     clients.forEach((cl, i) => {
       bodyContents.push({
         type: 'text',
-        text: `${i + 1}. ${cl.name} — ${cl.shopName}`,
+        text: `${i + 1}. 👤${cl.name} — 🛒${cl.shopName}`,
         size: 'sm',
         color: '#666666',
         wrap: true,
