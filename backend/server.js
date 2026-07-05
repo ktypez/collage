@@ -21,7 +21,7 @@ const { default: cors } = await import('cors');
 const { default: multer } = await import('multer');
 const fs = await import('fs/promises');
 const { createCollage } = await import('./collage.js');
-const { uploadCollage } = await import('./r2-storage.js');
+const { uploadCollage, getCollageStream } = await import('./r2-storage.js');
 
 const app = express();
 app.use(cors());
@@ -42,12 +42,13 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
     const buffer = await createCollage(files, name, date);
 
     const filename = `collage-${Date.now()}.jpg`;
-    const imageUrl = await uploadCollage(buffer, filename);
+    await uploadCollage(buffer, filename);
 
     for (const f of files) {
       try { await fs.unlink(f.path); } catch {}
     }
 
+    const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${filename}`;
     res.json({ success: true, imageUrl });
   } catch (error) {
     console.error('Collage error:', error);
@@ -57,6 +58,18 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+app.get('/api/image/:filename', async (req, res) => {
+  try {
+    const stream = await getCollageStream(req.params.filename);
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Image fetch error:', error);
+    res.status(404).json({ success: false, error: 'Image not found' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

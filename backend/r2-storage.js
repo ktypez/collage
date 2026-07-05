@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 
 let client = null;
 
@@ -14,6 +14,14 @@ function getClient() {
     });
   }
   return client;
+}
+
+export async function getCollageStream(filename) {
+  const response = await getClient().send(new GetObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME,
+    Key: filename,
+  }));
+  return response.Body;
 }
 
 export async function uploadCollage(buffer, filename) {
