@@ -24,6 +24,7 @@ const { createCollage } = await import('./collage.js');
 const { uploadCollage, getCollageStream } = await import('./r2-storage.js');
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 
@@ -48,7 +49,7 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
       try { await fs.unlink(f.path); } catch {}
     }
 
-    const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${filename}`;
+    const imageUrl = `https://${req.get('host')}/api/image/${filename}`;
     res.json({ success: true, imageUrl });
   } catch (error) {
     console.error('Collage error:', error);
