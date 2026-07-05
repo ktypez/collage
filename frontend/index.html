@@ -122,13 +122,8 @@
   </div>
 
   <script>
-    const LIFF_ID = new URLSearchParams(window.location.search).get('liffId') || 'YOUR_LIFF_ID';
-    const API_BASE = new URLSearchParams(window.location.search).get('api') || '';
-
-    if (!API_BASE) {
-      document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = 'Error: Missing api parameter in URL';
-    }
+    const LIFF_ID = '2010606328-qwQthUqN';
+    const API_BASE = new URLSearchParams(window.location.search).get('api') || 'https://collage-7cgv.onrender.com';
 
     liff.init({ liffId: LIFF_ID }).then(() => {
       if (!liff.isLoggedIn()) {
