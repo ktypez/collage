@@ -1,12 +1,19 @@
 import sharp from 'sharp';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 1200;
-const TEXT_HEIGHT = 120;
+const CANVAS_WIDTH = 2000;
+const CANVAS_HEIGHT = 2000;
+const TEXT_HEIGHT = 200;
 const IMAGE_AREA_HEIGHT = CANVAS_HEIGHT - TEXT_HEIGHT;
-const PADDING = 15;
+const PADDING = 25;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
+
+const FONT_BASE64 = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), 'Loma.otf')
+).toString('base64');
 
 function getImageBoxes(count) {
   const W = CANVAS_WIDTH;
@@ -54,11 +61,17 @@ function escapeXml(s) {
 }
 
 function buildTextSvg(name, date) {
-  return `<svg width="${CANVAS_WIDTH}" height="${TEXT_HEIGHT}">
+  return `<svg width="${CANVAS_WIDTH}" height="${TEXT_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      @font-face {
+        font-family: 'LomaEmbedded';
+        src: url(data:application/x-font-opentype;base64,${FONT_BASE64}) format('opentype');
+      }
+    </style>
     <rect width="100%" height="100%" fill="#E5E6E6"/>
-    <line x1="0" y1="0" x2="${CANVAS_WIDTH}" y2="0" stroke="#d0d0d0" stroke-width="1"/>
-    <text x="40" y="76" font-family="Arial, sans-serif" font-size="38" fill="#333" font-weight="bold">${escapeXml(name)}</text>
-    <text x="${CANVAS_WIDTH - 40}" y="76" font-family="Arial, sans-serif" font-size="32" fill="#666" text-anchor="end">${escapeXml(date)}</text>
+    <line x1="0" y1="0" x2="${CANVAS_WIDTH}" y2="0" stroke="#d0d0d0" stroke-width="2"/>
+    <text x="50" y="130" font-family="LomaEmbedded, Tahoma, sans-serif" font-size="64" fill="#333" font-weight="bold">${escapeXml(name)}</text>
+    <text x="${CANVAS_WIDTH - 50}" y="130" font-family="LomaEmbedded, Tahoma, sans-serif" font-size="52" fill="#666" text-anchor="end">${escapeXml(date)}</text>
   </svg>`;
 }
 
