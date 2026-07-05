@@ -8,6 +8,9 @@
   <meta property="og:description" content="รวมรูปภาพเป็นคอลลาจสวยๆ ส่งเข้ากลุ่ม LINE">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>สร้างรูปคอลลาจ - Collage Maker</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -154,6 +157,19 @@
   <script>
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
+
+    // Force cache clear + LINE logout
+    if (location.search.includes('force')) {
+      localStorage.clear();
+      if (/LINE|LIFF/i.test(navigator.userAgent)) {
+        liff.init({ liffId: LIFF_ID }).then(() => {
+          if (liff.isLoggedIn()) { liff.logout(); }
+          location.href = location.pathname;
+        }).catch(() => { location.href = location.pathname; });
+      } else {
+        location.href = location.pathname;
+      }
+    }
 
     const liffContent = document.getElementById('liffContent');
 
