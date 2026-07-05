@@ -83,8 +83,6 @@
     .btn:active { opacity: 0.8; }
     .btn-primary { background: #00994d; color: #fff; }
     .btn-primary:disabled { background: #88cc99; cursor: not-allowed; }
-    .out-icon { font-size: 56px; }
-    .out-title { font-size: 24px; font-weight: 700; color: #1a1a1a; }
     .status {
       text-align: center;
       padding: 16px;
@@ -96,10 +94,6 @@
     .status.loading { display: block; background: #fff3cd; color: #856404; }
     .status.success { display: block; background: #d4edda; color: #155724; }
     .status.error { display: block; background: #f8d7da; color: #721c24; }
-    .outside-box {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 70vh; text-align: center; gap: 16px;
-    }
     #liffContent { display: none; }
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a1a; color: #e0e0e0; }
@@ -115,15 +109,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- Non-LINE fallback -->
-    <div id="outsideBox" class="outside-box">
-      <div class="out-icon">📱</div>
-      <div class="out-title">กรุณาเปิดใน LINE</div>
-      <p style="font-size:15px;color:#666;line-height:1.6">
-        หน้านี้ใช้งานได้เฉพาะในแอป LINE เท่านั้น
-      </p>
-    </div>
-
     <!-- LIFF content (hidden until LINE user logged in) -->
     <div id="liffContent">
       <h1>สร้างรูปคอลลาจ</h1>
@@ -170,7 +155,6 @@
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
-    const outsideBox = document.getElementById('outsideBox');
     const liffContent = document.getElementById('liffContent');
 
     if (/LINE|LIFF/i.test(navigator.userAgent)) {
@@ -186,11 +170,13 @@
           return;
         }
         localStorage.removeItem('liff_login_tried');
-        outsideBox.style.display = 'none';
         liffContent.style.display = 'block';
         document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
         try { liff.permission.requestAll(); } catch (_) {}
       });
+    } else if (!localStorage.getItem('liff_redirect_tried')) {
+      localStorage.setItem('liff_redirect_tried', '1');
+      window.location.href = 'https://liff.line.me/' + LIFF_ID;
     }
 
     let selectedPreset = 'ocean';
