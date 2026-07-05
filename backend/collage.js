@@ -6,8 +6,13 @@ import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 3840;
 const HEADER_HEIGHT = 500;
-const PAD_X = 4;
-const PAD_Y = 20;
+const OUTER_MARGIN = 30;
+const GAP_X = 4;
+const GAP_Y = 20;
+const BORDER_WIDTH = 6;
+const CORNER_RADIUS = 12;
+const SHADOW_OFFSET = 6;
+const SHADOW_BLUR = 8;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
@@ -58,10 +63,10 @@ export async function createCollage(files, name, date) {
 
   const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / cols);
-  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PAD_X) / cols);
+  const cellW = Math.floor((CANVAS_WIDTH - 2 * OUTER_MARGIN - (cols - 1) * GAP_X) / cols);
   const cellH = Math.floor(cellW / cellRatio);
 
-  const gridH = rows * cellH + 2 * PAD_X + (rows - 1) * PAD_Y;
+  const gridH = 2 * OUTER_MARGIN + rows * cellH + (rows - 1) * GAP_Y;
   const totalH = HEADER_HEIGHT + gridH;
 
   const composites = [];
@@ -72,13 +77,34 @@ export async function createCollage(files, name, date) {
     const row = Math.floor(i / cols);
 
     const box = {
-      left: PAD_X + col * (cellW + PAD_X),
-      top: PAD_X + row * (cellH + PAD_Y),
+      left: OUTER_MARGIN + col * (cellW + GAP_X),
+      top: OUTER_MARGIN + row * (cellH + GAP_Y),
       width: cellW,
       height: cellH,
     };
 
-    const scale = Math.min(box.width / meta.width, box.height / meta.height);
+    // White rounded rect with drop shadow
+    const cellSvg = `<svg width="${cellW}" height="${cellH}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="s" x="-10%" y="-10%" width="130%" height="130%">
+          <feDropShadow dx="${SHADOW_OFFSET}" dy="${SHADOW_OFFSET}" stdDeviation="${SHADOW_BLUR}" flood-color="#000" flood-opacity="0.25"/>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="${cellW}" height="${cellH}" rx="${CORNER_RADIUS}" fill="#ffffff" filter="url(#s)"/>
+    </svg>`;
+
+    const cellBg = await sharp(Buffer.from(cellSvg)).toBuffer();
+
+    composites.push({
+      input: cellBg,
+      top: box.top + HEADER_HEIGHT,
+      left: box.left,
+    });
+
+    // Image inset by BORDER_WIDTH
+    const innerW = cellW - BORDER_WIDTH * 2;
+    const innerH = cellH - BORDER_WIDTH * 2;
+    const scale = Math.min(innerW / meta.width, innerH / meta.height);
     const rw = Math.round(meta.width * scale);
     const rh = Math.round(meta.height * scale);
 
@@ -88,13 +114,23 @@ export async function createCollage(files, name, date) {
 
     composites.push({
       input: buf,
-      top: Math.round(box.top + (box.height - rh) / 2) + HEADER_HEIGHT,
-      left: Math.round(box.left + (box.width - rw) / 2),
+      top: Math.round(box.top + (cellH - rh) / 2) + HEADER_HEIGHT,
+      left: Math.round(box.left + (cellW - rw) / 2),
     });
   }
 
   composites.push({
     input: Buffer.from(buildTextSvg(name, date, 170, 64)),
+    top: 0,
+    left: 0,
+  });
+
+  // Canvas outer border
+  const borderSvg = `<svg width="${CANVAS_WIDTH}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="#b0b0b0" stroke-width="2"/>
+  </svg>`;
+  composites.push({
+    input: Buffer.from(borderSvg),
     top: 0,
     left: 0,
   });
