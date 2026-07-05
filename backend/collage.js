@@ -16,6 +16,24 @@ const SHADOW_BLUR = 8;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
+const THAI_MONTHS = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+function formatThaiDate(dateStr) {
+  let d;
+  if (dateStr && dateStr.trim()) {
+    d = new Date(dateStr + 'T00:00:00');
+  } else {
+    d = new Date();
+  }
+  const day = d.getDate();
+  const month = THAI_MONTHS[d.getMonth()];
+  const year = d.getFullYear() + 543;
+  return `วันที่ ${day} ${month} ${year}`;
+}
+
 const font = opentype.parse(readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
 ));
@@ -52,6 +70,7 @@ function buildTextSvg(name, date, nameSize, dateSize) {
 }
 
 export async function createCollage(files, name, date) {
+  date = formatThaiDate(date);
   const count = files.length;
 
   const metas = await Promise.all(
