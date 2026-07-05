@@ -7,19 +7,50 @@ import { fileURLToPath } from 'url';
 const CANVAS_WIDTH = 1920;
 const HEADER_HEIGHT = 300;
 const OUTER_MARGIN = 20;
-const GAP_X = 8;
+const GAP_X = 24;
 const GAP_Y = 24;
 const BORDER_WIDTH = 4;
 const SHADOW_OFFSET = 4;
 const SHADOW_BLUR = 5;
 const IMG_SCALE = 0.90;
 
-const BG = { r: 232, g: 234, b: 237, alpha: 1 };
-
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
+
+const PRESETS = {
+  ocean: {
+    grad: ['#4facfe', '#00f2fe'],
+    nameColor: '#ffffff', dateColor: '#e0f7ff',
+    sepColor: '#ffffff', sepOpacity: 0.4, bg: '#e8eaed',
+  },
+  sunset: {
+    grad: ['#f093fb', '#f5576c'],
+    nameColor: '#ffffff', dateColor: '#ffe0f0',
+    sepColor: '#ffffff', sepOpacity: 0.35, bg: '#f5e6ed',
+  },
+  midnight: {
+    grad: ['#141e30', '#243b55'],
+    nameColor: '#ffffff', dateColor: '#a0b4d0',
+    sepColor: '#ffffff', sepOpacity: 0.25, bg: '#e0e4ea',
+  },
+  gold: {
+    grad: ['#fceabb', '#f8b500'],
+    nameColor: '#3d2e00', dateColor: '#6b5700',
+    sepColor: '#8a7300', sepOpacity: 0.5, bg: '#f0ede0',
+  },
+  mint: {
+    grad: ['#a8edea', '#fed6e3'],
+    nameColor: '#2a5a52', dateColor: '#7a5a6a',
+    sepColor: '#7a9a92', sepOpacity: 0.4, bg: '#eaf0ee',
+  },
+};
+
+function hexToRgb(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255, alpha: 1 };
+}
 
 function formatThaiDate(dateStr) {
   let d;
@@ -38,13 +69,13 @@ const font = opentype.parse(readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
 ));
 
-function buildTextSvg(name, date, nameSize, dateSize, sepY) {
+function buildTextSvg(name, date, nameSize, dateSize, sepY, c) {
   const parts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
 
   parts.push(`<defs>
     <linearGradient id="hGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4facfe"/>
-      <stop offset="100%" stop-color="#00f2fe"/>
+      <stop offset="0%" stop-color="${c.grad[0]}"/>
+      <stop offset="100%" stop-color="${c.grad[1]}"/>
     </linearGradient>
   </defs>`);
 
@@ -54,23 +85,25 @@ function buildTextSvg(name, date, nameSize, dateSize, sepY) {
     const w = font.getAdvanceWidth(name, nameSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
     const path = font.getPath(name, x, 185, nameSize);
-    parts.push(`<g fill="#ffffff">${path.toSVG(2)}</g>`);
+    parts.push(`<g fill="${c.nameColor}">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
     const path = font.getPath(date, x, 250, dateSize);
-    parts.push(`<g fill="#e0f7ff">${path.toSVG(2)}</g>`);
+    parts.push(`<g fill="${c.dateColor}">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="0" y1="${sepY}" x2="${CANVAS_WIDTH}" y2="${sepY}" stroke="#ffffff" stroke-width="2" opacity="0.4"/>`);
+  parts.push(`<line x1="0" y1="${sepY}" x2="${CANVAS_WIDTH}" y2="${sepY}" stroke="${c.sepColor}" stroke-width="2" opacity="${c.sepOpacity}"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
 
-export async function createCollage(files, name, date) {
+export async function createCollage(files, name, date, preset = 'ocean') {
   date = formatThaiDate(date);
+  const colors = PRESETS[preset] || PRESETS.ocean;
+  const bg = hexToRgb(colors.bg);
   const count = files.length;
 
   const metas = await Promise.all(
@@ -134,14 +167,14 @@ export async function createCollage(files, name, date) {
   composites.push(...await Promise.all(imgTasks));
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 92, 34, HEADER_HEIGHT - 3)),
+    input: Buffer.from(buildTextSvg(name, date, 92, 34, HEADER_HEIGHT - 3, colors)),
     top: 0,
     left: 0,
   });
 
   // Canvas outer border
   const borderSvg = `<svg width="${CANVAS_WIDTH}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="#8899aa" stroke-width="1"/>
+    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="${colors.sepColor}" stroke-width="1" opacity="${Math.min(1, colors.sepOpacity + 0.2)}"/>
   </svg>`;
   composites.push({
     input: Buffer.from(borderSvg),
@@ -154,7 +187,7 @@ export async function createCollage(files, name, date) {
       width: CANVAS_WIDTH,
       height: totalH,
       channels: 4,
-      background: BG,
+      background: bg,
     },
   });
 

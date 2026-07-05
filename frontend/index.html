@@ -110,6 +110,15 @@
       <label for="dateInput">วันที่</label>
       <input type="date" id="dateInput">
 
+      <label>สีหัวข้อ</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
+        <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #06c755;border-radius:10px;cursor:pointer" title="Ocean"></button>
+        <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
+        <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
+        <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
+        <button type="button" class="preset-btn" data-preset="mint" style="background:linear-gradient(135deg,#a8edea,#fed6e3);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Mint"></button>
+      </div>
+
       <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
       <input type="file" id="fileInput" accept="image/*" multiple>
 
@@ -133,6 +142,16 @@
     }).catch(err => {
       document.getElementById('status').className = 'status error';
       document.getElementById('status').textContent = 'ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
+    });
+
+    // Preset picker
+    let selectedPreset = 'ocean';
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = 'transparent');
+        btn.style.borderColor = '#06c755';
+        selectedPreset = btn.dataset.preset;
+      });
     });
 
     document.getElementById('fileInput').addEventListener('change', function() {
@@ -169,6 +188,7 @@
         const fd = new FormData();
         fd.append('name', name);
         fd.append('date', date);
+        fd.append('preset', selectedPreset);
         for (const f of files) fd.append('images', f);
 
         const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
