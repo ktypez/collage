@@ -193,9 +193,17 @@
     if (/LINE|LIFF/i.test(navigator.userAgent)) {
       liff.init({ liffId: LIFF_ID }).then(() => {
         if (!liff.isLoggedIn()) {
+          const tried = localStorage.getItem('liff_login_tried');
+          if (tried) {
+            localStorage.removeItem('liff_login_tried');
+            setWebMode();
+            return;
+          }
+          localStorage.setItem('liff_login_tried', '1');
           liff.login({ redirectUri: window.location.href });
           return;
         }
+        localStorage.removeItem('liff_login_tried');
         isLiff = true;
         badge.style.display = 'inline';
         badge.textContent = '💬 LINE — ส่งเข้าแชท';
