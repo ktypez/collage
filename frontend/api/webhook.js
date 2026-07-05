@@ -170,15 +170,7 @@ function buildClientFlex(clients, query) {
       { type: 'text', text: `🏪 ${c.shopName}`, size: 'sm', color: '#666666', wrap: true },
       { type: 'text', text: `📍 ${c.address}`, size: 'sm', color: '#666666', wrap: true },
     );
-    if (c.lat && c.lng) {
-      bodyContents.push({
-        type: 'text',
-        text: `🗺️ maps.google.com/?q=${c.lat},${c.lng}`,
-        size: 'xs',
-        color: '#888888',
-        wrap: true,
-      });
-    }
+
   } else {
     bodyContents.push(
       { type: 'text', text: `พบ ${clients.length} รายการ`, weight: 'bold', size: 'md' },
@@ -216,7 +208,7 @@ function buildClientFlex(clients, query) {
             action: {
               type: 'uri',
               label: 'เปิดใน browser',
-              uri: isSingle ? `${CLIENTDATA_URL}/c/${c.id}` : CLIENTDATA_URL,
+              uri: isSingle ? `${CLIENTDATA_URL}/c/${c.id}` : `${CLIENTDATA_URL}?q=${encodeURIComponent(query)}`,
             },
           },
         ],
