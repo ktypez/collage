@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Collage Maker</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container { max-width: 480px; margin: 0 auto; }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: #06c755;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 14px;
+    }
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .preview-grid img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #eee;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: #06c755; color: #fff; }
+    .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
+    .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
+    .status {
+      text-align: center;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.loading { display: block; background: #fff3cd; color: #856404; }
+    .status.success { display: block; background: #d4edda; color: #155724; }
+    .status.error { display: block; background: #f8d7da; color: #721c24; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e0e0e0; }
+      .card { background: #2a2a2a; }
+      input[type="text"], input[type="date"] { background: #333; border-color: #444; color: #e0e0e0; }
+      input[type="file"] { background: #2a2a2a; border-color: #555; }
+      .btn-secondary { background: #444; color: #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Collage Maker</h1>
+
+    <div class="card">
+      <label for="nameInput">Name / Caption</label>
+      <input type="text" id="nameInput" placeholder="Enter name or caption">
+
+      <label for="dateInput">Date</label>
+      <input type="date" id="dateInput">
+
+      <label for="fileInput">Select photos (2+ recommended)</label>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+
+      <div class="preview-grid" id="previewGrid"></div>
+
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">Create & Send to Group</button>
+
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const LIFF_ID = new URLSearchParams(window.location.search).get('liffId') || 'YOUR_LIFF_ID';
+    const API_BASE = new URLSearchParams(window.location.search).get('api') || '';
+
+    if (!API_BASE) {
+      document.getElementById('status').className = 'status error';
+      document.getElementById('status').textContent = 'Error: Missing api parameter in URL';
+    }
+
+    liff.init({ liffId: LIFF_ID }).then(() => {
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+      }
+      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+    }).catch(err => {
+      document.getElementById('status').className = 'status error';
+      document.getElementById('status').textContent = 'LIFF init failed: ' + err.message;
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function() {
+      const grid = document.getElementById('previewGrid');
+      grid.innerHTML = '';
+      for (const file of this.files) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        grid.appendChild(img);
+      }
+    });
+
+    function setStatus(text, type) {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + type;
+    }
+
+    async function generateCollage() {
+      const files = document.getElementById('fileInput').files;
+      const name = document.getElementById('nameInput').value;
+      const date = document.getElementById('dateInput').value;
+      const btn = document.getElementById('submitBtn');
+
+      if (!files.length) {
+        setStatus('Please select at least 1 photo', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      setStatus('Creating collage...', 'loading');
+
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('date', date);
+        for (const f of files) fd.append('images', f);
+
+        const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
+          method: 'POST',
+          body: fd,
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Unknown error');
+        }
+
+        setStatus('Sending to group...', 'loading');
+
+        await liff.sendMessages([{
+          type: 'image',
+          originalContentUrl: data.imageUrl,
+          previewImageUrl: data.imageUrl,
+        }]);
+
+        setStatus('Sent successfully!', 'success');
+
+        setTimeout(() => liff.closeWindow(), 1500);
+      } catch (err) {
+        setStatus('Error: ' + err.message, 'error');
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
