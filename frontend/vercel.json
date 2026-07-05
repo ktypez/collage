@@ -1,6 +1,9 @@
 {
   "version": 2,
-  "builds": [{ "src": "**/*", "use": "@vercel/static" }],
+  "builds": [
+    { "src": "**/*", "use": "@vercel/static" },
+    { "src": "api/*.js", "use": "@vercel/node" }
+  ],
   "routes": [
     { "src": "/liff", "dest": "/index.html" },
     { "src": "/(.*)", "status": 301, "dest": "https://liff.line.me/2010606328-7UnH1Yre" }

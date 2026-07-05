@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@line/bot-sdk": "^9.0.0"
+  }
+}
