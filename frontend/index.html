@@ -84,6 +84,9 @@
     .btn-primary { background: #06c755; color: #fff; }
     .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
     .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
+    .badge-line { background: #d4edda; color: #155724; }
+    .badge-web { background: #cce5ff; color: #004085; }
+    #resultCard img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; }
     .status {
       text-align: center;
       padding: 12px;
@@ -101,12 +104,19 @@
       input[type="text"], input[type="date"] { background: #333; border-color: #444; color: #e0e0e0; }
       input[type="file"] { background: #2a2a2a; border-color: #555; }
       .btn-secondary { background: #444; color: #ccc; }
+      .badge-line { background: #1e4a2e !important; color: #a8e6b8 !important; }
+      .badge-web { background: #1e3a5f !important; color: #a0c4ff !important; }
+      .instruction-card { background: #1a3a2a !important; border-color: #2a6a3a !important; }
+      .instruction-card div { color: #ccc !important; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>สร้างรูปคอลลาจ</h1>
+    <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+      สร้างรูปคอลลาจ
+      <span id="modeBadge" style="display:none;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600"></span>
+    </h1>
 
     <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
       <div style="font-weight:700;margin-bottom:10px;color:#06c755;font-size:15px">📋 วิธีใช้งาน</div>
@@ -114,12 +124,12 @@
         <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
         <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
         <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
-        <div>4️⃣ กดปุ่ม <strong>"สร้างและส่ง"</strong> รอแป๊บเดียว</div>
-        <div>📤 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
+        <div id="step4Text">4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว</div>
+        <div id="outputDesc">📤 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="formCard">
       <label for="nameInput">ชื่อ / คำอธิบาย</label>
       <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
 
@@ -144,20 +154,51 @@
 
       <div class="status" id="status"></div>
     </div>
+
+    <div class="card" id="resultCard" style="display:none;text-align:center">
+      <img id="resultImage" style="max-width:100%;border-radius:8px;margin-bottom:12px">
+      <a id="downloadLink" class="btn btn-primary" style="display:block;text-decoration:none;margin-bottom:8px" download>💾 ดาวน์โหลดรูป</a>
+      <button class="btn btn-secondary" onclick="resetForm()">🔄 สร้างใหม่</button>
+    </div>
   </div>
 
   <script>
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
+    let isLiff = false;
+    const badge = document.getElementById('modeBadge');
+    const step4 = document.getElementById('step4Text');
+    const outputDesc = document.getElementById('outputDesc');
+    const submitBtn = document.getElementById('submitBtn');
+    const formCard = document.getElementById('formCard');
+    const resultCard = document.getElementById('resultCard');
+    const resultImage = document.getElementById('resultImage');
+    const downloadLink = document.getElementById('downloadLink');
+
     liff.init({ liffId: LIFF_ID }).then(() => {
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
+        return;
       }
+      isLiff = true;
+      badge.style.display = 'inline';
+      badge.textContent = '💬 LINE — ส่งเข้าแชท';
+      badge.className = 'badge-line';
+      step4.textContent = '4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว';
+      outputDesc.textContent = '💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ';
+      submitBtn.textContent = '✨ สร้างและส่งเข้ากลุ่ม';
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-    }).catch(err => {
-      document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = '⚠️ ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
+    }).catch(() => {
+      // Web mode (browser)
+      isLiff = false;
+      badge.style.display = 'inline';
+      badge.textContent = '🌐 เว็บ — ดาวน์โหลดรูป';
+      badge.className = 'badge-web';
+      step4.textContent = '4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว';
+      outputDesc.textContent = '💾 รูปคอลลาจจะแสดงให้ดาวน์โหลด';
+      submitBtn.textContent = '✨ สร้างคอลลาจ';
+      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     });
 
     // Preset picker
@@ -184,6 +225,15 @@
       const el = document.getElementById('status');
       el.textContent = text;
       el.className = 'status ' + type;
+    }
+
+    function resetForm() {
+      resultCard.style.display = 'none';
+      formCard.style.display = 'block';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('previewGrid').innerHTML = '';
+      document.getElementById('status').className = 'status';
+      document.getElementById('submitBtn').disabled = false;
     }
 
     async function generateCollage() {
@@ -217,17 +267,23 @@
           throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
         }
 
-        setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
-
-        await liff.sendMessages([{
-          type: 'image',
-          originalContentUrl: data.imageUrl,
-          previewImageUrl: data.imageUrl,
-        }]);
-
-        setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
-
-        setTimeout(() => liff.closeWindow(), 1500);
+        if (isLiff) {
+          setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
+          await liff.sendMessages([{
+            type: 'image',
+            originalContentUrl: data.imageUrl,
+            previewImageUrl: data.imageUrl,
+          }]);
+          setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
+          setTimeout(() => liff.closeWindow(), 1500);
+        } else {
+          setStatus('✅ สร้างเสร็จแล้ว!', 'success');
+          formCard.style.display = 'none';
+          resultImage.src = data.imageUrl;
+          downloadLink.href = data.imageUrl;
+          resultCard.style.display = 'block';
+          btn.disabled = false;
+        }
       } catch (err) {
         setStatus('❌ ' + err.message, 'error');
         btn.disabled = false;
