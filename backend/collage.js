@@ -5,15 +5,16 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 1920;
-const HEADER_HEIGHT = 250;
-const OUTER_MARGIN = 16;
-const GAP_X = 2;
-const GAP_Y = 10;
-const BORDER_WIDTH = 3;
-const SHADOW_OFFSET = 3;
-const SHADOW_BLUR = 4;
+const HEADER_HEIGHT = 300;
+const OUTER_MARGIN = 20;
+const GAP_X = 8;
+const GAP_Y = 24;
+const BORDER_WIDTH = 4;
+const SHADOW_OFFSET = 4;
+const SHADOW_BLUR = 5;
+const IMG_SCALE = 0.88;
 
-const BG = { r: 229, g: 230, b: 230, alpha: 1 };
+const BG = { r: 232, g: 234, b: 237, alpha: 1 };
 
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -42,8 +43,8 @@ function buildTextSvg(name, date, nameSize, dateSize, sepY) {
 
   parts.push(`<defs>
     <linearGradient id="hGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fafafa"/>
-      <stop offset="100%" stop-color="#ececec"/>
+      <stop offset="0%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#00f2fe"/>
     </linearGradient>
   </defs>`);
 
@@ -52,18 +53,18 @@ function buildTextSvg(name, date, nameSize, dateSize, sepY) {
   if (name) {
     const w = font.getAdvanceWidth(name, nameSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(name, x, 148, nameSize);
-    parts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
+    const path = font.getPath(name, x, 185, nameSize);
+    parts.push(`<g fill="#ffffff">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(date, x, 200, dateSize);
-    parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
+    const path = font.getPath(date, x, 250, dateSize);
+    parts.push(`<g fill="#e0f7ff">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="0" y1="${sepY}" x2="${CANVAS_WIDTH}" y2="${sepY}" stroke="#b8b8b8" stroke-width="2"/>`);
+  parts.push(`<line x1="0" y1="${sepY}" x2="${CANVAS_WIDTH}" y2="${sepY}" stroke="#ffffff" stroke-width="2" opacity="0.4"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
@@ -115,8 +116,8 @@ export async function createCollage(files, name, date) {
       { input: shadowTile, top: box.top + HEADER_HEIGHT + SHADOW_OFFSET, left: box.left + SHADOW_OFFSET },
       { input: whiteTile, top: box.top + HEADER_HEIGHT, left: box.left },
     );
-    const innerW = cellW - BORDER_WIDTH * 2;
-    const innerH = cellH - BORDER_WIDTH * 2;
+    const innerW = (cellW - BORDER_WIDTH * 2) * IMG_SCALE;
+    const innerH = (cellH - BORDER_WIDTH * 2) * IMG_SCALE;
     const scale = Math.min(innerW / meta.width, innerH / meta.height);
     const rw = Math.round(meta.width * scale);
     const rh = Math.round(meta.height * scale);
@@ -133,14 +134,14 @@ export async function createCollage(files, name, date) {
   composites.push(...await Promise.all(imgTasks));
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 85, 32, HEADER_HEIGHT - 2)),
+    input: Buffer.from(buildTextSvg(name, date, 92, 34, HEADER_HEIGHT - 3)),
     top: 0,
     left: 0,
   });
 
   // Canvas outer border
   const borderSvg = `<svg width="${CANVAS_WIDTH}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="#b0b0b0" stroke-width="1"/>
+    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="#8899aa" stroke-width="1"/>
   </svg>`;
   composites.push({
     input: Buffer.from(borderSvg),
