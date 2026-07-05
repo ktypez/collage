@@ -4,9 +4,9 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const CANVAS_WIDTH = 1180;
-const HEADER_HEIGHT = 153;
-const PADDING = 15;
+const CANVAS_WIDTH = 2000;
+const HEADER_HEIGHT = 260;
+const PADDING = 25;
 const CELL_RATIO = 1;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
@@ -48,18 +48,18 @@ function buildTextSvg(name, date, nameSize, dateSize, canvasH) {
   if (name) {
     const w = font.getAdvanceWidth(name, nameSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(name, x, 92, nameSize);
+    const path = font.getPath(name, x, 155, nameSize);
     parts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(date, x, 127, dateSize);
+    const path = font.getPath(date, x, 215, dateSize);
     parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="24" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 24}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="1"/>`);
+  parts.push(`<line x1="40" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 40}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="1"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
@@ -90,7 +90,7 @@ export async function createCollage(files, name, date) {
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 45, 26, totalH)),
+    input: Buffer.from(buildTextSvg(name, date, 76, 44, totalH)),
     top: 0,
     left: 0,
   });
