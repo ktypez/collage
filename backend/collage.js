@@ -6,8 +6,7 @@ import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 3840;
 const HEADER_HEIGHT = 500;
-const PADDING = 48;
-const CELL_RATIO = 1;
+const PADDING = 8;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
@@ -15,25 +14,7 @@ const font = opentype.parse(readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
 ));
 
-function getGrid(count) {
-  const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
-  const rows = Math.ceil(count / cols);
-  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PADDING) / cols);
-  const cellH = Math.floor(cellW * CELL_RATIO);
-  const gridH = rows * cellH + (rows + 1) * PADDING;
-  const totalH = HEADER_HEIGHT + gridH;
-
-  const boxes = Array.from({ length: count }, (_, i) => ({
-    left: PADDING + (i % cols) * (cellW + PADDING),
-    top: PADDING + Math.floor(i / cols) * (cellH + PADDING),
-    width: cellW,
-    height: cellH,
-  }));
-
-  return { boxes, totalH };
-}
-
-function buildTextSvg(name, date, nameSize, dateSize, canvasH) {
+function buildTextSvg(name, date, nameSize, dateSize) {
   const parts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
 
   parts.push(`<defs>
@@ -59,26 +40,48 @@ function buildTextSvg(name, date, nameSize, dateSize, canvasH) {
     parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="77" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 77}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="2"/>`);
+  parts.push(`<line x1="20" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 20}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="2"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
 
 export async function createCollage(files, name, date) {
   const count = files.length;
-  const { boxes, totalH } = getGrid(count);
+
+  const metas = await Promise.all(
+    files.map(f => sharp(f.path).metadata())
+  );
+
+  const avgRatio = metas.reduce((sum, m) => sum + m.width / m.height, 0) / count;
+  const cellRatio = Math.max(0.3, Math.min(3.0, avgRatio));
+
+  const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
+  const rows = Math.ceil(count / cols);
+  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PADDING) / cols);
+  const cellH = Math.floor(cellW / cellRatio);
+
+  const gridH = rows * cellH + (rows + 1) * PADDING;
+  const totalH = HEADER_HEIGHT + gridH;
+
   const composites = [];
 
   for (let i = 0; i < count; i++) {
-    const file = files[i];
-    const box = boxes[i];
-    const meta = await sharp(file.path).metadata();
+    const meta = metas[i];
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const box = {
+      left: PADDING + col * (cellW + PADDING),
+      top: PADDING + row * (cellH + PADDING),
+      width: cellW,
+      height: cellH,
+    };
 
     const scale = Math.min(box.width / meta.width, box.height / meta.height);
     const rw = Math.round(meta.width * scale);
     const rh = Math.round(meta.height * scale);
 
-    const buf = await sharp(file.path)
+    const buf = await sharp(files[i].path)
       .resize(rw, rh, { fit: 'inside' })
       .toBuffer();
 
@@ -90,7 +93,7 @@ export async function createCollage(files, name, date) {
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 146, 84, totalH)),
+    input: Buffer.from(buildTextSvg(name, date, 146, 84)),
     top: 0,
     left: 0,
   });
