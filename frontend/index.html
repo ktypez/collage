@@ -196,15 +196,13 @@
     }
 
     function forceClose() {
-      try { liff.closeWindow(); } catch {}
-      window.location.href = 'about:blank';
+      liff.closeWindow();
     }
 
     function resetApp() {
       localStorage.clear();
       sessionStorage.clear();
-      try { liff.closeWindow(); } catch {}
-      window.location.href = 'about:blank';
+      liff.closeWindow();
     }
 
     async function generateCollage() {
