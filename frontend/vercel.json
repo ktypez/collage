@@ -1,6 +1,13 @@
 {
   "version": 2,
   "builds": [{ "src": "**/*", "use": "@vercel/static" }],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "https://liff.line.me/2010606328-7UnH1Yre",
+      "permanent": true
+    }
+  ],
   "routes": [
     { "src": "/liff", "dest": "/index.html" },
     { "src": "/(.*)", "dest": "/$1" }
