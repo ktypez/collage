@@ -84,6 +84,11 @@
     .btn-primary { background: #06c755; color: #fff; }
     .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
     .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
+    .btn-danger { background: #dc3545; color: #fff; margin-top: 8px; }
+    .btn-danger:active { opacity: 0.8; }
+    .action-btns { display: none; gap: 8px; margin-top: 12px; }
+    .action-btns.show { display: flex; }
+    .action-btns .btn { flex: 1; font-size: 14px; padding: 10px; }
     .status {
       text-align: center;
       padding: 12px;
@@ -143,6 +148,10 @@
       <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างและส่งเข้ากลุ่ม</button>
 
       <div class="status" id="status"></div>
+      <div class="action-btns" id="actionBtns">
+        <button class="btn btn-danger" onclick="forceClose()">✕ ปิดหน้าต่าง</button>
+        <button class="btn btn-secondary" onclick="resetApp()">↻ รีเซ็ต</button>
+      </div>
     </div>
   </div>
 
@@ -156,8 +165,7 @@
       }
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     }).catch(err => {
-      document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = '⚠️ ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
+      setStatus('⚠️ ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
     // Preset picker
@@ -184,6 +192,19 @@
       const el = document.getElementById('status');
       el.textContent = text;
       el.className = 'status ' + type;
+      document.getElementById('actionBtns').className = 'action-btns' + (type === 'error' ? ' show' : '');
+    }
+
+    function forceClose() {
+      try { liff.closeWindow(); } catch {}
+      window.location.href = 'about:blank';
+    }
+
+    function resetApp() {
+      localStorage.clear();
+      sessionStorage.clear();
+      try { liff.closeWindow(); } catch {}
+      window.location.href = 'about:blank';
     }
 
     async function generateCollage() {
