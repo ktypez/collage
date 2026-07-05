@@ -126,13 +126,13 @@
       <label for="dateInput">วันที่</label>
       <input type="date" id="dateInput">
 
-      <label>สีหัวข้อ</label>
+      <label>ธีมสี</label>
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
-        <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #06c755;border-radius:10px;cursor:pointer" title="Ocean"></button>
-        <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
-        <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
-        <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
-        <button type="button" class="preset-btn" data-preset="mint" style="background:linear-gradient(135deg,#a8edea,#fed6e3);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Mint"></button>
+        <button type="button" class="preset-btn active" data-preset="crimson" style="background:linear-gradient(135deg,#3B050A,#C32029);width:44px;height:44px;border:3px solid #06c755;border-radius:10px;cursor:pointer" title="Crimson"></button>
+        <button type="button" class="preset-btn" data-preset="corporate-blue" style="background:linear-gradient(135deg,#052040,#1A5FBF);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Corporate Blue"></button>
+        <button type="button" class="preset-btn" data-preset="emerald" style="background:linear-gradient(135deg,#043528,#0E8F6E);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Emerald"></button>
+        <button type="button" class="preset-btn" data-preset="dark" style="background:linear-gradient(135deg,#000,#2A2A2A);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Dark"></button>
+        <button type="button" class="preset-btn" data-preset="purple" style="background:linear-gradient(135deg,#2A0F4A,#9B5FE0);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Purple"></button>
       </div>
 
       <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
@@ -161,7 +161,7 @@
     });
 
     // Preset picker
-    let selectedPreset = 'ocean';
+    let selectedPreset = 'crimson';
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = 'transparent');

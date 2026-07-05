@@ -6,187 +6,190 @@ import { fileURLToPath } from 'url';
 
 sharp.concurrency(1);
 
-const CANVAS_WIDTH = 1920;
-const HEADER_HEIGHT = 300;
-const OUTER_MARGIN = 20;
-const GAP_X = 24;
-const GAP_Y = 24;
-const BORDER_WIDTH = 4;
-const SHADOW_OFFSET = 4;
-const SHADOW_BLUR = 3;
-const IMG_SCALE = 0.90;
+const W = 1080;
+const MIN_H = 1350;
+const HEADER_MIN = 220;
+const DH = 8;
+const PT = 40;
+const PS = 48;
+const PB = 48;
+const G = 24;
+const CP = 12;
+const CR = 24;
+const IR = 18;
+const SY = 8;
+const SB = 24;
+const SA = 0.12;
+const JPG_Q = 85;
 
-const THAI_MONTHS = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+const MONTHS = [
+  'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
 ];
 
-const PRESETS = {
-  ocean: {
-    grad: ['#4facfe', '#00f2fe'],
-    nameColor: '#ffffff', dateColor: '#e0f7ff',
-    sepColor: '#ffffff', sepOpacity: 0.4, bg: '#e8eaed',
-  },
-  sunset: {
-    grad: ['#f093fb', '#f5576c'],
-    nameColor: '#ffffff', dateColor: '#ffe0f0',
-    sepColor: '#ffffff', sepOpacity: 0.35, bg: '#f5e6ed',
-  },
-  midnight: {
-    grad: ['#141e30', '#243b55'],
-    nameColor: '#ffffff', dateColor: '#a0b4d0',
-    sepColor: '#ffffff', sepOpacity: 0.25, bg: '#e0e4ea',
-  },
-  gold: {
-    grad: ['#fceabb', '#f8b500'],
-    nameColor: '#3d2e00', dateColor: '#6b5700',
-    sepColor: '#8a7300', sepOpacity: 0.5, bg: '#f0ede0',
-  },
-  mint: {
-    grad: ['#a8edea', '#fed6e3'],
-    nameColor: '#2a5a52', dateColor: '#7a5a6a',
-    sepColor: '#7a9a92', sepOpacity: 0.4, bg: '#eaf0ee',
-  },
+const THEMES = {
+  crimson:         { g: ['#3B050A','#8F1018','#C32029'], d: '#F0B400', tc: '#fff', bg: '#ECECEC' },
+  'corporate-blue':{ g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECECEC' },
+  emerald:         { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECECEC' },
+  dark:            { g: ['#000','#111','#2A2A2A'],         d: '#D4AF37', tc: '#fff', bg: '#ECECEC' },
+  purple:          { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#ECECEC' },
 };
 
-function hexToRgb(hex) {
-  const v = parseInt(hex.slice(1), 16);
-  return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255, alpha: 1 };
+function cols(n) {
+  if (n <= 3) return n;
+  if (n === 4) return 2;
+  if (n <= 9) return 3;
+  return 4;
 }
 
-function formatThaiDate(dateStr) {
-  let d;
-  if (dateStr && dateStr.trim()) {
-    d = new Date(dateStr + 'T00:00:00');
-  } else {
-    d = new Date();
-  }
-  const day = d.getDate();
-  const month = THAI_MONTHS[d.getMonth()];
-  const year = d.getFullYear() + 543;
-  return `วันที่ ${day} ${month} ${year}`;
+function fmtDate(s) {
+  const d = s && s.trim() ? new Date(s + 'T00:00:00') : new Date();
+  return `วันที่ ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
-const font = opentype.parse(readFileSync(
-  resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
-));
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const font = opentype.parse(readFileSync(resolve(__dirname, 'NotoSansThai.ttf')));
 
-function buildTextSvg(name, date, nameSize, dateSize, sepY, c) {
-  const parts = [`<svg width="${CANVAS_WIDTH}" height="${HEADER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`];
+function headerSVG(name, date, hh, t) {
+  let svg = `<svg width="${W}" height="${hh}" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="h" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="${t.g[0]}"/>
+<stop offset="50%" stop-color="${t.g[1]}"/>
+<stop offset="100%" stop-color="${t.g[2]}"/>
+</linearGradient></defs>
+<rect width="100%" height="100%" fill="url(#h)"/>`;
 
-  parts.push(`<defs>
-    <linearGradient id="hGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${c.grad[0]}"/>
-      <stop offset="100%" stop-color="${c.grad[1]}"/>
-    </linearGradient>
-  </defs>`);
-
-  parts.push(`<rect width="100%" height="100%" fill="url(#hGrad)"/>`);
-
+  const ty = Math.round(hh * 0.55);
   if (name) {
-    const w = font.getAdvanceWidth(name, nameSize);
-    const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(name, x, 185, nameSize);
-    parts.push(`<g fill="${c.nameColor}">${path.toSVG(2)}</g>`);
+    const pw = font.getAdvanceWidth(name, 64);
+    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 64).toSVG(2)}</g>`;
   }
-
   if (date) {
-    const w = font.getAdvanceWidth(date, dateSize);
-    const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(date, x, 250, dateSize);
-    parts.push(`<g fill="${c.dateColor}">${path.toSVG(2)}</g>`);
+    const dy = name ? ty + 57 : Math.round(hh * 0.55) + 10;
+    const pw = font.getAdvanceWidth(date, 34);
+    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 34).toSVG(2)}</g>`;
   }
-
-  parts.push(`<line x1="0" y1="${sepY}" x2="${CANVAS_WIDTH}" y2="${sepY}" stroke="${c.sepColor}" stroke-width="2" opacity="${c.sepOpacity}"/>`);
-  parts.push('</svg>');
-  return parts.join('\n');
+  return svg + '</svg>';
 }
 
-export async function createCollage(files, name, date, preset = 'ocean') {
-  date = formatThaiDate(date);
-  const colors = PRESETS[preset] || PRESETS.ocean;
-  const bg = hexToRgb(colors.bg);
+function dividerSVG(c) {
+  return `<svg width="${W}" height="${DH}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="${c}"/></svg>`;
+}
+
+const shadowCache = new Map();
+
+async function getShadow(w, h) {
+  const key = `${w}x${h}`;
+  if (!shadowCache.has(key)) {
+    const pad = SB * 2;
+    const svg = `<svg width="${w + pad}" height="${h + pad}" xmlns="http://www.w3.org/2000/svg"><rect x="${pad / 2}" y="${pad / 2}" width="${w}" height="${h}" fill="rgba(0,0,0,${SA})"/></svg>`;
+    shadowCache.set(key, await sharp(Buffer.from(svg)).blur(SB).png().toBuffer());
+  }
+  return shadowCache.get(key);
+}
+
+function cardBgSVG(w, h) {
+  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" rx="${CR}" fill="#fff"/></svg>`;
+}
+
+function maskSVG(w, h) {
+  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" rx="${IR}" fill="#fff"/></svg>`;
+}
+
+async function roundImage(buf, w, h, contentW) {
+  const rh = Math.round(contentW * h / w);
+  const resized = await sharp(buf).resize(contentW, rh).toBuffer();
+  const mask = Buffer.from(maskSVG(contentW, rh));
+  return sharp({
+    create: { width: contentW, height: rh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .composite([
+      { input: resized, top: 0, left: 0 },
+      { input: mask, top: 0, left: 0, blend: 'dest-in' },
+    ])
+    .png()
+    .toBuffer();
+}
+
+export async function createCollage(files, name, date, preset = 'crimson') {
+  date = fmtDate(date);
+  const t = THEMES[preset] || THEMES.crimson;
   const count = files.length;
+  const c = cols(count);
 
-  const metas = await Promise.all(
-    files.map(f => sharp(f.path).metadata())
-  );
+  const usable = W - PS * 2;
+  const cardW = Math.floor((usable - G * (c - 1)) / c);
+  const iw = cardW - CP * 2;
 
-  const avgRatio = metas.reduce((sum, m) => sum + m.width / m.height, 0) / count;
-  const cellRatio = Math.max(0.3, Math.min(3.0, avgRatio));
+  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
 
-  const cols = count <= 2 ? count : Math.max(3, Math.ceil(Math.sqrt(count)));
-  const rows = Math.ceil(count / cols);
-  const cellW = Math.floor((CANVAS_WIDTH - 2 * OUTER_MARGIN - (cols - 1) * GAP_X) / cols);
-  const cellH = Math.floor(cellW / cellRatio);
+  const dims = metas.map(m => {
+    const ih = Math.round(iw * m.height / m.width);
+    return { iw, ih, ch: ih + CP * 2 };
+  });
 
-  const gridH = 2 * OUTER_MARGIN + rows * cellH + (rows - 1) * GAP_Y;
-  const totalH = HEADER_HEIGHT + gridH;
+  const rows = Math.ceil(count / c);
+  let contentH = 0;
+  for (let r = 0; r < rows; r++) {
+    const s = r * c;
+    const e = Math.min(s + c, count);
+    const rh = Math.max(...dims.slice(s, e).map(d => d.ch));
+    contentH += rh;
+    if (r < rows - 1) contentH += G;
+  }
+
+  const rest = contentH + DH + PT + PB;
+  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.25 / 0.75));
+  let totalH = headerH + rest;
+  if (totalH < MIN_H) {
+    headerH = Math.max(HEADER_MIN, MIN_H - rest);
+    totalH = MIN_H;
+  }
 
   const composites = [];
 
-  // Generate reusable shadow and white background (same size for all cells)
-  const [shadowTile, whiteTile] = await Promise.all([
-    sharp({
-      create: { width: cellW, height: cellH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0.35 } },
-    }).blur(SHADOW_BLUR).png().toBuffer(),
-    sharp({
-      create: { width: cellW, height: cellH, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
-    }).jpeg().toBuffer(),
-  ]);
+  composites.push({ input: Buffer.from(headerSVG(name, date, headerH, t)), top: 0, left: 0 });
+  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: headerH, left: 0 });
 
-  // Process images one at a time to limit peak memory
-  for (let i = 0; i < count; i++) {
-    const meta = metas[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const box = {
-      left: OUTER_MARGIN + col * (cellW + GAP_X),
-      top: OUTER_MARGIN + row * (cellH + GAP_Y),
-      width: cellW,
-      height: cellH,
-    };
-    composites.push(
-      { input: shadowTile, top: box.top + HEADER_HEIGHT + SHADOW_OFFSET, left: box.left + SHADOW_OFFSET },
-      { input: whiteTile, top: box.top + HEADER_HEIGHT, left: box.left },
+  let contentY = headerH + DH + PT;
+
+  for (let r = 0; r < rows; r++) {
+    const s = r * c;
+    const e = Math.min(s + c, count);
+    const n = e - s;
+
+    let rowOff = 0;
+    if (r === rows - 1 && n < c) {
+      rowOff = Math.floor((usable - (n * cardW + (n - 1) * G)) / 2);
+    }
+
+    const rh = Math.max(...dims.slice(s, e).map(d => d.ch));
+
+    const imgs = await Promise.all(
+      dims.slice(s, e).map((d, i) =>
+        roundImage(files[s + i].path, metas[s + i].width, metas[s + i].height, d.iw)
+      )
     );
-    const innerW = (cellW - BORDER_WIDTH * 2) * IMG_SCALE;
-    const innerH = (cellH - BORDER_WIDTH * 2) * IMG_SCALE;
-    const scale = Math.min(innerW / meta.width, innerH / meta.height);
-    const rw = Math.round(meta.width * scale);
-    const rh = Math.round(meta.height * scale);
-    const buf = await sharp(files[i].path).resize(rw, rh, { fit: 'inside' }).toBuffer();
-    composites.push({
-      input: buf,
-      top: Math.round(box.top + (cellH - rh) / 2) + HEADER_HEIGHT,
-      left: Math.round(box.left + (cellW - rw) / 2),
-    });
+
+    const pad = SB * 2;
+
+    for (let i = 0; i < n; i++) {
+      const x = PS + rowOff + i * (cardW + G);
+      const y = contentY;
+      const { ch } = dims[s + i];
+
+      const shadow = await getShadow(cardW, ch);
+      composites.push({ input: shadow, top: y + SY - pad / 2, left: x - pad / 2 });
+      composites.push({ input: Buffer.from(cardBgSVG(cardW, ch)), top: y, left: x });
+      composites.push({ input: imgs[i], top: y + CP, left: x + CP });
+    }
+
+    contentY += rh + G;
   }
 
-  composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 92, 34, HEADER_HEIGHT - 3, colors)),
-    top: 0,
-    left: 0,
-  });
-
-  // Canvas outer border
-  const borderSvg = `<svg width="${CANVAS_WIDTH}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0.5" y="0.5" width="${CANVAS_WIDTH - 1}" height="${totalH - 1}" fill="none" stroke="${colors.sepColor}" stroke-width="1" opacity="${Math.min(1, colors.sepOpacity + 0.2)}"/>
-  </svg>`;
-  composites.push({
-    input: Buffer.from(borderSvg),
-    top: 0,
-    left: 0,
-  });
-
   const base = sharp({
-    create: {
-      width: CANVAS_WIDTH,
-      height: totalH,
-      channels: 4,
-      background: bg,
-    },
+    create: { width: W, height: totalH, channels: 4, background: { r: 236, g: 236, b: 236, alpha: 1 } },
   });
 
-  return base.composite(composites).jpeg({ quality: 85 }).toBuffer();
+  return base.composite(composites).jpeg({ quality: JPG_Q }).toBuffer();
 }
