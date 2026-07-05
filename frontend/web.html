@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="สร้างรูปคอลลาจออนไลน์ ดาวน์โหลดฟรี">
+  <meta property="og:title" content="สร้างรูปคอลลาจ">
+  <meta property="og:description" content="รวมรูปภาพเป็นคอลลาจสวยๆ ดาวน์โหลดฟรี">
+  <meta property="og:type" content="website">
+  <title>สร้างรูปคอลลาจ - Web</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container { max-width: 480px; margin: 0 auto; }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: #06c755;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 14px;
+    }
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .preview-grid img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #eee;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: #06c755; color: #fff; }
+    .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
+    .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
+    .status {
+      text-align: center;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.loading { display: block; background: #fff3cd; color: #856404; }
+    .status.success { display: block; background: #d4edda; color: #155724; }
+    .status.error { display: block; background: #f8d7da; color: #721c24; }
+    #resultCard img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e0e0e0; }
+      .card { background: #2a2a2a; }
+      input[type="text"], input[type="date"] { background: #333; border-color: #444; color: #e0e0e0; }
+      input[type="file"] { background: #2a2a2a; border-color: #555; }
+      .btn-secondary { background: #444; color: #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌐 สร้างรูปคอลลาจ</h1>
+
+    <div class="card" style="background:#e8f5e9;border:1px solid #a5d6a7">
+      <div style="font-weight:700;margin-bottom:10px;color:#2e7d32;font-size:15px">📋 วิธีใช้งาน</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:14px;color:#444;line-height:1.4">
+        <div>1️⃣ <strong>เลือกรูป</strong> จากเครื่อง (เลือกกี่รูปก็ได้)</div>
+        <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
+        <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
+        <div>4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว</div>
+        <div>💾 รูปคอลลาจจะแสดงให้ <strong>ดาวน์โหลด</strong></div>
+      </div>
+    </div>
+
+    <div class="card" id="formCard">
+      <label for="nameInput">ชื่อ / คำอธิบาย</label>
+      <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
+
+      <label for="dateInput">วันที่</label>
+      <input type="date" id="dateInput">
+
+      <label>สีหัวข้อ</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
+        <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #2e7d32;border-radius:10px;cursor:pointer" title="Ocean"></button>
+        <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
+        <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
+        <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
+        <button type="button" class="preset-btn" data-preset="mint" style="background:linear-gradient(135deg,#a8edea,#fed6e3);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Mint"></button>
+      </div>
+
+      <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+
+      <div class="preview-grid" id="previewGrid"></div>
+
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างคอลลาจ</button>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;text-align:center">
+      <img id="resultImage" style="max-width:100%;border-radius:8px;margin-bottom:12px">
+      <a id="downloadLink" class="btn btn-primary" style="display:block;text-decoration:none;margin-bottom:8px" download>💾 ดาวน์โหลดรูป</a>
+      <button class="btn btn-secondary" onclick="resetForm()">🔄 สร้างใหม่</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://collage-7cgv.onrender.com';
+
+    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+
+    let selectedPreset = 'ocean';
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = 'transparent');
+        btn.style.borderColor = '#2e7d32';
+        selectedPreset = btn.dataset.preset;
+      });
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function() {
+      const grid = document.getElementById('previewGrid');
+      grid.innerHTML = '';
+      for (const file of this.files) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        grid.appendChild(img);
+      }
+    });
+
+    function setStatus(text, type) {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + type;
+    }
+
+    function resetForm() {
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('formCard').style.display = 'block';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('previewGrid').innerHTML = '';
+      document.getElementById('status').className = 'status';
+      document.getElementById('submitBtn').disabled = false;
+    }
+
+    async function generateCollage() {
+      const files = document.getElementById('fileInput').files;
+      const name = document.getElementById('nameInput').value;
+      const date = document.getElementById('dateInput').value;
+      const btn = document.getElementById('submitBtn');
+
+      if (!files.length) {
+        setStatus('📸 กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      setStatus('⏳ กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
+
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('date', date);
+        fd.append('preset', selectedPreset);
+        for (const f of files) fd.append('images', f);
+
+        const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
+          method: 'POST',
+          body: fd,
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
+        }
+
+        setStatus('✅ สร้างเสร็จแล้ว!', 'success');
+        document.getElementById('formCard').style.display = 'none';
+        document.getElementById('resultImage').src = data.imageUrl;
+        document.getElementById('downloadLink').href = data.imageUrl;
+        document.getElementById('resultCard').style.display = 'block';
+        btn.disabled = false;
+      } catch (err) {
+        setStatus('❌ ' + err.message, 'error');
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

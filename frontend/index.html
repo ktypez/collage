@@ -8,9 +8,6 @@
   <meta property="og:description" content="รวมรูปภาพเป็นคอลลาจสวยๆ ส่งเข้ากลุ่ม LINE">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>สร้างรูปคอลลาจ - Collage Maker</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -23,9 +20,9 @@
     }
     .container { max-width: 480px; margin: 0 auto; }
     h1 {
-      font-size: 26px;
+      font-size: 22px;
       margin-bottom: 20px;
-      color: #1a1a1a;
+      color: #06c755;
       text-align: center;
     }
     .card {
@@ -84,45 +81,70 @@
       transition: opacity 0.2s;
     }
     .btn:active { opacity: 0.8; }
-    .btn-primary { background: #00994d; color: #fff; }
-    .btn-primary:disabled { background: #88cc99; cursor: not-allowed; }
+    .btn-primary { background: #06c755; color: #fff; }
+    .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
+    .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
+    .badge-line { background: #d4edda; color: #155724; }
     .status {
       text-align: center;
-      padding: 16px;
+      padding: 12px;
       margin-top: 12px;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 14px;
       display: none;
     }
     .status.loading { display: block; background: #fff3cd; color: #856404; }
     .status.success { display: block; background: #d4edda; color: #155724; }
     .status.error { display: block; background: #f8d7da; color: #721c24; }
+    .outside-box {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 70vh; text-align: center; gap: 16px;
+    }
+    .outside-box h2 { font-size: 20px; color: #333; }
+    .outside-box p { font-size: 14px; color: #777; line-height: 1.6; }
+    .outside-box a { color: #06c755; font-weight: 600; text-decoration: none; }
     #liffContent { display: none; }
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a1a; color: #e0e0e0; }
       .card { background: #2a2a2a; }
       input[type="text"], input[type="date"] { background: #333; border-color: #444; color: #e0e0e0; }
       input[type="file"] { background: #2a2a2a; border-color: #555; }
-      .btn-primary:disabled { background: #3a6a4a; }
-      .status.success { background: #1e4a2e !important; color: #a8e6b8 !important; }
+      .btn-secondary { background: #444; color: #ccc; }
+      .badge-line { background: #1e4a2e !important; color: #a8e6b8 !important; }
       .instruction-card { background: #1a3a2a !important; border-color: #2a6a3a !important; }
       .instruction-card div { color: #ccc !important; }
+      #logoutBtn { background: #333 !important; border-color: #555 !important; color: #ccc !important; }
+      .outside-box h2 { color: #e0e0e0; }
+      .outside-box p { color: #999; }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Non-LINE fallback -->
+    <div id="outsideBox" class="outside-box">
+      <div style="font-size:48px">📱</div>
+      <h2>กรุณาเปิดใน LINE</h2>
+      <p>หน้านี้ใช้งานได้เฉพาะในแอป LINE เท่านั้น<br>กดปุ่มด้านล่างเพื่อใช้รุ่นเว็บแทน</p>
+      <a href="/web" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 32px">🌐 ใช้รุ่นเว็บ</a>
+    </div>
+
     <!-- LIFF content (hidden until LINE user logged in) -->
     <div id="liffContent">
-      <h1>สร้างรูปคอลลาจ</h1>
+      <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+        สร้างรูปคอลลาจ
+        <span id="modeBadge" class="badge-line" style="font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600">💬 LINE — ส่งเข้าแชท</span>
+        <button id="logoutBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #ccc;background:#fff;color:#666;cursor:pointer" onclick="logoutLiff()">ออกจากระบบ</button>
+      </h1>
 
       <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
-        <div style="font-weight:700;margin-bottom:10px;color:#1a7a3a;font-size:17px">📋 วิธีใช้งาน</div>
+        <div style="font-weight:700;margin-bottom:10px;color:#06c755;font-size:15px">📋 วิธีใช้งาน</div>
         <div style="display:flex;flex-direction:column;gap:7px;font-size:14px;color:#444;line-height:1.4">
           <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
           <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
           <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
-          <div>4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว — รูปจะส่งเข้า LINE ให้อัตโนมัติ</div>
+          <div>4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว</div>
+          <div>💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
         </div>
       </div>
 
@@ -135,7 +157,7 @@
 
         <label>สีหัวข้อ</label>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
-          <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #00994d;border-radius:10px;cursor:pointer" title="Ocean"></button>
+          <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #06c755;border-radius:10px;cursor:pointer" title="Ocean"></button>
           <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
           <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
           <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
@@ -158,19 +180,7 @@
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
-    // Force cache clear + LINE logout
-    if (location.search.includes('force')) {
-      localStorage.clear();
-      if (/LINE|LIFF/i.test(navigator.userAgent)) {
-        liff.init({ liffId: LIFF_ID }).then(() => {
-          if (liff.isLoggedIn()) { liff.logout(); }
-          location.href = location.pathname;
-        }).catch(() => { location.href = location.pathname; });
-      } else {
-        location.href = location.pathname;
-      }
-    }
-
+    const outsideBox = document.getElementById('outsideBox');
     const liffContent = document.getElementById('liffContent');
 
     if (/LINE|LIFF/i.test(navigator.userAgent)) {
@@ -186,20 +196,20 @@
           return;
         }
         localStorage.removeItem('liff_login_tried');
+        outsideBox.style.display = 'none';
         liffContent.style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'inline';
         document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-        try { liff.permission.requestAll(); } catch (_) {}
       });
-    } else if (!localStorage.getItem('liff_redirect_tried')) {
-      localStorage.setItem('liff_redirect_tried', '1');
-      window.location.href = 'https://liff.line.me/' + LIFF_ID;
+      // LIFF init failed → stay on outsideBox (do nothing)
     }
+    // else: not LINE browser → outsideBox already visible
 
     let selectedPreset = 'ocean';
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = 'transparent');
-        btn.style.borderColor = '#00994d';
+        btn.style.borderColor = '#06c755';
         selectedPreset = btn.dataset.preset;
       });
     });
@@ -218,6 +228,11 @@
       const el = document.getElementById('status');
       el.textContent = text;
       el.className = 'status ' + type;
+    }
+
+    function logoutLiff() {
+      liff.logout();
+      window.location.reload();
     }
 
     async function generateCollage() {
@@ -260,12 +275,7 @@
         setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        const msg = err.message || '';
-        if (msg.includes('permission')) {
-          setStatus('⚠️ LINE ไม่อนุญาตให้ส่งรูป กรุณาลบแอพนี้ออกจากแชท แล้วเพิ่มใหม่อีกครั้ง', 'error');
-        } else {
-          setStatus('❌ ' + msg, 'error');
-        }
+        setStatus('❌ ' + err.message, 'error');
         btn.disabled = false;
       }
     }
