@@ -8,7 +8,7 @@ sharp.concurrency(1);
 
 const W = 1080;
 const MIN_H = 1350;
-const HEADER_MIN = 220;
+const HEADER_MIN = 110;
 const DH = 8;
 const PT = 40;
 const PS = 48;
@@ -139,7 +139,7 @@ export async function createCollage(files, name, date, preset = 'crimson') {
   }
 
   const rest = contentH + DH + PT + PB;
-  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.19 / 0.81));
+  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.095 / 0.905));
   let totalH = headerH + rest;
   if (totalH < MIN_H) {
     headerH = Math.max(HEADER_MIN, MIN_H - rest);
