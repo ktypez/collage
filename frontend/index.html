@@ -189,6 +189,7 @@
         outsideBox.style.display = 'none';
         liffContent.style.display = 'block';
         document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+        try { liff.permission.requestAll(); } catch (_) {}
       });
     }
 
@@ -257,7 +258,12 @@
         setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        setStatus('❌ ' + err.message, 'error');
+        const msg = err.message || '';
+        if (msg.includes('permission')) {
+          setStatus('⚠️ LINE ไม่อนุญาตให้ส่งรูป กรุณาลบแอพนี้ออกจากแชท แล้วเพิ่มใหม่อีกครั้ง', 'error');
+        } else {
+          setStatus('❌ ' + msg, 'error');
+        }
         btn.disabled = false;
       }
     }
