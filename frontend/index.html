@@ -108,6 +108,7 @@
       .badge-web { background: #1e3a5f !important; color: #a0c4ff !important; }
       .instruction-card { background: #1a3a2a !important; border-color: #2a6a3a !important; }
       .instruction-card div { color: #ccc !important; }
+      #logoutBtn { background: #333 !important; border-color: #555 !important; color: #ccc !important; }
     }
   </style>
 </head>
@@ -116,6 +117,7 @@
     <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
       สร้างรูปคอลลาจ
       <span id="modeBadge" style="display:none;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600"></span>
+      <button id="logoutBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #ccc;background:#fff;color:#666;cursor:pointer" onclick="logoutLiff()">ออกจากระบบ</button>
     </h1>
 
     <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
@@ -198,6 +200,7 @@
         badge.style.display = 'inline';
         badge.textContent = '💬 LINE — ส่งเข้าแชท';
         badge.className = 'badge-line';
+        document.getElementById('logoutBtn').style.display = 'inline';
         step4.textContent = '4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว';
         outputDesc.textContent = '💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ';
         submitBtn.textContent = '✨ สร้างและส่งเข้ากลุ่ม';
@@ -231,6 +234,13 @@
       const el = document.getElementById('status');
       el.textContent = text;
       el.className = 'status ' + type;
+    }
+
+    function logoutLiff() {
+      if (isLiff) {
+        liff.logout();
+        window.location.reload();
+      }
     }
 
     function resetForm() {
