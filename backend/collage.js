@@ -16,7 +16,7 @@ const font = opentype.parse(readFileSync(
 ));
 
 function getGrid(count) {
-  const cols = Math.ceil(Math.sqrt(count));
+  const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / cols);
   const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PADDING) / cols);
   const cellH = Math.floor(cellW * CELL_RATIO);
