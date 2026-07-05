@@ -3,6 +3,6 @@
   "builds": [{ "src": "**/*", "use": "@vercel/static" }],
   "routes": [
     { "src": "/liff", "dest": "/index.html" },
-    { "src": "/(.*)", "status": 301, "dest": "https://liff.line.me/2010606328-7UnH1Yre" }
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
