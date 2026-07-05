@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Collage Maker</title>
+  <title>สร้างรูปคอลลาจ</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -101,21 +101,21 @@
 </head>
 <body>
   <div class="container">
-    <h1>Collage Maker</h1>
+    <h1>สร้างรูปคอลลาจ</h1>
 
     <div class="card">
-      <label for="nameInput">Name / Caption</label>
-      <input type="text" id="nameInput" placeholder="Enter name or caption">
+      <label for="nameInput">ชื่อ / คำอธิบาย</label>
+      <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
 
-      <label for="dateInput">Date</label>
+      <label for="dateInput">วันที่</label>
       <input type="date" id="dateInput">
 
-      <label for="fileInput">Select photos (2+ recommended)</label>
+      <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
       <input type="file" id="fileInput" accept="image/*" multiple>
 
       <div class="preview-grid" id="previewGrid"></div>
 
-      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">Create & Send to Group</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">สร้างและส่งเข้ากลุ่ม</button>
 
       <div class="status" id="status"></div>
     </div>
@@ -132,7 +132,7 @@
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     }).catch(err => {
       document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = 'LIFF init failed: ' + err.message;
+      document.getElementById('status').textContent = 'ไม่สามารถเชื่อมต่อ LINE: ' + err.message;
     });
 
     document.getElementById('fileInput').addEventListener('change', function() {
@@ -158,12 +158,12 @@
       const btn = document.getElementById('submitBtn');
 
       if (!files.length) {
-        setStatus('Please select at least 1 photo', 'error');
+        setStatus('กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
         return;
       }
 
       btn.disabled = true;
-      setStatus('Creating collage...', 'loading');
+      setStatus('กำลังสร้างรูปคอลลาจ...', 'loading');
 
       try {
         const fd = new FormData();
@@ -178,10 +178,10 @@
         const data = await res.json();
 
         if (!data.success) {
-          throw new Error(data.error || 'Unknown error');
+          throw new Error(data.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ');
         }
 
-        setStatus('Sending to group...', 'loading');
+        setStatus('กำลังส่งเข้ากลุ่ม...', 'loading');
 
         await liff.sendMessages([{
           type: 'image',
@@ -189,11 +189,11 @@
           previewImageUrl: data.imageUrl,
         }]);
 
-        setStatus('Sent successfully!', 'success');
+        setStatus('ส่งสำเร็จ!', 'success');
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        setStatus('Error: ' + err.message, 'error');
+        setStatus('ข้อผิดพลาด: ' + err.message, 'error');
         btn.disabled = false;
       }
     }
