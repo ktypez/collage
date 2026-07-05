@@ -20,8 +20,8 @@ function buildTextSvg(name, date, nameSize, dateSize) {
 
   parts.push(`<defs>
     <linearGradient id="hGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f5f5f5"/>
-      <stop offset="100%" stop-color="#e0e0e0"/>
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#ececec"/>
     </linearGradient>
   </defs>`);
 
@@ -30,18 +30,18 @@ function buildTextSvg(name, date, nameSize, dateSize) {
   if (name) {
     const w = font.getAdvanceWidth(name, nameSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(name, x, 298, nameSize);
+    const path = font.getPath(name, x, 295, nameSize);
     parts.push(`<g fill="#1a1a1a">${path.toSVG(2)}</g>`);
   }
 
   if (date) {
     const w = font.getAdvanceWidth(date, dateSize);
     const x = Math.max(0, (CANVAS_WIDTH - w) / 2);
-    const path = font.getPath(date, x, 413, dateSize);
+    const path = font.getPath(date, x, 400, dateSize);
     parts.push(`<g fill="#999999">${path.toSVG(2)}</g>`);
   }
 
-  parts.push(`<line x1="20" y1="${HEADER_HEIGHT - 2}" x2="${CANVAS_WIDTH - 20}" y2="${HEADER_HEIGHT - 2}" stroke="#d0d0d0" stroke-width="2"/>`);
+  parts.push(`<line x1="0" y1="${HEADER_HEIGHT - 3}" x2="${CANVAS_WIDTH}" y2="${HEADER_HEIGHT - 3}" stroke="#b8b8b8" stroke-width="4"/>`);
   parts.push('</svg>');
   return parts.join('\n');
 }
@@ -94,7 +94,7 @@ export async function createCollage(files, name, date) {
   }
 
   composites.push({
-    input: Buffer.from(buildTextSvg(name, date, 146, 84)),
+    input: Buffer.from(buildTextSvg(name, date, 170, 64)),
     top: 0,
     left: 0,
   });
