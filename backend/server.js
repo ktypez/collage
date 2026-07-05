@@ -1,9 +1,27 @@
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import fs from 'fs/promises';
-import { createCollage } from './collage.js';
-import { uploadCollage } from './r2-storage.js';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+try {
+  const envFile = readFileSync(resolve(__dirname, '.env'), 'utf-8');
+  for (const line of envFile.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = trimmed.indexOf('=');
+    if (idx === -1) continue;
+    const key = trimmed.slice(0, idx).trim();
+    const val = trimmed.slice(idx + 1).trim();
+    if (!process.env[key]) process.env[key] = val;
+  }
+} catch {}
+
+const { default: express } = await import('express');
+const { default: cors } = await import('cors');
+const { default: multer } = await import('multer');
+const fs = await import('fs/promises');
+const { createCollage } = await import('./collage.js');
+const { uploadCollage } = await import('./r2-storage.js');
 
 const app = express();
 app.use(cors());
