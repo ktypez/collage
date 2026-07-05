@@ -21,7 +21,7 @@ const { default: cors } = await import('cors');
 const { default: multer } = await import('multer');
 const fs = await import('fs/promises');
 const { createCollage } = await import('./collage.js');
-const { uploadCollage, getCollageStream } = await import('./r2-storage.js');
+const { uploadCollage, getCollageStream, cleanupOldCollages } = await import('./r2-storage.js');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -39,7 +39,7 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
 
     const name = (req.body.name || '').trim();
     const date = (req.body.date || '').trim();
-    const preset = (req.body.preset || '').trim() || 'ocean';
+    const preset = (req.body.preset || '').trim() || 'crimson';
 
     const buffer = await createCollage(files, name, date, preset);
 
@@ -62,6 +62,16 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.post('/api/cleanup', async (_req, res) => {
+  try {
+    const result = await cleanupOldCollages(90);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/image/:filename', async (req, res) => {
   try {
     const stream = await getCollageStream(req.params.filename);
@@ -78,3 +88,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Collage API running on port ${PORT}`);
 });
+
+cleanupOldCollages(90).catch(err => console.error('Startup cleanup error:', err));
