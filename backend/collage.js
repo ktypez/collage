@@ -21,30 +21,9 @@ function getImageBoxes(count) {
   const H = IMAGE_AREA_HEIGHT;
   const P = PADDING;
 
-  if (count === 1) {
-    return [{ left: P, top: P, width: W - 2 * P, height: H - 2 * P }];
-  }
+  if (count === 0) return [];
 
-  if (count === 2) {
-    const cw = (W - 3 * P) / 2;
-    return [
-      { left: P, top: P, width: cw, height: H - 2 * P },
-      { left: 2 * P + cw, top: P, width: cw, height: H - 2 * P },
-    ];
-  }
-
-  if (count === 3) {
-    const topH = (H - 3 * P) * 0.55;
-    const botH = (H - 3 * P) * 0.45;
-    const botW = (W - 3 * P) / 2;
-    return [
-      { left: P, top: P, width: W - 2 * P, height: topH },
-      { left: P, top: 2 * P + topH, width: botW, height: botH },
-      { left: 2 * P + botW, top: 2 * P + topH, width: botW, height: botH },
-    ];
-  }
-
-  const cols = count <= 4 ? 2 : Math.ceil(Math.sqrt(count));
+  const cols = Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / cols);
   const cellW = (W - (cols + 1) * P) / cols;
   const cellH = (H - (rows + 1) * P) / rows;
