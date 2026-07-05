@@ -6,7 +6,8 @@ import { fileURLToPath } from 'url';
 
 const CANVAS_WIDTH = 3840;
 const HEADER_HEIGHT = 500;
-const PADDING = 8;
+const PAD_X = 4;
+const PAD_Y = 20;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
@@ -57,10 +58,10 @@ export async function createCollage(files, name, date) {
 
   const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / cols);
-  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PADDING) / cols);
+  const cellW = Math.floor((CANVAS_WIDTH - (cols + 1) * PAD_X) / cols);
   const cellH = Math.floor(cellW / cellRatio);
 
-  const gridH = rows * cellH + (rows + 1) * PADDING;
+  const gridH = rows * cellH + 2 * PAD_X + (rows - 1) * PAD_Y;
   const totalH = HEADER_HEIGHT + gridH;
 
   const composites = [];
@@ -71,8 +72,8 @@ export async function createCollage(files, name, date) {
     const row = Math.floor(i / cols);
 
     const box = {
-      left: PADDING + col * (cellW + PADDING),
-      top: PADDING + row * (cellH + PADDING),
+      left: PAD_X + col * (cellW + PAD_X),
+      top: PAD_X + row * (cellH + PAD_Y),
       width: cellW,
       height: cellH,
     };
