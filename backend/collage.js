@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import opentype from 'opentype.js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -11,9 +12,9 @@ const PADDING = 25;
 
 const BG = { r: 229, g: 230, b: 230, alpha: 1 };
 
-const FONT_BASE64 = readFileSync(
-  resolve(dirname(fileURLToPath(import.meta.url)), 'Loma.otf')
-).toString('base64');
+const font = opentype.parse(readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), 'NotoSansThai.ttf')
+));
 
 function getImageBoxes(count) {
   const W = CANVAS_WIDTH;
@@ -61,17 +62,31 @@ function escapeXml(s) {
 }
 
 function buildTextSvg(name, date) {
+  const margin = 50;
+  const baselineY = 135;
+  const nameSize = 64;
+  const dateSize = 52;
+
+  let namePathData = '';
+  let datePathData = '';
+
+  if (name) {
+    const path = font.getPath(name, margin, baselineY, nameSize);
+    namePathData = path.toSVG(2);
+  }
+
+  if (date) {
+    const advance = font.getAdvanceWidth(date, dateSize);
+    const x = CANVAS_WIDTH - margin - advance;
+    const path = font.getPath(date, x, baselineY, dateSize);
+    datePathData = path.toSVG(2);
+  }
+
   return `<svg width="${CANVAS_WIDTH}" height="${TEXT_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-    <style>
-      @font-face {
-        font-family: 'LomaEmbedded';
-        src: url(data:application/x-font-opentype;base64,${FONT_BASE64}) format('opentype');
-      }
-    </style>
     <rect width="100%" height="100%" fill="#E5E6E6"/>
     <line x1="0" y1="0" x2="${CANVAS_WIDTH}" y2="0" stroke="#d0d0d0" stroke-width="2"/>
-    <text x="50" y="130" font-family="LomaEmbedded, Tahoma, sans-serif" font-size="64" fill="#333" font-weight="bold">${escapeXml(name)}</text>
-    <text x="${CANVAS_WIDTH - 50}" y="130" font-family="LomaEmbedded, Tahoma, sans-serif" font-size="52" fill="#666" text-anchor="end">${escapeXml(date)}</text>
+    <g fill="#333333">${namePathData}</g>
+    <g fill="#666666">${datePathData}</g>
   </svg>`;
 }
 
