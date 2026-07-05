@@ -96,13 +96,6 @@
     .status.loading { display: block; background: #fff3cd; color: #856404; }
     .status.success { display: block; background: #d4edda; color: #155724; }
     .status.error { display: block; background: #f8d7da; color: #721c24; }
-    .outside-box {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 70vh; text-align: center; gap: 16px;
-    }
-    .outside-box h2 { font-size: 20px; color: #333; }
-    .outside-box p { font-size: 14px; color: #777; line-height: 1.6; }
-    .outside-box a { color: #06c755; font-weight: 600; text-decoration: none; }
     #liffContent { display: none; }
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a1a; color: #e0e0e0; }
@@ -114,21 +107,12 @@
       .instruction-card { background: #1a3a2a !important; border-color: #2a6a3a !important; }
       .instruction-card div { color: #ccc !important; }
       #logoutBtn { background: #333 !important; border-color: #555 !important; color: #ccc !important; }
-      .outside-box h2 { color: #e0e0e0; }
-      .outside-box p { color: #999; }
+
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Non-LINE fallback -->
-    <div id="outsideBox" class="outside-box">
-      <div style="font-size:48px">📱</div>
-      <h2>กรุณาเปิดใน LINE</h2>
-      <p>หน้านี้ใช้งานได้เฉพาะในแอป LINE เท่านั้น<br>กดปุ่มด้านล่างเพื่อใช้รุ่นเว็บแทน</p>
-      <a href="/web" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 32px">🌐 ใช้รุ่นเว็บ</a>
-    </div>
-
     <!-- LIFF content (hidden until LINE user logged in) -->
     <div id="liffContent">
       <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
@@ -180,7 +164,6 @@
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
-    const outsideBox = document.getElementById('outsideBox');
     const liffContent = document.getElementById('liffContent');
 
     if (/LINE|LIFF/i.test(navigator.userAgent)) {
@@ -196,14 +179,11 @@
           return;
         }
         localStorage.removeItem('liff_login_tried');
-        outsideBox.style.display = 'none';
         liffContent.style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'inline';
         document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
       });
-      // LIFF init failed → stay on outsideBox (do nothing)
     }
-    // else: not LINE browser → outsideBox already visible
 
     let selectedPreset = 'ocean';
     document.querySelectorAll('.preset-btn').forEach(btn => {
