@@ -20,15 +20,10 @@
     }
     .container { max-width: 480px; margin: 0 auto; }
     h1 {
-      font-size: 22px;
+      font-size: 26px;
       margin-bottom: 20px;
       color: #1a1a1a;
       text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
     }
     .card {
       background: #fff;
@@ -88,91 +83,86 @@
     .btn:active { opacity: 0.8; }
     .btn-primary { background: #00994d; color: #fff; }
     .btn-primary:disabled { background: #88cc99; cursor: not-allowed; }
-    .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
-    .badge {
-      font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600;
-    }
-    .badge-line { background: #d4edda; color: #155724; }
-    .badge-web { background: #cce5ff; color: #004085; }
-    #logoutBtn {
-      font-size: 11px; padding: 4px 10px; border-radius: 20px;
-      border: 1px solid #ccc; background: #fff; color: #666; cursor: pointer;
-    }
-    #resultCard img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; }
+    .out-icon { font-size: 56px; }
+    .out-title { font-size: 24px; font-weight: 700; color: #1a1a1a; }
     .status {
       text-align: center;
-      padding: 12px;
+      padding: 16px;
       margin-top: 12px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 16px;
       display: none;
     }
     .status.loading { display: block; background: #fff3cd; color: #856404; }
     .status.success { display: block; background: #d4edda; color: #155724; }
     .status.error { display: block; background: #f8d7da; color: #721c24; }
+    .outside-box {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 70vh; text-align: center; gap: 16px;
+    }
+    #liffContent { display: none; }
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a1a; color: #e0e0e0; }
       .card { background: #2a2a2a; }
       input[type="text"], input[type="date"] { background: #333; border-color: #444; color: #e0e0e0; }
       input[type="file"] { background: #2a2a2a; border-color: #555; }
-      .btn-secondary { background: #444; color: #ccc; }
-      .badge-line { background: #1e4a2e !important; color: #a8e6b8 !important; }
-      .badge-web { background: #1e3a5f !important; color: #a0c4ff !important; }
+      .btn-primary:disabled { background: #3a6a4a; }
+      .status.success { background: #1e4a2e !important; color: #a8e6b8 !important; }
       .instruction-card { background: #1a3a2a !important; border-color: #2a6a3a !important; }
       .instruction-card div { color: #ccc !important; }
-      #logoutBtn { background: #333 !important; border-color: #555 !important; color: #ccc !important; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>
-      สร้างรูปคอลลาจ
-      <span id="modeBadge" class="badge badge-line" style="display:none">💬 LINE</span>
-      <button id="logoutBtn" style="display:none" onclick="logoutLiff()">ออกจากระบบ</button>
-    </h1>
-
-    <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
-      <div style="font-weight:700;margin-bottom:10px;color:#1a7a3a;font-size:15px">📋 วิธีใช้งาน</div>
-      <div id="howtoSteps" style="display:flex;flex-direction:column;gap:7px;font-size:14px;color:#444;line-height:1.4">
-        <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
-        <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
-        <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
-        <div>4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว</div>
-        <div id="outputDesc">💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
-      </div>
+    <!-- Non-LINE fallback -->
+    <div id="outsideBox" class="outside-box">
+      <div class="out-icon">📱</div>
+      <div class="out-title">กรุณาเปิดใน LINE</div>
+      <p style="font-size:15px;color:#666;line-height:1.6">
+        หน้านี้ใช้งานได้เฉพาะในแอป LINE เท่านั้น
+      </p>
     </div>
 
-    <div class="card" id="formCard">
-      <label for="nameInput">ชื่อ / คำอธิบาย</label>
-      <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
+    <!-- LIFF content (hidden until LINE user logged in) -->
+    <div id="liffContent">
+      <h1>สร้างรูปคอลลาจ</h1>
 
-      <label for="dateInput">วันที่</label>
-      <input type="date" id="dateInput">
-
-      <label>สีหัวข้อ</label>
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
-        <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #06c755;border-radius:10px;cursor:pointer" title="Ocean"></button>
-        <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
-        <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
-        <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
-        <button type="button" class="preset-btn" data-preset="mint" style="background:linear-gradient(135deg,#a8edea,#fed6e3);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Mint"></button>
+      <div class="card instruction-card" style="background:#f0faf4;border:1px solid #b8e6c8">
+        <div style="font-weight:700;margin-bottom:10px;color:#1a7a3a;font-size:17px">📋 วิธีใช้งาน</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:14px;color:#444;line-height:1.4">
+          <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
+          <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
+          <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
+          <div>4️⃣ กดปุ่มด้านล่าง รอแป๊บเดียว — รูปจะส่งเข้า LINE ให้อัตโนมัติ</div>
+        </div>
       </div>
 
-      <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
-      <input type="file" id="fileInput" accept="image/*" multiple>
+      <div class="card" id="formCard">
+        <label for="nameInput">ชื่อ / คำอธิบาย</label>
+        <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
 
-      <div class="preview-grid" id="previewGrid"></div>
+        <label for="dateInput">วันที่</label>
+        <input type="date" id="dateInput">
 
-      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้าง</button>
+        <label>สีหัวข้อ</label>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
+          <button type="button" class="preset-btn active" data-preset="ocean" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:44px;height:44px;border:3px solid #00994d;border-radius:10px;cursor:pointer" title="Ocean"></button>
+          <button type="button" class="preset-btn" data-preset="sunset" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Sunset"></button>
+          <button type="button" class="preset-btn" data-preset="midnight" style="background:linear-gradient(135deg,#141e30,#243b55);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Midnight"></button>
+          <button type="button" class="preset-btn" data-preset="gold" style="background:linear-gradient(135deg,#fceabb,#f8b500);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Gold"></button>
+          <button type="button" class="preset-btn" data-preset="mint" style="background:linear-gradient(135deg,#a8edea,#fed6e3);width:44px;height:44px;border:3px solid transparent;border-radius:10px;cursor:pointer" title="Mint"></button>
+        </div>
 
-      <div class="status" id="status"></div>
-    </div>
+        <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
+        <input type="file" id="fileInput" accept="image/*" multiple>
 
-    <div class="card" id="resultCard" style="display:none;text-align:center">
-      <img id="resultImage">
-      <a id="downloadLink" class="btn btn-primary" style="display:block;text-decoration:none;margin-bottom:8px" download>💾 ดาวน์โหลดรูป</a>
-      <button class="btn btn-secondary" onclick="resetForm()">🔄 สร้างใหม่</button>
+        <div class="preview-grid" id="previewGrid"></div>
+
+        <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างและส่งเข้ากลุ่ม</button>
+
+        <div class="status" id="status"></div>
+      </div>
     </div>
   </div>
 
@@ -180,50 +170,33 @@
     const LIFF_ID = '2010606328-qwQthUqN';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
-    let isLiff = false;
-    const badge = document.getElementById('modeBadge');
-    const outputDesc = document.getElementById('outputDesc');
-    const submitBtn = document.getElementById('submitBtn');
+    const outsideBox = document.getElementById('outsideBox');
+    const liffContent = document.getElementById('liffContent');
 
-    // Detect mode
     if (/LINE|LIFF/i.test(navigator.userAgent)) {
       liff.init({ liffId: LIFF_ID }).then(() => {
         if (!liff.isLoggedIn()) {
           const tried = localStorage.getItem('liff_login_tried');
           if (tried) {
             localStorage.removeItem('liff_login_tried');
-            return; // login failed → stay as-is (no redirect loop)
+            return;
           }
           localStorage.setItem('liff_login_tried', '1');
           liff.login({ redirectUri: window.location.href });
           return;
         }
         localStorage.removeItem('liff_login_tried');
-        isLiff = true;
-        badge.textContent = '💬 LINE';
-        badge.className = 'badge badge-line';
-        badge.style.display = 'inline';
-        document.getElementById('logoutBtn').style.display = 'inline';
-        outputDesc.textContent = '💬 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ';
-        submitBtn.textContent = '✨ สร้างและส่งเข้ากลุ่ม';
+        outsideBox.style.display = 'none';
+        liffContent.style.display = 'block';
         document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
       });
-      // LIFF init fail → web mode (page already shows web by default)
-    } else {
-      // Web mode — show form + download after generation
-      badge.textContent = '🌐 เว็บ';
-      badge.className = 'badge badge-web';
-      badge.style.display = 'inline';
-      outputDesc.textContent = '💾 รูปคอลลาจจะแสดงให้ดาวน์โหลด';
-      submitBtn.textContent = '✨ สร้างคอลลาจ';
-      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     }
 
     let selectedPreset = 'ocean';
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = 'transparent');
-        btn.style.borderColor = '#06c755';
+        btn.style.borderColor = '#00994d';
         selectedPreset = btn.dataset.preset;
       });
     });
@@ -242,20 +215,6 @@
       const el = document.getElementById('status');
       el.textContent = text;
       el.className = 'status ' + type;
-    }
-
-    function logoutLiff() {
-      liff.logout();
-      window.location.reload();
-    }
-
-    function resetForm() {
-      document.getElementById('resultCard').style.display = 'none';
-      document.getElementById('formCard').style.display = 'block';
-      document.getElementById('fileInput').value = '';
-      document.getElementById('previewGrid').innerHTML = '';
-      document.getElementById('status').className = 'status';
-      document.getElementById('submitBtn').disabled = false;
     }
 
     async function generateCollage() {
@@ -289,35 +248,15 @@
           throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
         }
 
-        if (isLiff) {
-          setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
-          await liff.sendMessages([{
-            type: 'image',
-            originalContentUrl: data.imageUrl,
-            previewImageUrl: data.imageUrl,
-          }]);
-          setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
-          setTimeout(() => liff.closeWindow(), 1500);
-        } else {
-          setStatus('✅ สร้างเสร็จแล้ว!', 'success');
-          document.getElementById('formCard').style.display = 'none';
-          document.getElementById('resultImage').src = data.imageUrl;
-          document.getElementById('downloadLink').href = data.imageUrl;
-          document.getElementById('resultCard').style.display = 'block';
-          btn.disabled = false;
-        }
+        setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
+        await liff.sendMessages([{
+          type: 'image',
+          originalContentUrl: data.imageUrl,
+          previewImageUrl: data.imageUrl,
+        }]);
+        setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
+        setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        if (isLiff && !err.toString().includes('sendMessages')) {
-          // LIFF send failed — fallback to web mode, show image
-          isLiff = false;
-          setStatus('⚠️ ไม่สามารถส่งเข้ากลุ่มได้ แต่ดาวน์โหลดรูปได้', 'loading');
-          document.getElementById('formCard').style.display = 'none';
-          document.getElementById('resultImage').src = data?.imageUrl || '';
-          document.getElementById('downloadLink').href = data?.imageUrl || '#';
-          document.getElementById('resultCard').style.display = 'block';
-          btn.disabled = false;
-          return;
-        }
         setStatus('❌ ' + err.message, 'error');
         btn.disabled = false;
       }
