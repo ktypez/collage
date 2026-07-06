@@ -7,85 +7,98 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 24px; color: #333; }
-    h1 { font-size: 20px; margin-bottom: 20px; text-align: center; }
-    .grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-    .card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.08); width: 220px; }
-    .header { padding: 20px 16px; text-align: center; }
-    .header .day { font-size: 22px; font-weight: 700; }
-    .header .sub { font-size: 12px; margin-top: 4px; opacity: .85; }
-    .color-bar { display: flex; height: 40px; }
-    .color-bar div { flex: 1; }
-    .info { padding: 12px 16px; font-size: 12px; }
-    .info .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
-    .sample-images {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 0 16px 16px;
+    h1 { font-size: 20px; margin-bottom: 8px; text-align: center; }
+    .subtitle { font-size: 13px; color: #888; text-align: center; margin-bottom: 20px; }
+    .themes { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; }
+    .mockup {
+      background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.1);
+      width: 300px; transition: transform .15s;
     }
-    .sample-images div {
-      aspect-ratio: 1; border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; color: #fff; font-weight: 600;
+    .mockup:hover { transform: scale(1.02); }
+    .mockup.today { outline: 3px solid #06c755; }
+    .mockup-tag {
+      text-align: center; font-size: 12px; font-weight: 600; padding: 5px;
+      background: #06c755; color: #fff;
+    }
+    .mockup-label {
+      text-align: center; font-size: 14px; font-weight: 700; padding: 8px 0 0;
+    }
+    .mockup-header {
+      padding: 24px 20px; text-align: center; color: #fff;
+    }
+    .mockup-header .title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .mockup-header .date { font-size: 12px; opacity: .85; }
+    .mockup-divider { height: 6px; }
+    .mockup-body {
+      padding: 16px 16px 20px;
+    }
+    .mockup-grid {
+      display: grid; gap: 12px;
+    }
+    .mockup-card {
+      background: #fff; border-radius: 12px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .mockup-card .img {
+      border-radius: 10px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .mockup-footer {
+      padding: 8px 16px; text-align: center; font-size: 11px; font-weight: 600;
     }
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a1a; color: #e0e0e0; }
-      .card { background: #2a2a2a; }
+      .mockup { background: #2a2a2a; }
     }
   </style>
 </head>
 <body>
-  <h1>🎨 ธีมสีประจำวัน — Collage Maker</h1>
-  <div class="grid" id="grid"></div>
+  <h1>🎨 ธีมสีประจำวัน — Collage Mockup</h1>
+  <p class="subtitle">เลือก 5 รูป (3 columns) — ตัวอย่างวิธีที่แต่ละธีมจะแสดงผล</p>
+  <div class="themes" id="grid"></div>
   <script>
     const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
     const LABELS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-    const COLORS = {
-      sun: ['#3B050A','#8F1018','#B81E28'],
-      mon: ['#4A3000','#8B6914','#C9A96E'],
-      tue: ['#4A0E2E','#8B1A5E','#C4448E'],
-      wed: ['#043528','#0A6B53','#0E8F6E'],
-      thu: ['#4A1500','#8B3A0E','#C86A2C'],
-      fri: ['#052040','#0B3C87','#1A5FBF'],
-      sat: ['#2A0F4A','#6B2FB8','#9B5FE0'],
+    const THEMES = {
+      sun: { g: ['#3B050A','#8F1018','#B81E28'], d: '#F0B400', bg: '#F5ECEC' },
+      mon: { g: ['#4A3000','#8B6914','#C9A96E'], d: '#8B4513', bg: '#F5F0E8' },
+      tue: { g: ['#4A0E2E','#8B1A5E','#C4448E'], d: '#FFD700', bg: '#F5ECF0' },
+      wed: { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', bg: '#ECF5F0' },
+      thu: { g: ['#4A1500','#8B3A0E','#C86A2C'], d: '#E8A020', bg: '#F5EEE8' },
+      fri: { g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', bg: '#ECF0F5' },
+      sat: { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', bg: '#F0ECF5' },
     };
-    const DIVIDERS = { sun:'#F0B400', mon:'#8B4513', tue:'#FFD700', wed:'#F4C430', thu:'#E8A020', fri:'#5AAEFF', sat:'#FFB6FF' };
-    const BGS = { sun:'#F5ECEC', mon:'#F5F0E8', tue:'#F5ECF0', wed:'#ECF5F0', thu:'#F5EEE8', fri:'#ECF0F5', sat:'#F0ECF5' };
-    const SAMPLE_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22'];
+    const SAMPLE = [
+      { name: 'Trip', cols: 3, images: ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6'] },
+    ];
 
     const grid = document.getElementById('grid');
     const today = DAYS[new Date().getDay()];
 
     DAYS.forEach((d, i) => {
-      const c = COLORS[d];
-      const dv = DIVIDERS[d];
+      const t = THEMES[d];
       const isToday = d === today;
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.background = bg;
-      if (isToday) card.style.outline = '3px solid #06c755';
+      const sample = SAMPLE[0];
+      const rows = Math.ceil(sample.images.length / sample.cols);
 
-      const bg = BGS[d];
-      card.innerHTML = `
-        <div class="header" style="background:linear-gradient(135deg,${c[0]},${c[1]},${c[2]});color:#fff">
-          <div class="day">${LABELS[i]}</div>
-          <div class="sub">${d}${isToday ? ' — วันนี้' : ''}</div>
+      const wrap = document.createElement('div');
+      wrap.className = 'mockup' + (isToday ? ' today' : '');
+      if (isToday) wrap.innerHTML = '<div class="mockup-tag">วันนี้</div>';
+
+      wrap.innerHTML += `
+        <div class="mockup-label" style="color:${t.g[2]}">${LABELS[i]}</div>
+        <div class="mockup-header" style="background:linear-gradient(135deg,${t.g[0]},${t.g[1]},${t.g[2]})">
+          <div class="title">${sample.name}</div>
+          <div class="date">วันที่ ${new Date().getDate()} ${['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][new Date().getMonth()]} ${new Date().getFullYear() + 543}</div>
         </div>
-        <div class="color-bar">
-          <div style="background:${c[0]}"></div>
-          <div style="background:${c[1]}"></div>
-          <div style="background:${c[2]}"></div>
+        <div class="mockup-divider" style="background:${t.d}"></div>
+        <div class="mockup-body" style="background:${t.bg}">
+          <div class="mockup-grid" style="grid-template-columns:repeat(${sample.cols},1fr)">
+            ${sample.images.map(c => `<div class="mockup-card"><div class="img" style="background:${c}">${c}</div></div>`).join('')}
+          </div>
         </div>
-        <div class="info">
-          <div class="row"><span>Bg</span><span><span class="swatch" style="background:${bg}"></span>${bg}</span></div>
-          <div class="row"><span>Divider</span><span><span class="swatch" style="background:${dv}"></span>${dv}</span></div>
-          <div class="row"><span>Stop 1</span><span>${c[0]}</span></div>
-          <div class="row"><span>Stop 2</span><span>${c[1]}</span></div>
-          <div class="row"><span>Stop 3</span><span>${c[2]}</span></div>
-        </div>
-        <div class="sample-images">
-          ${SAMPLE_COLORS.slice(0, 3).map(sc => `<div style="background:${sc}"></div>`).join('')}
-        </div>
+        <div class="mockup-footer" style="background:${t.g[0]};color:${t.tc || '#fff'}">240px &middot; 5 รูป &middot; ${sample.cols} columns</div>
       `;
-      grid.appendChild(card);
+      grid.appendChild(wrap);
     });
   </script>
 </body>
