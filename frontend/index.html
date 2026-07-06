@@ -148,14 +148,17 @@
       <label for="dateInput">วันที่</label>
       <input type="date" id="dateInput">
 
-      <label>ธีมสี</label>
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="presetPicker">
-        <button type="button" class="preset-btn active" data-preset="crimson" style="background:linear-gradient(135deg,#3B050A,#C32029);width:44px;height:44px;border-radius:10px;cursor:pointer" title="Crimson"></button>
-        <button type="button" class="preset-btn" data-preset="corporate-blue" style="background:linear-gradient(135deg,#052040,#1A5FBF);width:44px;height:44px;border-radius:10px;cursor:pointer" title="Corporate Blue"></button>
-        <button type="button" class="preset-btn" data-preset="emerald" style="background:linear-gradient(135deg,#043528,#0E8F6E);width:44px;height:44px;border-radius:10px;cursor:pointer" title="Emerald"></button>
-        <button type="button" class="preset-btn" data-preset="dark" style="background:linear-gradient(135deg,#000,#2A2A2A);width:44px;height:44px;border-radius:10px;cursor:pointer" title="Dark"></button>
-        <button type="button" class="preset-btn" data-preset="purple" style="background:linear-gradient(135deg,#2A0F4A,#9B5FE0);width:44px;height:44px;border-radius:10px;cursor:pointer" title="Purple"></button>
+      <label>ธีมสีประจำวัน</label>
+      <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap" id="presetPicker">
+        <button type="button" class="preset-btn" data-preset="sun"  style="background:linear-gradient(135deg,#3B050A,#B81E28);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="อาทิตย์">อา</button>
+        <button type="button" class="preset-btn" data-preset="mon"  style="background:linear-gradient(135deg,#4A3000,#C9A96E);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="จันทร์">จ</button>
+        <button type="button" class="preset-btn" data-preset="tue"  style="background:linear-gradient(135deg,#4A0E2E,#C4448E);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="อังคาร">อ</button>
+        <button type="button" class="preset-btn" data-preset="wed"  style="background:linear-gradient(135deg,#043528,#0E8F6E);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="พุธ">พ</button>
+        <button type="button" class="preset-btn" data-preset="thu"  style="background:linear-gradient(135deg,#4A1500,#C86A2C);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="พฤหัสบดี">พฤ</button>
+        <button type="button" class="preset-btn" data-preset="fri"  style="background:linear-gradient(135deg,#052040,#1A5FBF);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="ศุกร์">ศ</button>
+        <button type="button" class="preset-btn" data-preset="sat"  style="background:linear-gradient(135deg,#2A0F4A,#9B5FE0);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:11px;color:#fff;font-weight:700;line-height:44px;text-align:center" title="เสาร์">ส</button>
       </div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px" id="todayLabel"></div>
 
       <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
       <input type="file" id="fileInput" accept="image/*" multiple>
@@ -187,8 +190,14 @@
     });
 
     // Preset picker
-    let selectedPreset = 'crimson';
+    const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
+    const DAY_LABELS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    const today = DAYS[new Date().getDay()];
+    let selectedPreset = today;
+    document.getElementById('todayLabel').textContent = 'วันนี้: ' + DAY_LABELS[new Date().getDay()];
+
     document.querySelectorAll('.preset-btn').forEach(btn => {
+      if (btn.dataset.preset === today) btn.classList.add('active');
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');

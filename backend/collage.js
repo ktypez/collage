@@ -27,13 +27,31 @@ const MONTHS = [
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
 ];
 
+const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
+
 const THEMES = {
-  crimson:         { g: ['#3B050A','#8F1018','#C32029'], d: '#F0B400', tc: '#fff', bg: '#ECECEC' },
-  'corporate-blue':{ g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECECEC' },
-  emerald:         { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECECEC' },
-  dark:            { g: ['#000','#111','#2A2A2A'],         d: '#D4AF37', tc: '#fff', bg: '#ECECEC' },
-  purple:          { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#ECECEC' },
+  sun: { g: ['#3B050A','#8F1018','#B81E28'], d: '#F0B400', tc: '#fff', bg: '#ECECEC' },
+  mon: { g: ['#4A3000','#8B6914','#C9A96E'], d: '#8B4513', tc: '#fff', bg: '#ECECEC' },
+  tue: { g: ['#4A0E2E','#8B1A5E','#C4448E'], d: '#FFD700', tc: '#fff', bg: '#ECECEC' },
+  wed: { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECECEC' },
+  thu: { g: ['#4A1500','#8B3A0E','#C86A2C'], d: '#E8A020', tc: '#fff', bg: '#ECECEC' },
+  fri: { g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECECEC' },
+  sat: { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#ECECEC' },
 };
+
+const THEME_NAMES = {
+  sun: 'อาทิตย์',
+  mon: 'จันทร์',
+  tue: 'อังคาร',
+  wed: 'พุธ',
+  thu: 'พฤหัสบดี',
+  fri: 'ศุกร์',
+  sat: 'เสาร์',
+};
+
+function defaultPreset() {
+  return DAYS[new Date().getDay()];
+}
 
 function cols(n) {
   if (n <= 3) return n;
@@ -111,9 +129,10 @@ async function roundImage(buf, w, h, contentW) {
     .toBuffer();
 }
 
-export async function createCollage(files, name, date, preset = 'crimson') {
+export async function createCollage(files, name, date, preset) {
   date = fmtDate(date);
-  const t = THEMES[preset] || THEMES.crimson;
+  if (!preset || !THEMES[preset]) preset = defaultPreset();
+  const t = THEMES[preset];
   const count = files.length;
   const c = cols(count);
 
