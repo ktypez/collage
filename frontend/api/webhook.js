@@ -132,7 +132,12 @@ function mainMenu() {
           {
             type: 'button',
             style: 'secondary',
-            action: { type: 'uri', label: '📋 เปิดหน้าลูกค้า', uri: CLIENTDATA_URL },
+            action: { type: 'uri', label: '🚛 เปิดบันทึกงาน', uri: 'https://truck.mcky.space' },
+          },
+          {
+            type: 'button',
+            style: 'secondary',
+            action: { type: 'uri', label: '🥊 เปิดหน้าลูกค้า', uri: CLIENTDATA_URL },
           },
         ],
       },
