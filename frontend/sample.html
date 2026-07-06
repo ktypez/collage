@@ -48,6 +48,7 @@
       sat: ['#2A0F4A','#6B2FB8','#9B5FE0'],
     };
     const DIVIDERS = { sun:'#F0B400', mon:'#8B4513', tue:'#FFD700', wed:'#F4C430', thu:'#E8A020', fri:'#5AAEFF', sat:'#FFB6FF' };
+    const BGS = { sun:'#F5ECEC', mon:'#F5F0E8', tue:'#F5ECF0', wed:'#ECF5F0', thu:'#F5EEE8', fri:'#ECF0F5', sat:'#F0ECF5' };
     const SAMPLE_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22'];
 
     const grid = document.getElementById('grid');
@@ -59,8 +60,10 @@
       const isToday = d === today;
       const card = document.createElement('div');
       card.className = 'card';
+      card.style.background = bg;
       if (isToday) card.style.outline = '3px solid #06c755';
 
+      const bg = BGS[d];
       card.innerHTML = `
         <div class="header" style="background:linear-gradient(135deg,${c[0]},${c[1]},${c[2]});color:#fff">
           <div class="day">${LABELS[i]}</div>
@@ -72,6 +75,7 @@
           <div style="background:${c[2]}"></div>
         </div>
         <div class="info">
+          <div class="row"><span>Bg</span><span><span class="swatch" style="background:${bg}"></span>${bg}</span></div>
           <div class="row"><span>Divider</span><span><span class="swatch" style="background:${dv}"></span>${dv}</span></div>
           <div class="row"><span>Stop 1</span><span>${c[0]}</span></div>
           <div class="row"><span>Stop 2</span><span>${c[1]}</span></div>

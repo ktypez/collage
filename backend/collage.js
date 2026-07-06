@@ -30,13 +30,13 @@ const MONTHS = [
 const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
 const THEMES = {
-  sun: { g: ['#3B050A','#8F1018','#B81E28'], d: '#F0B400', tc: '#fff', bg: '#ECECEC' },
-  mon: { g: ['#4A3000','#8B6914','#C9A96E'], d: '#8B4513', tc: '#fff', bg: '#ECECEC' },
-  tue: { g: ['#4A0E2E','#8B1A5E','#C4448E'], d: '#FFD700', tc: '#fff', bg: '#ECECEC' },
-  wed: { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECECEC' },
-  thu: { g: ['#4A1500','#8B3A0E','#C86A2C'], d: '#E8A020', tc: '#fff', bg: '#ECECEC' },
-  fri: { g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECECEC' },
-  sat: { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#ECECEC' },
+  sun: { g: ['#3B050A','#8F1018','#B81E28'], d: '#F0B400', tc: '#fff', bg: '#F5ECEC' },
+  mon: { g: ['#4A3000','#8B6914','#C9A96E'], d: '#8B4513', tc: '#fff', bg: '#F5F0E8' },
+  tue: { g: ['#4A0E2E','#8B1A5E','#C4448E'], d: '#FFD700', tc: '#fff', bg: '#F5ECF0' },
+  wed: { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECF5F0' },
+  thu: { g: ['#4A1500','#8B3A0E','#C86A2C'], d: '#E8A020', tc: '#fff', bg: '#F5EEE8' },
+  fri: { g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECF0F5' },
+  sat: { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#F0ECF5' },
 };
 
 const THEME_NAMES = {
@@ -201,8 +201,9 @@ export async function createCollage(files, name, date, preset) {
     contentY += rh + G;
   }
 
+  const bgc = parseInt(t.bg.slice(1), 16);
   const base = sharp({
-    create: { width: W, height: totalH, channels: 4, background: { r: 236, g: 236, b: 236, alpha: 1 } },
+    create: { width: W, height: totalH, channels: 4, background: { r: (bgc >> 16) & 255, g: (bgc >> 8) & 255, b: bgc & 255, alpha: 1 } },
   });
 
   return base.composite(composites).jpeg({ quality: JPG_Q }).toBuffer();
