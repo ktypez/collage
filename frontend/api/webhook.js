@@ -142,7 +142,7 @@ function mainMenu() {
 
 async function handleSearchClient(replyToken, query) {
   try {
-    const res = await fetch(`${CLIENTDATA_URL}/api/clients/search?q=${encodeURIComponent(query)}`);
+    const res = await fetch(`${CLIENTDATA_URL}/api/clients/search?${new URLSearchParams({ q: query })}`);
     if (!res.ok) throw new Error(`API error ${res.status}`);
     const clients = await res.json();
 
@@ -213,7 +213,7 @@ function buildClientFlex(clients, query) {
             action: {
               type: 'uri',
               label: 'เปิดใน browser',
-              uri: isSingle ? `${CLIENTDATA_URL}/c/${c.id}` : `${CLIENTDATA_URL}?q=${encodeURIComponent(query)}`,
+              uri: isSingle ? `${CLIENTDATA_URL}/c/${c.id}` : `${CLIENTDATA_URL}?${new URLSearchParams({ q: query })}`,
             },
           },
         ],
