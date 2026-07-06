@@ -8,7 +8,7 @@ sharp.concurrency(1);
 
 const W = 1080;
 const MIN_H = 1350;
-const HEADER_MIN = 110;
+const HEADER_H = 220;
 const DH = 8;
 const PT = 40;
 const PS = 48;
@@ -139,19 +139,14 @@ export async function createCollage(files, name, date, preset = 'crimson') {
   }
 
   const rest = contentH + DH + PT + PB;
-  let headerH = Math.max(HEADER_MIN, Math.round(rest * 0.095 / 0.905));
-  let totalH = headerH + rest;
-  if (totalH < MIN_H) {
-    headerH = Math.max(HEADER_MIN, MIN_H - rest);
-    totalH = MIN_H;
-  }
+  const totalH = Math.max(MIN_H, HEADER_H + rest);
 
   const composites = [];
 
-  composites.push({ input: Buffer.from(headerSVG(name, date, headerH, t)), top: 0, left: 0 });
-  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: headerH, left: 0 });
+  composites.push({ input: Buffer.from(headerSVG(name, date, HEADER_H, t)), top: 0, left: 0 });
+  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: HEADER_H, left: 0 });
 
-  let contentY = headerH + DH + PT;
+  let contentY = HEADER_H + DH + PT;
 
   for (let r = 0; r < rows; r++) {
     const s = r * c;
