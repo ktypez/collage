@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 sharp.concurrency(1);
 
 const W = 1080;
-const MIN_H = 1350;
+
 const HEADER_H = 220;
 const DH = 8;
 const PT = 40;
@@ -139,7 +139,7 @@ export async function createCollage(files, name, date, preset = 'crimson') {
   }
 
   const rest = contentH + DH + PT + PB;
-  const totalH = Math.max(MIN_H, HEADER_H + rest);
+  const totalH = HEADER_H + rest;
 
   const composites = [];
 
