@@ -172,6 +172,11 @@
     const LIFF_ID = '2010606328-7UnH1Yre';
     const API_BASE = 'https://collage-7cgv.onrender.com';
 
+    const nameInput = document.getElementById('nameInput');
+    const savedName = localStorage.getItem('collage_name');
+    if (savedName) nameInput.value = savedName;
+    nameInput.addEventListener('input', () => localStorage.setItem('collage_name', nameInput.value));
+
     liff.init({ liffId: LIFF_ID }).then(() => {
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
