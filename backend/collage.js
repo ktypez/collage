@@ -56,8 +56,13 @@ function defaultPreset() {
 function cols(n) {
   if (n <= 3) return n;
   if (n === 4) return 2;
-  if (n <= 9) return 3;
+  if (n <= 6) return 3;
   return 4;
+}
+
+function isSmallLayout(metas) {
+  const portrait = metas.filter(m => m.height > m.width).length;
+  return portrait >= Math.ceil(metas.length / 2);
 }
 
 function fmtDate(s) {
@@ -134,13 +139,14 @@ export async function createCollage(files, name, date, preset) {
   if (!preset || !THEMES[preset]) preset = defaultPreset();
   const t = THEMES[preset];
   const count = files.length;
-  const c = cols(count);
+
+  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
+
+  const c = isSmallLayout(metas) ? 1 : cols(count);
 
   const usable = W - PS * 2;
   const cardW = Math.floor((usable - G * (c - 1)) / c);
   const iw = cardW - CP * 2;
-
-  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
 
   const dims = metas.map(m => {
     const ih = Math.round(iw * m.height / m.width);
