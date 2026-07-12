@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/liff", "dest": "/index.html" }
+    { "src": "/liff", "dest": "/index.html" },
+    { "src": "/index.html", "headers": { "Cache-Control": "no-cache, no-store, must-revalidate" } }
   ]
 }
