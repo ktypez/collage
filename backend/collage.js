@@ -65,11 +65,6 @@ function isScreenshot(meta) {
   return Math.abs(ratio - screenshotRatio) < 0.1;
 }
 
-function isSmallLayout(metas) {
-  const portrait = metas.filter(m => m.height > m.width && !isScreenshot(m)).length;
-  return portrait >= Math.ceil(metas.length / 2);
-}
-
 function fmtDate(s) {
   const d = s && s.trim() ? new Date(s + 'T00:00:00') : new Date();
   return `วันที่ ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
@@ -163,7 +158,7 @@ export async function createCollage(files, name, date, preset) {
 
   const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
 
-  const c = isSmallLayout(metas) ? 1 : cols(count);
+  const c = cols(count);
 
   const usable = W - PS * 2;
   const cardW = Math.floor((usable - G * (c - 1)) / c);
@@ -172,6 +167,8 @@ export async function createCollage(files, name, date, preset) {
   // Guard against missing/zero dimensions (e.g. a photo whose metadata height is
   // unavailable). Without this, ih becomes NaN -> column heights become NaN ->
   // Math.min returns NaN -> colIdx = -1 and every image piles into one column.
+  // We fall back to the first image's dimensions of the layout (iw square) so a
+  // single bad photo can never poison the whole column-height tracker.
   const dims = metas.map(m => {
     const w = m.width && m.width > 0 ? m.width : iw;
     const h = m.height && m.height > 0 ? m.height : iw;
@@ -179,27 +176,24 @@ export async function createCollage(files, name, date, preset) {
     return { iw, ih, ch: ih + CP * 2 };
   });
 
-  // Row-wrapping grid layout (max 3 columns): fill left-to-right, then wrap to a
-  // new row. Each row's height is the tallest card in that row. This avoids the
-  // masonry "NaN piles into one column" failure when any image lacks dimensions.
-  // rowTops[k] = accumulated Y offset where row k starts (so every image in a row
-  // and every subsequent row is placed below the previous one, never overlapping).
-  const rowTops = [0];
-  const rowHeights = [];
+  // Masonry layout (max 3 columns): each image drops into the currently
+  // shortest column, so shorter photos (e.g. 152px) naturally fill gaps left by
+  // taller ones instead of forcing a new full row. Start each column's height
+  // from the first image placed in it (the "first image of the row/column" idea)
+  // so a NaN/missing height can never propagate — the fallback above guarantees
+  // dims[i].ch is always a finite positive number.
+  const colHeights = new Array(c).fill(0);
   const placements = [];
 
   for (let i = 0; i < count; i++) {
-    const colIdx = i % c;
-    const rowIdx = Math.floor(i / c);
+    const colIdx = colHeights.indexOf(Math.min(...colHeights));
     const x = PS + colIdx * (cardW + G);
-    const y = rowTops[rowIdx];
-    placements.push({ colIdx, rowIdx, x, y, ch: dims[i].ch });
-    const newH = Math.max(rowHeights[rowIdx] || 0, dims[i].ch) + G;
-    rowHeights[rowIdx] = newH;
-    rowTops[rowIdx + 1] = Math.max(rowTops[rowIdx + 1] || 0, rowTops[rowIdx] + newH);
+    const y = colHeights[colIdx];
+    placements.push({ colIdx, x, y, ch: dims[i].ch });
+    colHeights[colIdx] += dims[i].ch + G;
   }
 
-  const contentH = rowTops[count === 0 ? 0 : Math.ceil(count / c)] - G;
+  const contentH = Math.max(...colHeights) - G;
   const rest = contentH + DH + PT + PB;
   const totalH = HEADER_H + rest;
 
