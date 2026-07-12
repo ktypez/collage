@@ -182,6 +182,9 @@ export async function createCollage(files, name, date, preset) {
   // Row-wrapping grid layout (max 3 columns): fill left-to-right, then wrap to a
   // new row. Each row's height is the tallest card in that row. This avoids the
   // masonry "NaN piles into one column" failure when any image lacks dimensions.
+  // rowTops[k] = accumulated Y offset where row k starts (so every image in a row
+  // and every subsequent row is placed below the previous one, never overlapping).
+  const rowTops = [0];
   const rowHeights = [];
   const placements = [];
 
@@ -189,12 +192,14 @@ export async function createCollage(files, name, date, preset) {
     const colIdx = i % c;
     const rowIdx = Math.floor(i / c);
     const x = PS + colIdx * (cardW + G);
-    const y = (rowHeights[rowIdx] || 0);
+    const y = rowTops[rowIdx];
     placements.push({ colIdx, rowIdx, x, y, ch: dims[i].ch });
-    rowHeights[rowIdx] = Math.max(rowHeights[rowIdx] || 0, dims[i].ch) + G;
+    const newH = Math.max(rowHeights[rowIdx] || 0, dims[i].ch) + G;
+    rowHeights[rowIdx] = newH;
+    rowTops[rowIdx + 1] = Math.max(rowTops[rowIdx + 1] || 0, rowTops[rowIdx] + newH);
   }
 
-  const contentH = rowHeights.reduce((a, b) => a + b, 0) - G;
+  const contentH = rowTops[count === 0 ? 0 : Math.ceil(count / c)] - G;
   const rest = contentH + DH + PT + PB;
   const totalH = HEADER_H + rest;
 

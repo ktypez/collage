@@ -36,7 +36,7 @@ export async function uploadCollage(buffer, filename) {
   return `${base}/${filename}`;
 }
 
-export async function cleanupOldCollages(maxAgeDays = 90) {
+export async function cleanupOldCollages(maxAgeDays = 30) {
   const list = await getClient().send(new ListObjectsV2Command({
     Bucket: process.env.R2_BUCKET_NAME,
     Prefix: 'collage-',

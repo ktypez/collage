@@ -64,7 +64,7 @@ app.get('/health', (_req, res) => {
 
 app.post('/api/cleanup', async (_req, res) => {
   try {
-    const result = await cleanupOldCollages(90);
+    const result = await cleanupOldCollages(30);
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('Cleanup error:', error);
@@ -89,4 +89,4 @@ app.listen(PORT, () => {
   console.log(`Collage API running on port ${PORT}`);
 });
 
-cleanupOldCollages(90).catch(err => console.error('Startup cleanup error:', err));
+cleanupOldCollages(30).catch(err => console.error('Startup cleanup error:', err));
