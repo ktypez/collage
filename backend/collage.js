@@ -20,7 +20,7 @@ const IR = 18;
 const SY = 8;
 const SB = 24;
 const SA = 0.12;
-const JPG_Q = 85;
+const JPG_Q = 90;
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -55,8 +55,8 @@ function defaultPreset() {
 
 function cols(n) {
   if (n === 1) return 1;
-  if (n <= 4) return n;
-  return 4;
+  if (n <= 3) return n;
+  return 3;
 }
 
 function isScreenshot(meta) {
@@ -126,17 +126,33 @@ function maskSVG(w, h) {
 
 async function roundImage(buf, w, h, contentW) {
   const rh = Math.round(contentW * h / w);
-  const resized = await sharp(buf).resize(contentW, rh).toBuffer();
+  // Never upscale a small source (LINE-compressed photos) — that is the main cause
+  // of blurry results. If the source is smaller than the card, keep its native size
+  // and it will be centered inside the card. Use lanczos3 for crisp downscaling.
+  const resized = await sharp(buf)
+    .resize(contentW, rh, {
+      fit: 'fill',
+      withoutEnlargement: true,
+      kernel: 'lanczos3',
+    })
+    .png()
+    .toBuffer();
+  const rmeta = await sharp(resized).metadata();
+  // If the source was smaller than the card (no upscale applied), center it inside
+  // the card area so there is no offset / empty gap on one side.
+  const padX = Math.max(0, Math.round((contentW - rmeta.width) / 2));
+  const padY = Math.max(0, Math.round((rh - rmeta.height) / 2));
   const mask = Buffer.from(maskSVG(contentW, rh));
-  return sharp({
+  const rounded = await sharp({
     create: { width: contentW, height: rh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
   })
     .composite([
-      { input: resized, top: 0, left: 0 },
+      { input: resized, top: padY, left: padX },
       { input: mask, top: 0, left: 0, blend: 'dest-in' },
     ])
     .png()
     .toBuffer();
+  return { buf: rounded, w: rmeta.width, h: rmeta.height };
 }
 
 export async function createCollage(files, name, date, preset) {
@@ -153,24 +169,32 @@ export async function createCollage(files, name, date, preset) {
   const cardW = Math.floor((usable - G * (c - 1)) / c);
   const iw = cardW - CP * 2;
 
+  // Guard against missing/zero dimensions (e.g. a photo whose metadata height is
+  // unavailable). Without this, ih becomes NaN -> column heights become NaN ->
+  // Math.min returns NaN -> colIdx = -1 and every image piles into one column.
   const dims = metas.map(m => {
-    const ih = Math.round(iw * m.height / m.width);
+    const w = m.width && m.width > 0 ? m.width : iw;
+    const h = m.height && m.height > 0 ? m.height : iw;
+    const ih = Math.round(iw * h / w) || iw;
     return { iw, ih, ch: ih + CP * 2 };
   });
 
-  // Masonry layout: track column heights
-  const colHeights = new Array(c).fill(0);
+  // Row-wrapping grid layout (max 3 columns): fill left-to-right, then wrap to a
+  // new row. Each row's height is the tallest card in that row. This avoids the
+  // masonry "NaN piles into one column" failure when any image lacks dimensions.
+  const rowHeights = [];
   const placements = [];
 
   for (let i = 0; i < count; i++) {
-    const colIdx = colHeights.indexOf(Math.min(...colHeights));
+    const colIdx = i % c;
+    const rowIdx = Math.floor(i / c);
     const x = PS + colIdx * (cardW + G);
-    const y = colHeights[colIdx];
-    placements.push({ colIdx, x, y, ch: dims[i].ch });
-    colHeights[colIdx] += dims[i].ch + G;
+    const y = (rowHeights[rowIdx] || 0);
+    placements.push({ colIdx, rowIdx, x, y, ch: dims[i].ch });
+    rowHeights[rowIdx] = Math.max(rowHeights[rowIdx] || 0, dims[i].ch) + G;
   }
 
-  const contentH = Math.max(...colHeights) - G;
+  const contentH = rowHeights.reduce((a, b) => a + b, 0) - G;
   const rest = contentH + DH + PT + PB;
   const totalH = HEADER_H + rest;
 
@@ -196,7 +220,10 @@ export async function createCollage(files, name, date, preset) {
     const shadow = await getShadow(cardW, ch);
     composites.push({ input: shadow, top: actualY + SY - pad / 2, left: x - pad / 2 });
     composites.push({ input: Buffer.from(cardBgSVG(cardW, ch)), top: actualY, left: x });
-    composites.push({ input: imgs[i], top: actualY + CP, left: x + CP });
+    // Center the (possibly smaller) image inside the card's content area.
+    const cx = x + CP + Math.max(0, Math.round((dims[i].iw - imgs[i].w) / 2));
+    const cy = actualY + CP + Math.max(0, Math.round((dims[i].ih - imgs[i].h) / 2));
+    composites.push({ input: imgs[i].buf, top: cy, left: cx });
   }
 
   const bgc = parseInt(t.bg.slice(1), 16);
@@ -204,5 +231,5 @@ export async function createCollage(files, name, date, preset) {
     create: { width: W, height: totalH, channels: 4, background: { r: (bgc >> 16) & 255, g: (bgc >> 8) & 255, b: bgc & 255, alpha: 1 } },
   });
 
-  return base.composite(composites).jpeg({ quality: JPG_Q }).toBuffer();
+  return base.composite(composites).jpeg({ quality: JPG_Q, mozjpeg: true }).toBuffer();
 }
