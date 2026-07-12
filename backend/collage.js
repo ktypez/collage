@@ -54,14 +54,19 @@ function defaultPreset() {
 }
 
 function cols(n) {
-  if (n <= 3) return n;
-  if (n === 4) return 2;
-  if (n <= 6) return 3;
+  if (n === 1) return 1;
+  if (n <= 4) return n;
   return 4;
 }
 
+function isScreenshot(meta) {
+  const ratio = meta.height / meta.width;
+  const screenshotRatio = 2760 / 1256; // ~2.2
+  return Math.abs(ratio - screenshotRatio) < 0.1;
+}
+
 function isSmallLayout(metas) {
-  const portrait = metas.filter(m => m.height > m.width).length;
+  const portrait = metas.filter(m => m.height > m.width && !isScreenshot(m)).length;
   return portrait >= Math.ceil(metas.length / 2);
 }
 
@@ -153,16 +158,19 @@ export async function createCollage(files, name, date, preset) {
     return { iw, ih, ch: ih + CP * 2 };
   });
 
-  const rows = Math.ceil(count / c);
-  let contentH = 0;
-  for (let r = 0; r < rows; r++) {
-    const s = r * c;
-    const e = Math.min(s + c, count);
-    const rh = Math.max(...dims.slice(s, e).map(d => d.ch));
-    contentH += rh;
-    if (r < rows - 1) contentH += G;
+  // Masonry layout: track column heights
+  const colHeights = new Array(c).fill(0);
+  const placements = [];
+
+  for (let i = 0; i < count; i++) {
+    const colIdx = colHeights.indexOf(Math.min(...colHeights));
+    const x = PS + colIdx * (cardW + G);
+    const y = colHeights[colIdx];
+    placements.push({ colIdx, x, y, ch: dims[i].ch });
+    colHeights[colIdx] += dims[i].ch + G;
   }
 
+  const contentH = Math.max(...colHeights) - G;
   const rest = contentH + DH + PT + PB;
   const totalH = HEADER_H + rest;
 
@@ -171,40 +179,24 @@ export async function createCollage(files, name, date, preset) {
   composites.push({ input: Buffer.from(headerSVG(name, date, HEADER_H, t)), top: 0, left: 0 });
   composites.push({ input: Buffer.from(dividerSVG(t.d)), top: HEADER_H, left: 0 });
 
-  let contentY = HEADER_H + DH + PT;
+  const contentY = HEADER_H + DH + PT;
 
-  for (let r = 0; r < rows; r++) {
-    const s = r * c;
-    const e = Math.min(s + c, count);
-    const n = e - s;
+  const imgs = await Promise.all(
+    dims.map((d, i) =>
+      roundImage(files[i].path, metas[i].width, metas[i].height, d.iw)
+    )
+  );
 
-    let rowOff = 0;
-    if (r === rows - 1 && n < c) {
-      rowOff = Math.floor((usable - (n * cardW + (n - 1) * G)) / 2);
-    }
+  const pad = SB * 2;
 
-    const rh = Math.max(...dims.slice(s, e).map(d => d.ch));
+  for (let i = 0; i < count; i++) {
+    const { x, y, ch } = placements[i];
+    const actualY = contentY + y;
 
-    const imgs = await Promise.all(
-      dims.slice(s, e).map((d, i) =>
-        roundImage(files[s + i].path, metas[s + i].width, metas[s + i].height, d.iw)
-      )
-    );
-
-    const pad = SB * 2;
-
-    for (let i = 0; i < n; i++) {
-      const x = PS + rowOff + i * (cardW + G);
-      const y = contentY;
-      const { ch } = dims[s + i];
-
-      const shadow = await getShadow(cardW, ch);
-      composites.push({ input: shadow, top: y + SY - pad / 2, left: x - pad / 2 });
-      composites.push({ input: Buffer.from(cardBgSVG(cardW, ch)), top: y, left: x });
-      composites.push({ input: imgs[i], top: y + CP, left: x + CP });
-    }
-
-    contentY += rh + G;
+    const shadow = await getShadow(cardW, ch);
+    composites.push({ input: shadow, top: actualY + SY - pad / 2, left: x - pad / 2 });
+    composites.push({ input: Buffer.from(cardBgSVG(cardW, ch)), top: actualY, left: x });
+    composites.push({ input: imgs[i], top: actualY + CP, left: x + CP });
   }
 
   const bgc = parseInt(t.bg.slice(1), 16);
