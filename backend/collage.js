@@ -8,17 +8,17 @@ sharp.concurrency(1);
 
 const W = 2160;
 
-const HEADER_H = 220;
-const DH = 8;
-const PT = 40;
-const PS = 48;
-const PB = 48;
-const G = 24;
-const CP = 12;
-const CR = 24;
-const IR = 18;
-const SY = 8;
-const SB = 24;
+const HEADER_H = 440;
+const DH = 16;
+const PT = 80;
+const PS = 96;
+const PB = 96;
+const G = 48;
+const CP = 24;
+const CR = 48;
+const IR = 36;
+const SY = 16;
+const SB = 48;
 const SA = 0.12;
 const JPG_Q = 95;
 
@@ -84,13 +84,13 @@ function headerSVG(name, date, hh, t) {
 
   const ty = Math.round(hh * 0.55);
   if (name) {
-    const pw = font.getAdvanceWidth(name, 64);
-    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 64).toSVG(2)}</g>`;
+    const pw = font.getAdvanceWidth(name, 128);
+    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 128).toSVG(2)}</g>`;
   }
   if (date) {
-    const dy = name ? ty + 57 : Math.round(hh * 0.55) + 10;
-    const pw = font.getAdvanceWidth(date, 34);
-    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 34).toSVG(2)}</g>`;
+    const dy = name ? ty + 114 : Math.round(hh * 0.55) + 20;
+    const pw = font.getAdvanceWidth(date, 68);
+    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 68).toSVG(2)}</g>`;
   }
   return svg + '</svg>';
 }
