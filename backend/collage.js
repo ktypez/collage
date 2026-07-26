@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 sharp.concurrency(1);
 
-const W = 1080;
+const W = 2160;
 
 const HEADER_H = 220;
 const DH = 8;
@@ -229,5 +229,5 @@ export async function createCollage(files, name, date, preset) {
     create: { width: W, height: totalH, channels: 4, background: { r: (bgc >> 16) & 255, g: (bgc >> 8) & 255, b: bgc & 255, alpha: 1 } },
   });
 
-  return base.composite(composites).sharpen().jpeg({ quality: JPG_Q, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+  return base.composite(composites).sharpen({ sigma: 1.5 }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
 }
