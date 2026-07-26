@@ -20,7 +20,7 @@ const IR = 18;
 const SY = 8;
 const SB = 24;
 const SA = 0.12;
-const JPG_Q = 90;
+const JPG_Q = 95;
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -120,26 +120,25 @@ function maskSVG(w, h) {
 }
 
 async function roundImage(buf, w, h, contentW) {
-  const rh = Math.round(contentW * h / w);
-  // Never upscale a small source (LINE-compressed photos) — that is the main cause
-  // of blurry results. If the source is smaller than the card, keep its native size
-  // and it will be centered inside the card. Use lanczos3 for crisp downscaling.
+  // Allow upscale up to 3x the original size to fill the card.
+  // Capping prevents pixelation from extremely small sources (e.g. 50px LINE thumbnails).
+  const upscaleCap = 3;
+  const targetW = w < contentW ? Math.min(contentW, Math.round(w * upscaleCap)) : contentW;
+  const targetH = Math.round(targetW * h / w);
   const resized = await sharp(buf)
-    .resize(contentW, rh, {
+    .resize(targetW, targetH, {
       fit: 'fill',
-      withoutEnlargement: true,
       kernel: 'lanczos3',
     })
     .png()
     .toBuffer();
   const rmeta = await sharp(resized).metadata();
-  // If the source was smaller than the card (no upscale applied), center it inside
-  // the card area so there is no offset / empty gap on one side.
+  // Center the (possibly smaller than card) image inside the card area.
   const padX = Math.max(0, Math.round((contentW - rmeta.width) / 2));
-  const padY = Math.max(0, Math.round((rh - rmeta.height) / 2));
-  const mask = Buffer.from(maskSVG(contentW, rh));
+  const padY = Math.max(0, Math.round((targetH - rmeta.height) / 2));
+  const mask = Buffer.from(maskSVG(contentW, targetH));
   const rounded = await sharp({
-    create: { width: contentW, height: rh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    create: { width: contentW, height: targetH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
   })
     .composite([
       { input: resized, top: padY, left: padX },
@@ -230,5 +229,5 @@ export async function createCollage(files, name, date, preset) {
     create: { width: W, height: totalH, channels: 4, background: { r: (bgc >> 16) & 255, g: (bgc >> 8) & 255, b: bgc & 255, alpha: 1 } },
   });
 
-  return base.composite(composites).jpeg({ quality: JPG_Q, mozjpeg: true }).toBuffer();
+  return base.composite(composites).sharpen().jpeg({ quality: JPG_Q, mozjpeg: true }).toBuffer();
 }
