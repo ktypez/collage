@@ -149,7 +149,7 @@ async function roundImage(buf, w, h, contentW) {
   return { buf: rounded, w: rmeta.width, h: rmeta.height };
 }
 
-export async function createCollage(files, name, date, preset) {
+export async function createCollage(files, name, date, preset, format) {
   date = fmtDate(date);
   if (!preset || !THEMES[preset]) preset = defaultPreset();
   const t = THEMES[preset];
@@ -229,5 +229,9 @@ export async function createCollage(files, name, date, preset) {
     create: { width: W, height: totalH, channels: 4, background: { r: (bgc >> 16) & 255, g: (bgc >> 8) & 255, b: bgc & 255, alpha: 1 } },
   });
 
-  return base.composite(composites).sharpen().jpeg({ quality: JPG_Q, mozjpeg: true }).toBuffer();
+  const composite = base.composite(composites).sharpen();
+  if (format === 'png') {
+    return composite.png().toBuffer();
+  }
+  return composite.jpeg({ quality: JPG_Q, mozjpeg: true }).toBuffer();
 }

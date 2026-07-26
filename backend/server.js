@@ -40,18 +40,20 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
     const name = (req.body.name || '').trim();
     const date = (req.body.date || '').trim();
     const preset = (req.body.preset || '').trim() || undefined;
+    const format = (req.body.format || '').trim() === 'png' ? 'png' : 'jpeg';
 
-    const buffer = await createCollage(files, name, date, preset);
+    const buffer = await createCollage(files, name, date, preset, format);
 
-    const filename = `collage-${Date.now()}.jpg`;
-    await uploadCollage(buffer, filename);
+    const ext = format === 'png' ? 'png' : 'jpg';
+    const filename = `collage-${Date.now()}.${ext}`;
+    await uploadCollage(buffer, filename, format);
 
     for (const f of files) {
       try { await fs.unlink(f.path); } catch {}
     }
 
     const imageUrl = `https://${req.get('host')}/api/image/${filename}`;
-    res.json({ success: true, imageUrl });
+    res.json({ success: true, imageUrl, format });
   } catch (error) {
     console.error('Collage error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -75,7 +77,8 @@ app.post('/api/cleanup', async (_req, res) => {
 app.get('/api/image/:filename', async (req, res) => {
   try {
     const stream = await getCollageStream(req.params.filename);
-    res.set('Content-Type', 'image/jpeg');
+    const isPng = req.params.filename.endsWith('.png');
+    res.set('Content-Type', isPng ? 'image/png' : 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
     stream.pipe(res);
   } catch (error) {

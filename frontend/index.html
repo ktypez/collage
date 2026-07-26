@@ -168,7 +168,8 @@
 
       <div class="preview-grid" id="previewGrid"></div>
 
-      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างและส่งเข้ากลุ่ม</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage('jpeg')">✨ สร้างและส่งเข้ากลุ่ม</button>
+      <button class="btn btn-secondary" id="submitPngBtn" onclick="generateCollage('png')">💾 บันทึก PNG คุณภาพเต็ม</button>
 
       <div class="status" id="status"></div>
     </div>
@@ -224,11 +225,12 @@
       el.className = 'status ' + type;
     }
 
-    async function generateCollage() {
+    async function generateCollage(format) {
       const files = document.getElementById('fileInput').files;
       const name = document.getElementById('nameInput').value;
       const date = document.getElementById('dateInput').value;
       const btn = document.getElementById('submitBtn');
+      const btnPng = document.getElementById('submitPngBtn');
 
       if (!files.length) {
         setStatus('📸 กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
@@ -236,13 +238,15 @@
       }
 
       btn.disabled = true;
-      setStatus('⏳ กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
+      btnPng.disabled = true;
+      setStatus(format === 'png' ? '⏳ กำลังสร้าง PNG คุณภาพเต็ม...' : '⏳ กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
 
       try {
         const fd = new FormData();
         fd.append('name', name);
         fd.append('date', date);
         fd.append('preset', selectedPreset);
+        fd.append('format', format);
         for (const f of files) fd.append('images', f);
 
         const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
@@ -255,20 +259,31 @@
           throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
         }
 
-        setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
-
-        await liff.sendMessages([{
-          type: 'image',
-          originalContentUrl: data.imageUrl,
-          previewImageUrl: data.imageUrl,
-        }]);
-
-        setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
-
-        setTimeout(() => liff.closeWindow(), 1500);
+        if (format === 'png') {
+          // Download PNG — user shares as file in LINE to preserve quality
+          setStatus('💾 กำลังดาวน์โหลด PNG... แล้วแนบไฟล์ใน LINE', 'loading');
+          const a = document.createElement('a');
+          a.href = data.imageUrl;
+          a.download = 'collage.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setStatus('✅ ดาวน์โหลดสำเร็จ! แชร์ไฟล์ PNG ใน LINE เพื่อคุณภาพเต็ม', 'success');
+        } else {
+          // Send as image — LINE re-compresses
+          setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
+          await liff.sendMessages([{
+            type: 'image',
+            originalContentUrl: data.imageUrl,
+            previewImageUrl: data.imageUrl,
+          }]);
+          setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
+          setTimeout(() => liff.closeWindow(), 1500);
+        }
       } catch (err) {
         setStatus('❌ ' + err.message, 'error');
         btn.disabled = false;
+        btnPng.disabled = false;
       }
     }
   </script>
