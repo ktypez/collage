@@ -24,13 +24,12 @@ export async function getCollageStream(filename) {
   return response.Body;
 }
 
-export async function uploadCollage(buffer, filename, format) {
-  const contentType = format === 'png' ? 'image/png' : 'image/jpeg';
+export async function uploadCollage(buffer, filename) {
   await getClient().send(new PutObjectCommand({
     Bucket: process.env.R2_BUCKET_NAME,
     Key: filename,
     Body: buffer,
-    ContentType: contentType,
+    ContentType: 'image/jpeg',
   }));
 
   const base = process.env.R2_PUBLIC_URL.replace(/\/+$/, '');
