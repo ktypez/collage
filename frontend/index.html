@@ -14,161 +14,209 @@
   <title>สร้างรูปคอลลาจ - Collage Maker</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-      color: #333;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --bg-muted: #f4f4f5;
+      --surface: #ffffff;
+      --foreground: #18181b;
+      --foreground-muted: #71717a;
+      --border: #e4e4e7;
+      --border-hover: #a1a1aa;
+      --ring: #18181b;
+      --primary: #18181b;
+      --primary-foreground: #fafafa;
+      --destructive: #ef4444;
+      --success-bg: #f0fdf4;
+      --warning-bg: #fefce8;
+      --error-bg: #fef2f2;
+      --radius: 0.625rem;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .container { max-width: 480px; margin: 0 auto; }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 20px;
-      color: #06c755;
-      text-align: center;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    .instruction-card {
-      background: #f0faf4;
-      border: 1px solid #b8e6c8;
-    }
-    .instruction-card .title {
-      font-weight: 700; margin-bottom: 10px; color: #06c755; font-size: 15px;
-    }
-    .instruction-card .steps {
-      display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: #444; line-height: 1.4;
-    }
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #555;
-    }
-    input[type="text"], input[type="date"] {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      background: #fafafa;
-      font-size: 14px;
-    }
-    .preview-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .preview-grid img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid #eee;
-    }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .btn:active { opacity: 0.8; }
-    .btn-primary { background: #06c755; color: #fff; }
-    .btn-primary:disabled { background: #a8e6b8; cursor: not-allowed; }
-    .btn-secondary { background: #eee; color: #555; margin-top: 8px; }
-    .preset-btn { border: 3px solid transparent; border-radius: 10px; cursor: pointer; }
-    .preset-btn.active { border-color: #06c755; }
-    .status {
-      text-align: center;
-      padding: 12px;
-      margin-top: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      display: none;
-    }
-    .status.loading { display: block; background: #fff3cd; color: #856404; }
-    .status.success { display: block; background: #d4edda; color: #155724; }
-    .status.error { display: block; background: #f8d7da; color: #721c24; }
+
     @media (prefers-color-scheme: dark) {
-      body { background: #1a1a1a; color: #e0e0e0; }
-      h1 { color: #4ae87a; }
-      .card { background: #2a2a2a; }
-      .instruction-card { background: #1a3a2a; border-color: #2a6a4a; }
-      .instruction-card .steps { color: #c0d0c0; }
-      label { color: #aaa; }
-      input[type="text"], input[type="date"] { background: #333; border-color: #555; color: #e0e0e0; }
-      input[type="text"]::placeholder, input[type="date"]::placeholder { color: #888; }
-      input[type="file"] { background: #2a2a2a; border-color: #555; color: #ccc; }
-      .preview-grid img { border-color: #444; }
-      .btn-secondary { background: #444; color: #ccc; }
-      .status.loading { background: #3a3a1a; color: #d4c84a; }
-      .status.success { background: #1a3a2a; color: #7ae8a0; }
-      .status.error { background: #3a1a1a; color: #e87a7a; }
-      .preset-btn.active { border-color: #4ae87a; }
+      :root {
+        --bg: #09090b;
+        --bg-muted: #18181b;
+        --surface: #09090b;
+        --foreground: #fafafa;
+        --foreground-muted: #a1a1aa;
+        --border: #27272a;
+        --border-hover: #52525b;
+        --ring: #d4d4d8;
+        --primary: #fafafa;
+        --primary-foreground: #18181b;
+        --success-bg: #052e16;
+        --warning-bg: #422006;
+        --error-bg: #450a0a;
+      }
     }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--foreground);
+      padding: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { max-width: 420px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 24px; padding: 24px 0 16px; }
+    .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 4px; }
+    .header p { font-size: 13px; color: var(--foreground-muted); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+
+    .label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--foreground); }
+    .label-hint { font-weight: 400; color: var(--foreground-muted); }
+
+    .input {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg); color: var(--foreground);
+      font-size: 14px; font-family: var(--font-sans);
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+      margin-bottom: 16px;
+    }
+    .input::placeholder { color: var(--foreground-muted); opacity: 0.6; }
+    .input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring); }
+
+    .upload-zone {
+      position: relative; border: 2px dashed var(--border);
+      border-radius: var(--radius); padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 16px;
+    }
+    .upload-zone:hover { border-color: var(--border-hover); background: var(--bg-muted); }
+    .upload-zone.dragover { border-color: var(--primary); background: var(--bg-muted); }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+    }
+    .upload-icon {
+      width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 50%;
+      background: var(--bg-muted); display: flex; align-items: center; justify-content: center;
+    }
+    .upload-icon svg { width: 24px; height: 24px; stroke: var(--foreground-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .upload-text { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    .upload-hint { font-size: 12px; color: var(--foreground-muted); }
+
+    .preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .preview-grid:empty { display: none; }
+    .preview-item { position: relative; width: 72px; height: 72px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-remove {
+      position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
+      border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none;
+      cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .preview-item:hover .preview-remove { opacity: 1; }
+
+    .theme-grid { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .theme-btn {
+      width: 36px; height: 36px; border-radius: var(--radius); border: 2px solid transparent;
+      cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+    }
+    .theme-btn:hover { transform: scale(1.1); }
+    .theme-btn.active { border-color: var(--foreground); box-shadow: 0 0 0 2px var(--bg); }
+    .theme-label { font-size: 11px; color: var(--foreground-muted); margin-bottom: 16px; }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px 16px; border: none; border-radius: var(--radius);
+      font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+      cursor: pointer; transition: background 0.15s, opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .status {
+      text-align: center; padding: 10px 12px; margin-top: 12px;
+      border-radius: var(--radius); font-size: 13px; font-weight: 500; display: none;
+    }
+    .status.loading { display: block; background: var(--warning-bg); }
+    .status.success { display: block; background: var(--success-bg); }
+    .status.error { display: block; background: var(--error-bg); color: var(--destructive); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid var(--border);
+      border-top-color: var(--foreground); border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: inline-block;
+    }
+
+    .steps { display: flex; flex-direction: column; gap: 8px; }
+    .step { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--foreground-muted); }
+    .step-num {
+      flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+      background: var(--primary); color: var(--primary-foreground);
+      font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    }
+    .step strong { color: var(--foreground); font-weight: 500; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>สร้างรูปคอลลาจ</h1>
+    <div class="header">
+      <h1>Collage Maker</h1>
+      <p>สร้างคอลลาจจากภาพถ่าย ส่งเข้า LINE ได้ทันที</p>
+    </div>
 
-    <div class="card instruction-card">
-      <div class="title">📋 วิธีใช้งาน</div>
+    <div class="card">
       <div class="steps">
-        <div>1️⃣ <strong>เลือกรูป</strong> จากอัลบั้ม (เลือกกี่รูปก็ได้)</div>
-        <div>2️⃣ ใส่<strong>ชื่อ</strong>หรือเลือก<strong>วันที่</strong> (หรือไม่ก็ได้)</div>
-        <div>3️⃣ <strong>เลือกสีหัวข้อ</strong> ที่ชอบ</div>
-        <div>4️⃣ กดปุ่ม <strong>"สร้างและส่ง"</strong> รอแป๊บเดียว</div>
-        <div>📤 รูปคอลลาจจะส่งเข้า LINE ให้อัตโนมัติ</div>
+        <div class="step"><div class="step-num">1</div><div><strong>เลือกรูป</strong> จากอัลบั้ม (กี่รูปก็ได้)</div></div>
+        <div class="step"><div class="step-num">2</div><div>ใส่<strong>ชื่อ</strong>หรือ<strong>วันที่</strong> (หรือไม่ก็ได้)</div></div>
+        <div class="step"><div class="step-num">3</div><div><strong>เลือกสีธีม</strong> ประจำวัน</div></div>
+        <div class="step"><div class="step-num">4</div><div>กด <strong>"สร้างและส่ง"</strong> รอแป๊บเดียว</div></div>
       </div>
     </div>
 
     <div class="card">
-      <label for="nameInput">ชื่อ / คำอธิบาย</label>
-      <input type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
+      <label class="label" for="nameInput">ชื่อ / คำอธิบาย</label>
+      <input class="input" type="text" id="nameInput" placeholder="ใส่ชื่อของคุณ">
 
-      <label for="dateInput">วันที่</label>
-      <input type="date" id="dateInput">
+      <label class="label" for="dateInput">วันที่</label>
+      <input class="input" type="date" id="dateInput">
 
-      <label>ธีมสีประจำวัน</label>
-      <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap" id="presetPicker">
-        <button type="button" class="preset-btn" data-preset="sun"  style="background:linear-gradient(135deg,#3B050A,#B81E28);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="อาทิตย์">อา</button>
-        <button type="button" class="preset-btn" data-preset="mon"  style="background:linear-gradient(135deg,#4A3000,#C9A96E);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="จันทร์">จ</button>
-        <button type="button" class="preset-btn" data-preset="tue"  style="background:linear-gradient(135deg,#4A0E2E,#C4448E);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="อังคาร">อ</button>
-        <button type="button" class="preset-btn" data-preset="wed"  style="background:linear-gradient(135deg,#043528,#0E8F6E);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="พุธ">พ</button>
-        <button type="button" class="preset-btn" data-preset="thu"  style="background:linear-gradient(135deg,#4A1500,#C86A2C);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="พฤหัสบดี">พฤ</button>
-        <button type="button" class="preset-btn" data-preset="fri"  style="background:linear-gradient(135deg,#052040,#1A5FBF);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="ศุกร์">ศ</button>
-        <button type="button" class="preset-btn" data-preset="sat"  style="background:linear-gradient(135deg,#2A0F4A,#9B5FE0);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:10px;color:#fff;font-weight:700;line-height:34px;text-align:center" title="เสาร์">ส</button>
+      <label class="label">ธีมสีประจำวัน</label>
+      <div class="theme-grid" id="presetPicker">
+        <button type="button" class="theme-btn" data-preset="sun" style="background:linear-gradient(135deg,#3B050A,#B81E28)" title="อาทิตย์"></button>
+        <button type="button" class="theme-btn" data-preset="mon" style="background:linear-gradient(135deg,#4A3000,#C9A96E)" title="จันทร์"></button>
+        <button type="button" class="theme-btn" data-preset="tue" style="background:linear-gradient(135deg,#4A0E2E,#C4448E)" title="อังคาร"></button>
+        <button type="button" class="theme-btn" data-preset="wed" style="background:linear-gradient(135deg,#043528,#0E8F6E)" title="พุธ"></button>
+        <button type="button" class="theme-btn" data-preset="thu" style="background:linear-gradient(135deg,#4A1500,#C86A2C)" title="พฤหัสบดี"></button>
+        <button type="button" class="theme-btn" data-preset="fri" style="background:linear-gradient(135deg,#052040,#1A5FBF)" title="ศุกร์"></button>
+        <button type="button" class="theme-btn" data-preset="sat" style="background:linear-gradient(135deg,#2A0F4A,#9B5FE0)" title="เสาร์"></button>
       </div>
-      <div style="font-size:12px;color:#888;margin-bottom:16px" id="todayLabel"></div>
+      <div class="theme-label" id="todayLabel"></div>
 
-      <label for="fileInput">เลือกรูปภาพ (แนะนำ 2+ รูป)</label>
-      <input type="file" id="fileInput" accept="image/*" multiple>
+      <label class="label">เลือกรูปภาพ <span class="label-hint">(แนะนำ 2+ รูป)</span></label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="upload-text">คลิกหรือลากไฟล์มาที่นี่</div>
+        <div class="upload-hint">JPG, PNG — สูงสุด 20 รูป</div>
+      </div>
 
       <div class="preview-grid" id="previewGrid"></div>
 
-      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">✨ สร้างและส่งเข้ากลุ่ม</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        สร้างและส่งเข้ากลุ่ม
+      </button>
 
       <div class="status" id="status"></div>
     </div>
@@ -189,7 +237,7 @@
       }
       document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
     }).catch(err => {
-      setStatus('⚠️ ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
+      setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
     // Preset picker
@@ -199,29 +247,43 @@
     let selectedPreset = today;
     document.getElementById('todayLabel').textContent = 'วันนี้: ' + DAY_LABELS[new Date().getDay()];
 
-    document.querySelectorAll('.preset-btn').forEach(btn => {
+    document.querySelectorAll('.theme-btn').forEach(btn => {
       if (btn.dataset.preset === today) btn.classList.add('active');
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedPreset = btn.dataset.preset;
       });
     });
 
-    document.getElementById('fileInput').addEventListener('change', function() {
-      const grid = document.getElementById('previewGrid');
-      grid.innerHTML = '';
-      for (const file of this.files) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        grid.appendChild(img);
-      }
+    // Upload zone drag & drop
+    const zone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewGrid = document.getElementById('previewGrid');
+
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('dragover');
+      fileInput.files = e.dataTransfer.files;
+      updatePreview(e.dataTransfer.files);
     });
+    fileInput.addEventListener('change', e => updatePreview(e.target.files));
+
+    function updatePreview(files) {
+      previewGrid.innerHTML = '';
+      for (const file of files) {
+        const item = document.createElement('div'); item.className = 'preview-item';
+        const img = document.createElement('img'); img.src = URL.createObjectURL(file);
+        const removeBtn = document.createElement('button'); removeBtn.className = 'preview-remove';
+        removeBtn.textContent = '\u00d7';
+        removeBtn.onclick = () => item.remove();
+        item.appendChild(img); item.appendChild(removeBtn); previewGrid.appendChild(item);
+      }
+    }
 
     function setStatus(text, type) {
-      const el = document.getElementById('status');
-      el.textContent = text;
-      el.className = 'status ' + type;
+      const el = document.getElementById('status'); el.textContent = text; el.className = 'status ' + type;
     }
 
     async function generateCollage() {
@@ -231,12 +293,13 @@
       const btn = document.getElementById('submitBtn');
 
       if (!files.length) {
-        setStatus('📸 กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
+        setStatus('กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
         return;
       }
 
       btn.disabled = true;
-      setStatus('⏳ กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
+      btn.innerHTML = '<div class="spinner"></div> กำลังสร้างภาพ...';
+      setStatus('กำลังสร้างภาพ... รอสักครู่ครับ', 'loading');
 
       try {
         const fd = new FormData();
@@ -255,7 +318,7 @@
           throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
         }
 
-        setStatus('📤 กำลังส่งเข้ากลุ่ม LINE...', 'loading');
+        setStatus('กำลังส่งเข้ากลุ่ม LINE...', 'loading');
 
         await liff.sendMessages([{
           type: 'image',
@@ -263,12 +326,13 @@
           previewImageUrl: data.imageUrl,
         }]);
 
-        setStatus('✅ ส่งสำเร็จแล้ว!', 'success');
+        setStatus('ส่งสำเร็จแล้ว!', 'success');
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        setStatus('❌ ' + err.message, 'error');
+        setStatus(err.message, 'error');
         btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> สร้างและส่งเข้ากลุ่ม';
       }
     }
   </script>
