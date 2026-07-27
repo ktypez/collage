@@ -111,13 +111,25 @@
 
     .preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
     .preview-grid:empty { display: none; }
-    .preview-item { position: relative; width: 72px; height: 72px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
-    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-item {
+      position: relative; width: 76px; height: 96px; border-radius: var(--radius);
+      overflow: hidden; border: 1px solid var(--border); background: var(--bg-muted);
+      cursor: grab; transition: box-shadow 0.15s, opacity 0.15s;
+    }
+    .preview-item:active { cursor: grabbing; }
+    .preview-item.dragging { opacity: 0.4; box-shadow: 0 0 0 2px var(--primary); }
+    .preview-item.dragover-item { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+    .preview-item img { width: 100%; height: 68px; object-fit: cover; display: block; }
+    .preview-num {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 24px;
+      background: var(--primary); color: var(--primary-foreground);
+      font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    }
     .preview-remove {
       position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
       border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none;
       cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.15s;
+      opacity: 0; transition: opacity 0.15s; z-index: 2;
     }
     .preview-item:hover .preview-remove { opacity: 1; }
 
@@ -242,43 +254,133 @@
       });
     });
 
-    // Upload zone drag & drop
+    // --- File management ---
+    let imageFiles = [];        // File objects in order
+    let imageUrls = [];         // object URLs for display
+    const MAX_FILES = 20;
     const zone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const previewGrid = document.getElementById('previewGrid');
 
+    function addFiles(newFiles) {
+      for (const file of newFiles) {
+        if (imageFiles.length >= MAX_FILES) break;
+        imageFiles.push(file);
+        imageUrls.push(URL.createObjectURL(file));
+      }
+      renderPreview();
+    }
+
+    function removeFile(idx) {
+      URL.revokeObjectURL(imageUrls[idx]);
+      imageFiles.splice(idx, 1);
+      imageUrls.splice(idx, 1);
+      renderPreview();
+    }
+
+    function moveFile(from, to) {
+      if (to < 0 || to >= imageFiles.length) return;
+      [imageFiles[from], imageFiles[to]] = [imageFiles[to], imageFiles[from]];
+      [imageUrls[from], imageUrls[to]] = [imageUrls[to], imageUrls[from]];
+      renderPreview();
+    }
+
+    function renderPreview() {
+      previewGrid.innerHTML = '';
+      imageUrls.forEach((url, i) => {
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.draggable = true;
+        item.dataset.idx = i;
+
+        const img = document.createElement('img');
+        img.src = url;
+
+        const num = document.createElement('div');
+        num.className = 'preview-num';
+        num.textContent = i + 1;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'preview-remove';
+        removeBtn.textContent = '\u00d7';
+        removeBtn.onclick = (e) => { e.stopPropagation(); removeFile(i); };
+
+        item.appendChild(img);
+        item.appendChild(num);
+        item.appendChild(removeBtn);
+        previewGrid.appendChild(item);
+
+        // --- Drag & drop reorder ---
+        item.addEventListener('dragstart', e => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', i);
+          item.classList.add('dragging');
+        });
+        item.addEventListener('dragend', () => item.classList.remove('dragging'));
+        item.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          item.classList.add('dragover-item');
+        });
+        item.addEventListener('dragleave', () => item.classList.remove('dragover-item'));
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          item.classList.remove('dragover-item');
+          const from = parseInt(e.dataTransfer.getData('text/plain'));
+          const to = parseInt(item.dataset.idx);
+          if (from !== to) moveFile(from, to);
+        });
+
+        // --- Touch reorder (long press to pick, tap to place) ---
+        let longTimer = null;
+        let touchDragging = null;
+        item.addEventListener('touchstart', e => {
+          longTimer = setTimeout(() => {
+            touchDragging = i;
+            item.classList.add('dragging');
+          }, 400);
+        }, { passive: true });
+        item.addEventListener('touchend', () => {
+          clearTimeout(longTimer);
+          if (touchDragging !== null) {
+            item.classList.remove('dragging');
+            touchDragging = null;
+          }
+        });
+        item.addEventListener('touchmove', () => { clearTimeout(longTimer); }, { passive: true });
+
+        item.addEventListener('click', () => {
+          if (touchDragging !== null && touchDragging !== i) {
+            moveFile(touchDragging, i);
+            touchDragging = null;
+            item.classList.remove('dragging');
+          }
+        });
+      });
+    }
+
+    // Upload zone: append files (not replace)
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
     zone.addEventListener('drop', e => {
       e.preventDefault(); zone.classList.remove('dragover');
-      fileInput.files = e.dataTransfer.files;
-      updatePreview(e.dataTransfer.files);
+      addFiles(e.dataTransfer.files);
     });
-    fileInput.addEventListener('change', e => updatePreview(e.target.files));
-
-    function updatePreview(files) {
-      previewGrid.innerHTML = '';
-      for (const file of files) {
-        const item = document.createElement('div'); item.className = 'preview-item';
-        const img = document.createElement('img'); img.src = URL.createObjectURL(file);
-        const removeBtn = document.createElement('button'); removeBtn.className = 'preview-remove';
-        removeBtn.textContent = '\u00d7';
-        removeBtn.onclick = () => item.remove();
-        item.appendChild(img); item.appendChild(removeBtn); previewGrid.appendChild(item);
-      }
-    }
+    fileInput.addEventListener('change', e => {
+      addFiles(e.target.files);
+      fileInput.value = '';
+    });
 
     function setStatus(text, type) {
       const el = document.getElementById('status'); el.textContent = text; el.className = 'status ' + type;
     }
 
     async function generateCollage() {
-      const files = document.getElementById('fileInput').files;
       const name = document.getElementById('nameInput').value;
       const date = document.getElementById('dateInput').value;
       const btn = document.getElementById('submitBtn');
 
-      if (!files.length) {
+      if (!imageFiles.length) {
         setStatus('กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
         return;
       }
@@ -292,7 +394,7 @@
         fd.append('name', name);
         fd.append('date', date);
         fd.append('preset', selectedPreset);
-        for (const f of files) fd.append('images', f);
+        for (const f of imageFiles) fd.append('images', f);
 
         const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
           method: 'POST',
