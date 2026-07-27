@@ -31,7 +31,7 @@ const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
 const THEMES = {
   sun: { g: ['#DC2626','#EF4444','#F87171'], d: '#FBBF24', tc: '#fff', bg: '#FEF2F2' },
-  mon: { g: ['#B45309','#D97706','#FBBF24'], d: '#92400E', tc: '#fff', bg: '#FFFBEB' },
+  mon: { g: ['#854D0E','#CA8A04','#FACC15'], d: '#A16207', tc: '#fff', bg: '#FEFCE8' },
   tue: { g: ['#BE185D','#EC4899','#F472B6'], d: '#FDE68A', tc: '#fff', bg: '#FDF2F8' },
   wed: { g: ['#047857','#059669','#34D399'], d: '#FCD34D', tc: '#fff', bg: '#ECFDF5' },
   thu: { g: ['#C2410C','#EA580C','#FB923C'], d: '#FED7AA', tc: '#fff', bg: '#FFF7ED' },
