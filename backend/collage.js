@@ -30,13 +30,13 @@ const MONTHS = [
 const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
 const THEMES = {
-  sun: { g: ['#3B050A','#8F1018','#B81E28'], d: '#F0B400', tc: '#fff', bg: '#F5ECEC' },
-  mon: { g: ['#4A3000','#8B6914','#C9A96E'], d: '#8B4513', tc: '#fff', bg: '#F5F0E8' },
-  tue: { g: ['#4A0E2E','#8B1A5E','#C4448E'], d: '#FFD700', tc: '#fff', bg: '#F5ECF0' },
-  wed: { g: ['#043528','#0A6B53','#0E8F6E'], d: '#F4C430', tc: '#fff', bg: '#ECF5F0' },
-  thu: { g: ['#4A1500','#8B3A0E','#C86A2C'], d: '#E8A020', tc: '#fff', bg: '#F5EEE8' },
-  fri: { g: ['#052040','#0B3C87','#1A5FBF'], d: '#5AAEFF', tc: '#fff', bg: '#ECF0F5' },
-  sat: { g: ['#2A0F4A','#6B2FB8','#9B5FE0'], d: '#FFB6FF', tc: '#fff', bg: '#F0ECF5' },
+  sun: { g: ['#DC2626','#EF4444','#F87171'], d: '#FBBF24', tc: '#fff', bg: '#FEF2F2' },
+  mon: { g: ['#B45309','#D97706','#FBBF24'], d: '#92400E', tc: '#fff', bg: '#FFFBEB' },
+  tue: { g: ['#BE185D','#EC4899','#F472B6'], d: '#FDE68A', tc: '#fff', bg: '#FDF2F8' },
+  wed: { g: ['#047857','#059669','#34D399'], d: '#FCD34D', tc: '#fff', bg: '#ECFDF5' },
+  thu: { g: ['#C2410C','#EA580C','#FB923C'], d: '#FED7AA', tc: '#fff', bg: '#FFF7ED' },
+  fri: { g: ['#1D4ED8','#3B82F6','#60A5FA'], d: '#BFDBFE', tc: '#fff', bg: '#EFF6FF' },
+  sat: { g: ['#7C3AED','#8B5CF6','#A78BFA'], d: '#DDD6FE', tc: '#fff', bg: '#F5F3FF' },
 };
 
 const THEME_NAMES = {
