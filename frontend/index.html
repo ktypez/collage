@@ -13,43 +13,46 @@
   <meta name="twitter:card" content="summary_large_image">
   <title>สร้างรูปคอลลาจ - Collage Maker</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #fafafa;
-      --bg-muted: #f4f4f5;
+      --bg: #f8f8f8;
+      --bg-muted: #f2f2f2;
       --surface: #ffffff;
-      --foreground: #18181b;
-      --foreground-muted: #71717a;
-      --border: #e4e4e7;
-      --border-hover: #a1a1aa;
-      --ring: #18181b;
-      --primary: #18181b;
-      --primary-foreground: #fafafa;
+      --foreground: #2c2c2e;
+      --foreground-muted: #6e6e73;
+      --border: #e5e5ea;
+      --border-hover: #b5b5bd;
+      --ring: #2c2c2e;
+      --primary: #2c2c2e;
+      --primary-foreground: #ffffff;
       --destructive: #ef4444;
       --success-bg: #f0fdf4;
       --warning-bg: #fefce8;
       --error-bg: #fef2f2;
-      --radius: 0.625rem;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 0.75rem;
+      --font-sans: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #09090b;
-        --bg-muted: #18181b;
-        --surface: #09090b;
-        --foreground: #fafafa;
-        --foreground-muted: #a1a1aa;
-        --border: #27272a;
-        --border-hover: #52525b;
-        --ring: #d4d4d8;
-        --primary: #fafafa;
-        --primary-foreground: #18181b;
-        --success-bg: #052e16;
-        --warning-bg: #422006;
-        --error-bg: #450a0a;
+        --bg: #121214;
+        --bg-muted: #1c1c1e;
+        --surface: #1c1c1e;
+        --foreground: #f5f5f7;
+        --foreground-muted: #98989f;
+        --border: #2c2c2e;
+        --border-hover: #56565d;
+        --ring: #e5e5ea;
+        --primary: #f5f5f7;
+        --primary-foreground: #1c1c1e;
+        --success-bg: #062c1d;
+        --warning-bg: #2a2305;
+        --error-bg: #2a0a0a;
       }
     }
 
@@ -58,15 +61,16 @@
       background: var(--bg);
       color: var(--foreground);
       padding: 16px;
-      line-height: 1.5;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .container { max-width: 420px; margin: 0 auto; }
 
     .header { text-align: center; margin-bottom: 16px; padding: 12px 0 8px; }
-    .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 2px; }
-    .header p { font-size: 13px; color: var(--foreground-muted); }
+    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.01em; margin-bottom: 2px; }
+    .header p { font-size: 13px; font-weight: 400; color: var(--foreground-muted); }
 
     .card {
       background: var(--surface);
@@ -76,14 +80,14 @@
       margin-bottom: 10px;
     }
 
-    .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--foreground); }
-    .label-hint { font-weight: 400; color: var(--foreground-muted); font-size: 13px; }
+    .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--foreground); letter-spacing: 0.01em; }
+    .label-hint { font-weight: 300; color: var(--foreground-muted); font-size: 13px; }
 
     .input {
       width: 100%; padding: 12px 14px;
       border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--bg); color: var(--foreground);
-      font-size: 16px; font-family: var(--font-sans);
+      font-size: 16px; font-weight: 400; font-family: var(--font-sans);
       outline: none; transition: border-color 0.15s, box-shadow 0.15s;
       margin-bottom: 16px;
     }
@@ -106,8 +110,8 @@
       background: var(--bg-muted); display: flex; align-items: center; justify-content: center;
     }
     .upload-icon svg { width: 18px; height: 18px; stroke: var(--foreground-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .upload-text { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
-    .upload-hint { font-size: 12px; color: var(--foreground-muted); }
+    .upload-text { font-size: 14px; font-weight: 500; margin-bottom: 2px; letter-spacing: 0.01em; }
+    .upload-hint { font-size: 12px; font-weight: 300; color: var(--foreground-muted); }
 
     .preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
     .preview-grid:empty { display: none; }
@@ -140,12 +144,12 @@
     }
     .theme-btn:hover { transform: scale(1.1); }
     .theme-btn.active { border-color: var(--foreground); box-shadow: 0 0 0 2px var(--bg); }
-    .theme-label { font-size: 13px; color: var(--foreground-muted); margin-bottom: 16px; }
+    .theme-label { font-size: 13px; font-weight: 300; color: var(--foreground-muted); margin-bottom: 16px; }
 
     .btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       width: 100%; padding: 14px 16px; border: none; border-radius: var(--radius);
-      font-size: 16px; font-weight: 500; font-family: var(--font-sans);
+      font-size: 16px; font-weight: 500; font-family: var(--font-sans); letter-spacing: 0.01em;
       cursor: pointer; transition: background 0.15s, opacity 0.15s, transform 0.1s;
     }
     .btn:active { transform: scale(0.98); }
@@ -155,7 +159,7 @@
 
     .status {
       text-align: center; padding: 10px 12px; margin-top: 12px;
-      border-radius: var(--radius); font-size: 13px; font-weight: 500; display: none;
+      border-radius: var(--radius); font-size: 13px; font-weight: 400; display: none;
     }
     .status.loading { display: block; background: var(--warning-bg); }
     .status.success { display: block; background: var(--success-bg); }
