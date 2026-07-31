@@ -40,8 +40,9 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
     const name = (req.body.name || '').trim();
     const date = (req.body.date || '').trim();
     const preset = (req.body.preset || '').trim() || undefined;
+    const theme = (req.body.theme || '').trim() || undefined;
 
-    const buffer = await createCollage(files, name, date, preset);
+    const buffer = await createCollage(files, name, date, preset, theme);
 
     const filename = `collage-${Date.now()}.jpg`;
     await uploadCollage(buffer, filename);

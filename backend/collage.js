@@ -149,9 +149,17 @@ async function roundImage(buf, w, h, contentW) {
   return { buf: rounded, w: rmeta.width, h: rmeta.height };
 }
 
-export async function createCollage(files, name, date, preset) {
+export async function createCollage(files, name, date, preset, theme) {
   date = fmtDate(date);
   if (!preset || !THEMES[preset]) preset = defaultPreset();
+
+  // Themed rendering (rack/crt/noc) — min/default keeps the original renderer
+  const themeId = String(theme || '').toLowerCase();
+  const themedManifest = THEME_MANIFESTS[themeId];
+  if (themedManifest) {
+    return createThemedCollage(files, name, date, preset, themedManifest);
+  }
+
   const t = THEMES[preset];
   const count = files.length;
 
@@ -231,3 +239,83 @@ export async function createCollage(files, name, date, preset) {
 
   return base.composite(composites).sharpen({ sigma: 1.5 }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
 }
+
+/* =============================================================================
+   THEMED RENDERING (rack / crt / noc)
+   -----------------------------------------------------------------------------
+   Same masonry layout + image pipeline as above, but the visual chrome
+   (background, header, cell frames, overlays, photo fx) comes from the
+   theme MANIFEST via sharp-renderer.js — the same manifest the client canvas
+   uses. min / default keeps the original day-gradient renderer above.
+   ============================================================================= */
+export async function createThemedCollage(files, name, date, preset, manifest) {
+  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
+  const count = files.length;
+  const c = cols(count);
+  const usable = W - PS * 2;
+  const cardW = Math.floor((usable - G * (c - 1)) / c);
+  const iw = cardW - CP * 2;
+
+  const dims = metas.map(m => {
+    const w = m.width && m.width > 0 ? m.width : iw;
+    const h = m.height && m.height > 0 ? m.height : iw;
+    const ih = Math.round(iw * h / w) || iw;
+    return { iw, ih, ch: ih + CP * 2 };
+  });
+
+  const colHeights = new Array(c).fill(0);
+  const placements = [];
+  for (let i = 0; i < count; i++) {
+    const colIdx = colHeights.indexOf(Math.min(...colHeights));
+    const x = PS + colIdx * (cardW + G);
+    const y = colHeights[colIdx];
+    placements.push({ colIdx, x, y, ch: dims[i].ch });
+    colHeights[colIdx] += dims[i].ch + G;
+  }
+
+  const contentH = Math.max(...colHeights) - G;
+  const rest = contentH + DH + PT + PB;
+  const totalH = HEADER_H + rest;
+  const contentY = HEADER_H + DH + PT;
+
+  // pixel-space card rects (for sharp-renderer)
+  const cards = placements.map(p => ({ x: p.x, y: contentY + p.y, w: cardW, h: p.ch }));
+
+  // 1. backdrop: bg gradient/flat + header + cell chips
+  const backdropSVG = renderBackdrop(manifest, { W, H: totalH, headerH: HEADER_H, name, date, cards });
+  const backdrop = await sharp(backdropSVG).png().toBuffer();
+
+  // 2. photos (rounded + optional photoFx)
+  const fx = getPhotoFx(manifest);
+  const imgs = [];
+  for (let i = 0; i < count; i++) {
+    const rounded = await roundImage(files[i].path, metas[i].width, metas[i].height, dims[i].iw);
+    let buf = rounded.buf;
+    if (fx) buf = await sharp(buf).modulate(fx).png().toBuffer();
+    const cx = placements[i].x + CP + Math.max(0, Math.round((dims[i].iw - rounded.w) / 2));
+    const cy = contentY + placements[i].y + CP + Math.max(0, Math.round((dims[i].ih - rounded.h) / 2));
+    imgs.push({ input: buf, top: cy, left: cx });
+  }
+
+  // 3. foreground: cell borders + labels + overlays + accent
+  const fgSVG = renderForeground(manifest, { W, H: totalH, cards, preset: manifest.canvas.presetAccent ? preset : null });
+
+  // 4. compose
+  let base = sharp(backdrop).composite(imgs);
+  if (fgSVG) base = base.composite([{ input: fgSVG }]);
+  return base.sharpen({ sigma: 1.5 }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
+}
+
+/* =============================================================================
+   Theme registry (from design-system — the SAME manifests as the client)
+   ============================================================================= */
+const THEME_MANIFESTS = {};
+try {
+  for (const id of ['rack', 'crt', 'noc']) {
+    const { manifest } = await import(`./design-system/themes/${id}/manifest.js`);
+    if (manifest) THEME_MANIFESTS[id] = manifest;
+  }
+} catch (e) {
+  console.error('[collage] theme manifest load failed:', e.message);
+}
+const { renderBackdrop, renderForeground, getPhotoFx } = await import('./design-system/core/sharp-renderer.js');

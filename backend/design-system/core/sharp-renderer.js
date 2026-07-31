@@ -1,0 +1,229 @@
+/* =============================================================================
+   core/sharp-renderer.js — production renderer (sharp)
+   -----------------------------------------------------------------------------
+   Reads the SAME theme manifest as the client canvas-renderer and produces a
+   collage with sharp (SVG composites + modulate). Used by backend collage.js.
+
+   Theme canvas pipeline (mirrored here):
+     backdrop  = bg + header + cell chip backgrounds      → SVG → PNG
+     photos    = rounded images (with optional photoFx)   → sharp composite
+     foreground= cell borders + labels + overlays + accent → SVG → PNG
+   ============================================================================= */
+
+import sharp from 'sharp';
+import opentype from 'opentype.js';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { DAY_PRESETS, DAY_NAMES } from '../engine/layout.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+let monoFont = null;
+let displayFont = null;
+try {
+  monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
+} catch {}
+try {
+  displayFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/VT323-Regular.ttf')));
+} catch {}
+
+/* =============================================================================
+   helpers
+   ============================================================================= */
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function pickFont(manifest) {
+  const header = manifest.canvas.header || {};
+  if (header.font === 'display' && displayFont) return displayFont;
+  return monoFont;
+}
+
+/** Draw text as SVG path (opentype), centered or left-aligned */
+function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff' }) {
+  const path = font.getPath(text, 0, 0, size).toSVG(2);
+  const w = font.getAdvanceWidth(text, size);
+  const tx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  // y is baseline
+  return `<g fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+}
+
+function hexToRgba(hex, alpha = 1) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+/* =============================================================================
+   BACKGROUND (bg gradient/flat + header text)
+   ============================================================================= */
+export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
+  const c = manifest.canvas;
+  const svg = [];
+
+  // --- base background ---
+  const bg = c.bg;
+  if (bg && typeof bg === 'string') {
+    svg.push(`<rect width="${W}" height="${H}" fill="${bg}"/>`);
+  } else if (bg && bg.gradient) {
+    const stops = bg.gradient.map((s, i) =>
+      `<stop offset="${(i / (bg.gradient.length - 1)) * 100}%" stop-color="${s}"/>`).join('');
+    const vert = bg.vertical !== false;
+    const gid = 'bg';
+    svg.push(`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="${vert ? 0 : 1}" y2="${vert ? 1 : 0}">${stops}</linearGradient></defs>`);
+    svg.push(`<rect width="${W}" height="${H}" fill="url(#${gid})"/>`);
+  } else {
+    svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
+  }
+
+  // --- header (theme header text + name/date) ---
+  const h = c.header;
+  if (h) {
+    const font = pickFont(manifest);
+    const hs = h.size || 40;
+    const pad = h.pad ?? 40;
+    const color = h.color || '#fff';
+    // theme title (e.g. STACK//FRAME · RACK 01)
+    svg.push(textPathSVG(h.text || '', font, hs, { x: pad, y: pad + hs * 0.75, color }));
+    // name + date below (small)
+    if (font) {
+      const ns = Math.max(26, hs * 0.45);
+      let yy = pad + hs + 46;
+      if (name) { svg.push(textPathSVG(name, font, ns, { x: pad, y: yy, color })); yy += ns + 10; }
+      if (date) { svg.push(textPathSVG(date, font, ns * 0.8, { x: pad, y: yy, color: hexToRgba(color, 0.85) })); }
+    }
+  }
+
+  // --- cell chip backgrounds (behind photos) ---
+  const cell = c.cell || {};
+  if (cell.bg) {
+    for (const card of cards) {
+      svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" fill="${cell.bg}"/>`);
+    }
+  }
+
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${svg.join('')}</svg>`);
+}
+
+/* =============================================================================
+   FOREGROUND (cell borders + labels + overlays + accent strip)
+   ============================================================================= */
+export function renderForeground(manifest, { W, H, cards, preset }) {
+  const c = manifest.canvas;
+  const cell = c.cell || {};
+  const parts = [];
+
+  // --- cell borders ---
+  if (cell.border && cell.width) {
+    for (const card of cards) {
+      const bw = cell.width;
+      const rounded = cell.rounded ? `rx="${cell.rounded}"` : '';
+      parts.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" ${rounded} fill="none" stroke="${cell.border}" stroke-width="${bw}"/>`);
+    }
+  }
+
+  // --- cell labels (UNIT 01 / P1 / 01) ---
+  if (cell.label) {
+    const font = monoFont;
+    if (font) {
+      const ls = 26;
+      const pad = 10;
+      const lh = 34;
+      cards.forEach((card, i) => {
+        const text = cell.label === true
+          ? String(i + 1).padStart(2, '0')
+          : String(cell.label).replace('{n}', String(i + 1).padStart(2, '0'));
+        const labelBg = cell.labelBg ?? 'rgba(0,0,0,0.55)';
+        const labelColor = cell.labelColor ?? '#fff';
+        const align = cell.labelAlign || 'right';
+        const w = font.getAdvanceWidth(text, ls) + pad * 2;
+        const x = align === 'left' ? card.x : card.x + card.w - w;
+        const y = card.y + card.h - lh;
+        parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${lh}" fill="${labelBg}"/>`);
+        parts.push(textPathSVG(text, font, ls, { x: x + pad, y: y + lh - 8, color: labelColor }));
+      });
+    }
+  }
+
+  // --- overlays ---
+  const ov = c.overlay;
+  const ovList = Array.isArray(ov) ? ov : ov ? [ov] : ['none'];
+  const ovOpts = c.overlayOpts || {};
+  ovList.forEach((name) => {
+    const o = ovOpts[name] || {};
+    if (name === 'scanline') {
+      const spacing = o.spacing ?? 4;
+      const alpha = o.alpha ?? 0.18;
+      let lines = '';
+      for (let y = 0; y < H; y += spacing) {
+        lines += `<rect y="${y}" width="${W}" height="1" fill="rgba(0,0,0,${alpha})"/>`;
+      }
+      parts.push(lines);
+    } else if (name === 'vignette') {
+      const intensity = o.intensity ?? 0.55;
+      const r = Math.round(Math.max(W, H) * 0.75);
+      parts.push(`<defs><radialGradient id="vig" cx="50%" cy="50%" r="70%">
+        <stop offset="55%" stop-color="rgba(0,0,0,0)"/>
+        <stop offset="100%" stop-color="rgba(0,0,0,${intensity})"/>
+      </radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vig)"/>`);
+    } else if (name === 'grid') {
+      const spacing = o.spacing ?? 60;
+      const color = o.color ?? 'rgba(0,212,255,0.05)';
+      let grid = '';
+      for (let x = 0; x <= W; x += spacing) grid += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${color}" stroke-width="1"/>`;
+      for (let y = 0; y <= H; y += spacing) grid += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${color}" stroke-width="1"/>`;
+      parts.push(grid);
+    } else if (name === 'connectors') {
+      const color = o.color ?? 'rgba(0,212,255,0.30)';
+      if (cards.length) {
+        const cx = W / 2, cy = Math.round(H * 0.55);
+        let conn = '';
+        for (const card of cards) {
+          const mx = card.x + card.w / 2;
+          const my = card.y + card.h / 2;
+          conn += `<line x1="${mx}" y1="${my}" x2="${cx + (mx - cx) * 0.25}" y2="${cy + (my - cy) * 0.25}" stroke="${color}" stroke-width="2"/>`;
+        }
+        conn += `<circle cx="${cx}" cy="${cy}" r="10" fill="${color}"/>`;
+        parts.push(conn);
+      }
+    }
+  });
+
+  // --- accent strip (min theme / presetAccent) ---
+  if (c.presetAccent && preset) {
+    const stopsArr = DAY_PRESETS[preset];
+    if (stopsArr) {
+      const stripH = Math.max(14, Math.round(H * 0.02));
+      const stops = stopsArr.map((s, i) =>
+        `<stop offset="${(i / (stopsArr.length - 1)) * 100}%" stop-color="${s}"/>`).join('');
+      parts.push(`<defs><linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient></defs>`);
+      parts.push(`<rect y="${H - stripH}" width="${W}" height="${stripH}" fill="url(#acc)"/>`);
+      if (monoFont) {
+        const label = `// ${DAY_NAMES[preset] || preset}`;
+        parts.push(textPathSVG(label, monoFont, 24, {
+          x: W - 20, y: H - stripH / 2 + 8, align: 'right', color: 'rgba(0,0,0,0.55)',
+        }));
+      }
+    }
+  }
+
+  if (!parts.length) return null;
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join('')}</svg>`);
+}
+
+/* =============================================================================
+   PHOTO FX — map manifest.canvas.photoFx CSS filter → sharp.modulate params
+   ============================================================================= */
+export function getPhotoFx(manifest) {
+  const fx = manifest.canvas.photoFx;
+  if (!fx) return null;
+  const m = { saturation: 1, brightness: 1 };
+  const sat = fx.match(/saturate\(([\d.]+)\)/);
+  const bri = fx.match(/brightness\(([\d.]+)\)/);
+  if (sat) m.saturation = parseFloat(sat[1]);
+  if (bri) m.brightness = parseFloat(bri[1]);
+  if (m.saturation === 1 && m.brightness === 1) return null;
+  return m;
+}
