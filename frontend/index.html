@@ -133,6 +133,31 @@
       margin: 0 auto 4px; background: var(--accent);
     }
 
+    /* === THEME OUTPUT PREVIEW === */
+    .theme-preview { margin-bottom: 14px; }
+    .tp-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 6px;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--fg-dim); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .tp-head .tp-label::before { content: '◈ '; color: var(--accent); }
+    .tp-head .tp-name { color: var(--accent); letter-spacing: 0.05em; }
+    .tp-box {
+      width: 100%; max-width: 220px; aspect-ratio: 1;
+      margin: 0 auto;
+      border-radius: 6px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-2);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .tp-box svg { display: block; width: 100%; height: 100%; }
+    .tp-caption {
+      margin-top: 6px; text-align: center;
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--fg-dim); letter-spacing: 0.05em;
+    }
+
     /* === KPI GRID === */
     .kpi-grid {
       display: grid;
@@ -599,6 +624,16 @@
       </button>
     </div>
 
+    <!-- THEME OUTPUT PREVIEW -->
+    <div class="theme-preview">
+      <div class="tp-head">
+        <span class="tp-label">OUTPUT PREVIEW</span>
+        <span class="tp-name" id="tpName">collage.sh</span>
+      </div>
+      <div class="tp-box" id="tpBox"></div>
+      <div class="tp-caption">// ตัวอย่างผลลัพธ์ — รูปจริงจะถูกจัดวางในสไตล์นี้</div>
+    </div>
+
     <div class="kpi-grid">
       <div class="kpi green">
         <div class="k-label">PHOTO NODES</div>
@@ -711,11 +746,146 @@
         document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedPreset = btn.dataset.preset;
+        updateThemePreview(); // re-render min accent strip
       });
     });
 
     // --- Brand theme selector (output style: rack/crt/noc/min) ---
     // default = min (collage.sh) — backward compatible with legacy day-gradient
+    // --- Theme output preview (SVG mockup of what the collage will look like) ---
+    const TP = {
+      rack: {
+        name: 'STACK//FRAME',
+        bg: ['#2a2a30', '#1c1c20', '#2a2a30'],
+        rail: true, leds: true,
+        cell: { border: '#3a3a42', width: 2, label: 'UNIT' },
+        fills: ['#4a4a55', '#3f3f4a', '#565660', '#494955'],
+        header: '#ffb000',
+      },
+      crt: {
+        name: 'PIXSH v1.0',
+        bg: '#0a0a0a',
+        bezel: true, scanline: true, vignette: true,
+        cell: { border: '#003318', width: 2, label: '' },
+        fills: ['#0d3b2a', '#115540', '#0b3022', '#0f4a33'],
+        header: '#00ff66',
+      },
+      noc: {
+        name: 'PACKETGRID',
+        bg: '#0a0e14',
+        grid: true, connectors: true,
+        cell: { border: '#1f2733', width: 1.5, label: 'P' },
+        fills: ['#14202e', '#182838', '#101a26', '#1c2e40'],
+        header: '#00d4ff',
+      },
+      min: {
+        name: 'collage.sh',
+        bg: '#fafafa',
+        accent: true,
+        cell: { border: '#e5e5e8', width: 1, label: '' },
+        fills: ['#e8e8ec', '#dcdce2', '#f0f0f4', '#e2e2e8'],
+        header: '#16161a',
+      },
+    };
+    const DAY_GRAD = {
+      sun: ['#DC2626', '#F87171'], mon: ['#854D0E', '#FACC15'], tue: ['#BE185D', '#F472B6'],
+      wed: ['#047857', '#34D399'], thu: ['#C2410C', '#FB923C'], fri: ['#1D4ED8', '#60A5FA'],
+      sat: ['#7C3AED', '#A78BFA'],
+    };
+
+    function buildPreviewSVG(theme) {
+      const t = TP[theme] || TP.min;
+      const W = 200, H = 200;
+      const cells = [{ x: 14, y: 34 }, { x: 102, y: 34 }, { x: 14, y: 122 }, { x: 102, y: 122 }];
+      let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+      // background
+      if (Array.isArray(t.bg)) {
+        s += `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">` +
+          t.bg.map((c, i) => `<stop offset="${(i / (t.bg.length - 1)) * 100}%" stop-color="${c}"/>`).join('') +
+          `</linearGradient></defs><rect width="${W}" height="${H}" fill="url(#bg)"/>`;
+      } else {
+        s += `<rect width="${W}" height="${H}" fill="${t.bg}"/>`;
+      }
+
+      // header
+      s += `<text x="12" y="22" font-family="monospace" font-size="11" font-weight="700" fill="${t.header}">${t.name}</text>`;
+
+      // rack rails + screws
+      if (t.rail) {
+        s += `<rect x="0" y="0" width="8" height="${H}" fill="#0a0a0c"/><rect x="${W - 8}" y="0" width="8" height="${H}" fill="#0a0a0c"/>`;
+        for (let y = 20; y < H; y += 30) {
+          s += `<circle cx="4" cy="${y}" r="1.5" fill="#5a5a63"/><circle cx="${W - 4}" cy="${y}" r="1.5" fill="#5a5a63"/>`;
+        }
+      }
+
+      // photo cells
+      cells.forEach((c, i) => {
+        s += `<rect x="${c.x}" y="${c.y}" width="84" height="84" rx="4" fill="${t.fills[i]}"/>`;
+        if (t.cell.border) {
+          s += `<rect x="${c.x}" y="${c.y}" width="84" height="84" rx="4" fill="none" stroke="${t.cell.border}" stroke-width="${t.cell.width}"/>`;
+        }
+        if (t.cell.label) {
+          const label = t.cell.label === 'UNIT' ? 'U' + String(i + 1).padStart(2, '0') : t.cell.label + (i + 1);
+          s += `<text x="${c.x + 6}" y="${c.y + 76}" font-family="monospace" font-size="9" fill="${theme === 'noc' ? '#00d4ff' : 'rgba(255,255,255,0.8)'}">${label}</text>`;
+        }
+      });
+
+      // noc grid + connectors
+      if (t.grid) {
+        for (let x = 20; x < W; x += 20) s += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="rgba(0,212,255,0.07)"/>`;
+        for (let y = 20; y < H; y += 20) s += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(0,212,255,0.07)"/>`;
+      }
+      if (t.connectors) {
+        const cx = 100, cy = 140;
+        cells.forEach((c) => {
+          const mx = c.x + 42, my = c.y + 42;
+          s += `<line x1="${mx}" y1="${my}" x2="${cx + (mx - cx) * 0.25}" y2="${cy + (my - cy) * 0.25}" stroke="rgba(0,212,255,0.35)"/>`;
+        });
+        s += `<circle cx="${cx}" cy="${cy}" r="5" fill="rgba(0,212,255,0.6)"/>`;
+      }
+
+      // crt bezel + scanline + vignette
+      if (t.bezel) {
+        s += `<rect x="2" y="2" width="${W - 4}" height="${H - 4}" rx="6" fill="none" stroke="#151515" stroke-width="7"/>`;
+      }
+      if (t.scanline) {
+        s += `<defs><pattern id="scan" width="2" height="3" patternUnits="userSpaceOnUse"><rect width="2" height="1" fill="rgba(0,0,0,0.18)"/></pattern></defs>`;
+        s += `<rect width="${W}" height="${H}" fill="url(#scan)"/>`;
+      }
+      if (t.vignette) {
+        s += `<defs><radialGradient id="vig" cx="50%" cy="50%" r="70%"><stop offset="55%" stop-color="rgba(0,0,0,0)"/><stop offset="100%" stop-color="rgba(0,0,0,0.5)"/></radialGradient></defs>`;
+        s += `<rect width="${W}" height="${H}" fill="url(#vig)"/>`;
+      }
+
+      // rack LEDs
+      if (t.leds) {
+        const cols = ['#00ff66', '#ffb000', '#00d4ff', '#00ff66'];
+        cols.forEach((c, i) => {
+          s += `<circle cx="${W - 14 - i * 12}" cy="14" r="3" fill="${c}" opacity="${i % 2 ? '0.6' : '1'}"/>`;
+        });
+      }
+
+      // min accent strip (day preset)
+      if (t.accent) {
+        const stops = DAY_GRAD[selectedPreset] || DAY_GRAD.wed;
+        s += `<defs><linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">` +
+          stops.map((c, i) => `<stop offset="${(i / (stops.length - 1)) * 100}%" stop-color="${c}"/>`).join('') +
+          `</linearGradient></defs>`;
+        s += `<rect y="${H - 10}" width="${W}" height="10" fill="url(#acc)"/>`;
+      }
+
+      s += `</svg>`;
+      return s;
+    }
+
+    function updateThemePreview() {
+      const t = TP[selectedTheme] || TP.min;
+      document.getElementById('tpName').textContent = t.name;
+      document.getElementById('tpBox').innerHTML = buildPreviewSVG(selectedTheme);
+    }
+    // initial + keep in sync
+    updateThemePreview();
     const BRAND_UI = {
       rack: { btn: 'DEPLOY TO /DEV/LINE', sending: 'deploying · routing to /api/collage', done: 'DEPLOYED · ACK received' },
       crt:  { btn: 'EXECUTE BUILD',        sending: 'compiling · routing to /api/collage', done: 'COMPILED · 200 OK' },
@@ -733,6 +903,7 @@
       const ui = BRAND_UI[selectedTheme] || BRAND_UI.min;
       submitLabel.textContent = ui.btn;
       dayPresetSection.style.display = selectedTheme === 'min' ? 'block' : 'none';
+      updateThemePreview();
     }
     document.querySelectorAll('.bchip').forEach(chip => {
       chip.addEventListener('click', () => {
@@ -742,6 +913,7 @@
       });
     });
     applyBrandTheme();
+
 
     // --- File management ---
     let imageFiles = [];
