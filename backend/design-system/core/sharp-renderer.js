@@ -21,11 +21,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let monoFont = null;
 let displayFont = null;
+let thaiFont = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
 } catch {}
 try {
   displayFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/VT323-Regular.ttf')));
+} catch {}
+try {
+  // Thai-capable font (backend root — for user name/date). Mono fonts have no Thai glyphs.
+  thaiFont = opentype.parse(readFileSync(resolve(__dirname, '../../NotoSansThai.ttf')));
 } catch {}
 
 /* =============================================================================
@@ -56,6 +61,17 @@ function hexToRgba(hex, alpha = 1) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+/** Detect if a theme's background is light (affects name/date text color) */
+function isLightBg(c) {
+  let first = null;
+  if (typeof c.bg === 'string') first = c.bg;
+  else if (c.bg && c.bg.gradient) first = c.bg.gradient[0];
+  if (!first) return false;
+  const n = parseInt(String(first).replace('#', ''), 16);
+  if (Number.isNaN(n)) return false;
+  return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 450; // avg > 150
+}
+
 /* =============================================================================
    BACKGROUND (bg gradient/flat + header text)
    ============================================================================= */
@@ -78,21 +94,28 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
-  // --- header (theme header text + name/date) ---
+  // --- header (theme title big + name/date with Thai-capable font) ---
   const h = c.header;
   if (h) {
-    const font = pickFont(manifest);
-    const hs = h.size || 40;
-    const pad = h.pad ?? 40;
+    const font = pickFont(manifest) || monoFont;
+    const nameFont = thaiFont || font;
+    const title = h.text || '';
     const color = h.color || '#fff';
-    // theme title (e.g. STACK//FRAME · RACK 01)
-    svg.push(textPathSVG(h.text || '', font, hs, { x: pad, y: pad + hs * 0.75, color }));
-    // name + date below (small)
-    if (font) {
-      const ns = Math.max(26, hs * 0.45);
-      let yy = pad + hs + 46;
-      if (name) { svg.push(textPathSVG(name, font, ns, { x: pad, y: yy, color })); yy += ns + 10; }
-      if (date) { svg.push(textPathSVG(date, font, ns * 0.8, { x: pad, y: yy, color: hexToRgba(color, 0.85) })); }
+    const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
+    const pad = Math.round(headerH * 0.06); // ~26
+
+    // theme title — big, top third
+    const titleSize = Math.round(headerH * 0.2);       // ~88 @440
+    if (title) svg.push(textPathSVG(title, font, titleSize, { x: pad, y: Math.round(headerH * 0.36), color }));
+
+    // name — middle (Thai-capable)
+    const nameSize = Math.round(headerH * 0.11);       // ~48 @440
+    if (name) svg.push(textPathSVG(name, nameFont, nameSize, { x: pad, y: Math.round(headerH * 0.62), color: textColor }));
+
+    // date — below name
+    if (date) {
+      const dateSize = Math.round(headerH * 0.085);    // ~37 @440
+      svg.push(textPathSVG(date, nameFont, dateSize, { x: pad, y: Math.round(headerH * 0.82), color: hexToRgba(textColor, 0.85) }));
     }
   }
 

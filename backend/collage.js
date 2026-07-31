@@ -298,12 +298,26 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
   }
 
   // 3. foreground: cell borders + labels + overlays + accent
+  //    (rasterize SVG → PNG first; composite over a FLATTENED base — compositing
+  //     an RGBA overlay over an RGBA base in sharp mangles transparent-black
+  //     pixels and erases the photos underneath. Must flatten in a SEPARATE step,
+  //     not a chain, otherwise sharp still produces dark output.)
   const fgSVG = renderForeground(manifest, { W, H: totalH, cards, preset: manifest.canvas.presetAccent ? preset : null });
 
-  // 4. compose
-  let base = sharp(backdrop).composite(imgs);
-  if (fgSVG) base = base.composite([{ input: fgSVG }]);
-  return base.sharpen({ sigma: 1.5 }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
+  // 4. compose — step 1: base + photos, flatten to RGB
+  let baseBuf = await sharp(backdrop)
+    .composite(imgs)
+    .flatten({ background: '#000000' })
+    .png()
+    .toBuffer();
+
+  // step 2: overlay foreground (transparent PNG over opaque RGB works correctly)
+  if (fgSVG) {
+    const fgPNG = await sharp(fgSVG).png().toBuffer();
+    baseBuf = await sharp(baseBuf).composite([{ input: fgPNG }]).png().toBuffer();
+  }
+
+  return sharp(baseBuf).sharpen({ sigma: 1.5 }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
 }
 
 /* =============================================================================
