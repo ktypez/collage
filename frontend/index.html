@@ -127,44 +127,6 @@
     .ochip.active .osub { color: var(--fg-muted); }
     .ochip:active { transform: scale(0.97); transition-duration: 0.1s; }
 
-    /* === KPI GRID === */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .kpi {
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-left: 2px solid var(--accent);
-      border-radius: 4px;
-      padding: 8px 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    .kpi.green { border-left-color: var(--accent-2); }
-    .kpi.amber { border-left-color: var(--warn); }
-    .kpi .k-label {
-      font-size: 8px;
-      color: var(--fg-dim);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-    .kpi .k-val {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--accent);
-      line-height: 1;
-      margin-bottom: 2px;
-      font-variant-numeric: tabular-nums;
-    }
-    .kpi.green .k-val { color: var(--accent-2); }
-    .kpi.amber .k-val { color: var(--warn); }
-    .kpi .k-delta { font-size: 9px; color: var(--fg-dim); }
-    .kpi .k-delta.ok { color: var(--accent-2); }
-
     /* === CARD === */
     .card {
       background: var(--bg-2);
@@ -216,6 +178,104 @@
     }
     .input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
     .input::placeholder { color: var(--fg-dim); }
+
+    /* === DATE PICKER === */
+    .date-wrap { position: relative; }
+    .date-wrap .input { padding-right: 44px; cursor: pointer; }
+    .date-toggle {
+      position: absolute;
+      top: 0; right: 0;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      border-left: 1px solid var(--border);
+    }
+    .date-toggle:hover { color: var(--accent-2); }
+    .date-toggle:active { transform: scale(0.95); }
+    .date-popup {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 10;
+      width: 280px;
+      max-width: calc(100vw - 32px);
+      background: var(--bg-2);
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      padding: 8px;
+      font-family: var(--font-mono);
+    }
+    .date-popup[hidden] { display: none; }
+    .cal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .cal-nav {
+      width: 44px; height: 32px;
+      background: none; border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .cal-nav:hover { border-color: var(--accent); }
+    .cal-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--fg);
+      text-transform: uppercase;
+    }
+    .cal-dow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
+    }
+    .cal-dow span {
+      font-size: 8px;
+      color: var(--fg-dim);
+      letter-spacing: 0.1em;
+      text-align: center;
+      padding: 4px 0;
+    }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-day {
+      min-height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .cal-day:hover { border-color: var(--border-bright); background: rgba(255,176,0,0.06); }
+    .cal-day.is-out { color: var(--fg-dim); opacity: 0.4; }
+    .cal-day.is-today { border-color: var(--accent-2); color: var(--accent-2); }
+    .cal-day.is-selected { background: var(--accent); color: #111114; font-weight: 700; }
+    .cal-today {
+      width: 100%;
+      margin-top: 8px;
+      min-height: 36px;
+      background: none; border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .cal-today:hover { border-color: var(--accent-2); }
+    @media (max-width: 480px) {
+      .date-popup { left: 50%; transform: translateX(-50%); }
+      .cal-day { min-height: 42px; }
+    }
 
     /* === DAY PRESETS === */
     .theme-grid { display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
@@ -422,7 +482,7 @@
     }
 
     /* === MOBILE / SAFE AREA / A11Y === */
-    .topbar, .header, .kpi, .label, .card-head, .footer, .preview-num, .theme-label, .upload-hint, .btn {
+    .topbar, .header, .label, .card-head, .footer, .preview-num, .theme-label, .upload-hint, .btn {
       -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
     }
     * { -webkit-tap-highlight-color: transparent; }
@@ -447,7 +507,6 @@
 
     @media (max-width: 480px) {
       body { padding: max(10px, env(safe-area-inset-top)) 10px max(40px, env(safe-area-inset-bottom)); }
-      .kpi .k-val { font-size: 14px; }
       .header h1 { font-size: 20px; }
     }
   </style>
@@ -480,29 +539,6 @@
       </button>
     </div>
 
-    <div class="kpi-grid">
-      <div class="kpi green">
-        <div class="k-label">PHOTO NODES</div>
-        <div class="k-val" id="kpi-photos">0/0</div>
-        <div class="k-delta ok">▲ ready</div>
-      </div>
-      <div class="kpi">
-        <div class="k-label">LATENCY</div>
-        <div class="k-val">12<span style="font-size:10px;color:var(--fg-dim)">ms</span></div>
-        <div class="k-delta">▼ -3ms vs avg</div>
-      </div>
-      <div class="kpi green">
-        <div class="k-label">PACKET LOSS</div>
-        <div class="k-val">0.0<span style="font-size:10px;color:var(--fg-dim)">%</span></div>
-        <div class="k-delta ok">● 0 drops</div>
-      </div>
-      <div class="kpi amber">
-        <div class="k-label">UPTIME</div>
-        <div class="k-val">99.99<span style="font-size:10px;color:var(--fg-dim)">%</span></div>
-        <div class="k-delta">▲ 247d streak</div>
-      </div>
-    </div>
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">SESSION / META</div>
@@ -511,7 +547,24 @@
       <label class="label" for="nameInput">NAME</label>
       <input class="input" type="text" id="nameInput" placeholder="ชื่อของคุณ" inputmode="text" autocapitalize="words" autocomplete="name">
       <label class="label" for="dateInput">DATE</label>
-      <input class="input" type="date" id="dateInput">
+      <div class="date-wrap">
+        <input class="input" type="text" id="dateInput" readonly placeholder="yyyy-mm-dd" autocomplete="off" aria-haspopup="dialog">
+        <button type="button" class="date-toggle" id="dateToggle" aria-label="เลือกวันที่" aria-expanded="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+        </button>
+        <div class="date-popup" id="datePopup" role="dialog" aria-label="เลือกวันที่" hidden>
+          <div class="cal-head">
+            <button type="button" class="cal-nav" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
+            <div class="cal-title" id="calTitle"></div>
+            <button type="button" class="cal-nav" id="calNext" aria-label="เดือนถัดไป">›</button>
+          </div>
+          <div class="cal-dow" aria-hidden="true">
+            <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <button type="button" class="cal-today" id="calToday">วันนี้</button>
+        </div>
+      </div>
       <div id="dayPresetSection">
         <label class="label">DAY-OF-WEEK PRESET <span class="label-hint">(เฉพาะ 7 DAYS)</span></label>
         <div class="theme-grid" id="presetPicker">
@@ -570,12 +623,104 @@
     if (savedName) nameInput.value = savedName;
     nameInput.addEventListener('input', () => localStorage.setItem('collage_name', nameInput.value));
 
+    /* ---- date picker (custom calendar) ---- */
+    const dateInput = document.getElementById('dateInput');
+    const datePopup = document.getElementById('datePopup');
+    const dateToggle = document.getElementById('dateToggle');
+    const calTitle = document.getElementById('calTitle');
+    const calGrid = document.getElementById('calGrid');
+    const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    let calYear, calMonth; // month 0-based
+    let selectedISO = null;
+
+    function isoToParts(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return { y, m: m - 1, d };
+    }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function setDateValue(iso) {
+      if (!iso) return;
+      selectedISO = iso;
+      const { y, m, d } = isoToParts(iso);
+      dateInput.value = d + ' ' + TH_MONTHS[m] + ' ' + y;
+      dateInput.dataset.iso = iso;
+      const dt = new Date(y, m, d);
+      calYear = dt.getFullYear();
+      calMonth = dt.getMonth();
+      renderCalendar();
+    }
+    function formatISO(y, m, d) { return y + '-' + pad2(m + 1) + '-' + pad2(d); }
+    function renderCalendar() {
+      calTitle.textContent = TH_MONTHS[calMonth] + ' ' + calYear;
+      const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0 = อาทิตย์
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const prevDays = new Date(calYear, calMonth, 0).getDate();
+      const today = new Date();
+      const todayISO = formatISO(today.getFullYear(), today.getMonth(), today.getDate());
+      let cells = '';
+      // days from previous month (grayed)
+      for (let i = firstDow - 1; i >= 0; i--) {
+        const d = prevDays - i;
+        const py = calMonth === 0 ? calYear - 1 : calYear;
+        const pm = calMonth === 0 ? 11 : calMonth - 1;
+        const iso = formatISO(py, pm, d);
+        cells += '<button type="button" class="cal-day is-out" data-iso="' + iso + '">' + d + '</button>';
+      }
+      // current month
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = formatISO(calYear, calMonth, d);
+        const cls = 'cal-day'
+          + (iso === todayISO ? ' is-today' : '')
+          + (iso === selectedISO ? ' is-selected' : '');
+        cells += '<button type="button" class="' + cls + '" data-iso="' + iso + '">' + d + '</button>';
+      }
+      calGrid.innerHTML = cells;
+    }
+    function openDatePopup() {
+      datePopup.hidden = false;
+      dateToggle.setAttribute('aria-expanded', 'true');
+      renderCalendar();
+    }
+    function closeDatePopup() {
+      datePopup.hidden = true;
+      dateToggle.setAttribute('aria-expanded', 'false');
+    }
+    function isDatePopupOpen() { return !datePopup.hidden; }
+
+    dateInput.addEventListener('click', () => isDatePopupOpen() ? closeDatePopup() : openDatePopup());
+    dateToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isDatePopupOpen() ? closeDatePopup() : openDatePopup();
+    });
+    document.getElementById('calPrev').addEventListener('click', () => {
+      calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar();
+    });
+    document.getElementById('calNext').addEventListener('click', () => {
+      calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar();
+    });
+    document.getElementById('calToday').addEventListener('click', () => {
+      setDateValue(formatISO(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
+      closeDatePopup();
+    });
+    calGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.cal-day');
+      if (!btn) return;
+      setDateValue(btn.dataset.iso);
+      closeDatePopup();
+    });
+    document.addEventListener('click', (e) => {
+      if (isDatePopupOpen() && !e.target.closest('.date-wrap')) closeDatePopup();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isDatePopupOpen()) closeDatePopup();
+    });
+
     /* ---- LIFF init ---- */
     liff.init({ liffId: LIFF_ID }).then(() => {
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
       }
-      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+      setDateValue(new Date().toISOString().split('T')[0]);
     }).catch(err => {
       setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
@@ -623,9 +768,6 @@
     const zone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const previewGrid = document.getElementById('previewGrid');
-    const kpiPhotos = document.getElementById('kpi-photos');
-
-    function updateKpi() { kpiPhotos.textContent = imageFiles.length + '/20'; }
 
     function addFiles(newFiles) {
       for (const file of newFiles) {
@@ -634,14 +776,12 @@
         imageUrls.push(URL.createObjectURL(file));
       }
       renderPreview();
-      updateKpi();
     }
     function removeFile(idx) {
       URL.revokeObjectURL(imageUrls[idx]);
       imageFiles.splice(idx, 1);
       imageUrls.splice(idx, 1);
       renderPreview();
-      updateKpi();
     }
     function moveFile(from, to) {
       if (to < 0 || to >= imageFiles.length) return;
@@ -763,7 +903,7 @@
     /* ---- generate + send ---- */
     async function generateCollage() {
       const name = document.getElementById('nameInput').value;
-      const date = document.getElementById('dateInput').value;
+      const date = document.getElementById('dateInput').dataset.iso || document.getElementById('dateInput').value;
       const btn = document.getElementById('submitBtn');
 
       if (!imageFiles.length) {
@@ -805,7 +945,6 @@
       }
     }
 
-    updateKpi();
   </script>
 </body>
 </html>
