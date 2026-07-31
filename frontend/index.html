@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-brand="min">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -27,31 +27,14 @@
        ============================================================ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #0a0e14;
-      --bg-2: #0f1419;
-      --bg-3: #141a22;
-      --surface: #161c25;
-      --border: #1f2733;
-      --border-bright: #2a3340;
-      --fg: #e6e9ef;
-      --fg-muted: #8b95a7;
-      --fg-dim: #5a6478;
-      --accent: #00d4ff;
-      --accent-2: #00ff9c;
-      --warn: #ffb000;
-      --danger: #ff3b5c;
-      --success: #00ff9c;
-      --font-sans: 'Inter', -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-    }
+    /* Theme CSS variables defined in brand blocks below ([data-brand]) */
 
     html, body { min-height: 100%; }
     body {
       font-family: var(--font-mono);
       background:
-        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,212,255,0.04), transparent),
-        var(--bg);
+        var(--body-glow),
+        var(--body-bg);
       color: var(--fg);
       min-height: 100vh;
       padding: 16px 16px 60px;
@@ -98,7 +81,7 @@
       font-family: var(--font-mono);
       font-size: 22px;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--title);
       letter-spacing: -0.01em;
       margin-bottom: 4px;
     }
@@ -126,7 +109,7 @@
     .bchip:hover { border-color: var(--accent); color: var(--fg); }
     .bchip.active {
       border-color: var(--accent); color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 0 8px rgba(0,212,255,0.3);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 8px var(--glow-accent);
     }
     .bchip .bdot {
       display: block; width: 8px; height: 8px; border-radius: 50%;
@@ -186,7 +169,7 @@
     .kpi .k-val {
       font-size: 16px;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--kpi-val);
       line-height: 1;
       margin-bottom: 2px;
       font-variant-numeric: tabular-nums;
@@ -276,7 +259,7 @@
     .theme-btn:hover { transform: scale(1.1); }
     .theme-btn.active {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 0 8px rgba(0,212,255,0.4);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 8px var(--glow-accent);
     }
     .theme-label {
       font-family: var(--font-mono);
@@ -300,11 +283,11 @@
     }
     .upload-zone:hover {
       border-color: var(--accent);
-      background: rgba(0,212,255,0.03);
+      background: var(--zone-hover);
     }
     .upload-zone.dragover {
       border-color: var(--accent);
-      background: rgba(0,212,255,0.06);
+      background: var(--zone-hover);
       border-style: solid;
     }
     .upload-zone input[type="file"] {
@@ -358,7 +341,7 @@
       bottom: 0; left: 0; right: 0;
       height: 22px;
       background: var(--accent);
-      color: var(--bg);
+      color: var(--on-accent);
       font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 700;
@@ -395,12 +378,14 @@
       margin-top: 12px;
     }
     .btn-primary {
-      background: linear-gradient(180deg, var(--accent-2), #00cc7d);
-      color: var(--bg);
-      box-shadow: 0 0 20px rgba(0,255,156,0.25);
+      background: var(--btn-bg);
+      color: var(--btn-color);
+      border: var(--btn-border);
+      box-shadow: var(--btn-shadow);
     }
     .btn-primary:hover {
-      box-shadow: 0 0 30px rgba(0,255,156,0.4);
+      box-shadow: var(--btn-shadow);
+      filter: brightness(1.06);
       transform: translateY(-1px);
     }
     .btn-primary:active { transform: scale(0.98); }
@@ -478,44 +463,78 @@
     }
 
     /* ============================================================
-       LIGHT MODE — outdoor use
-       Triggered by data-theme="light" on html (toggle button) OR
-       auto-fallback to system preference if data-theme is not set
+       BRAND THEMES — [data-brand] on <html>: rack/crt/noc/min
+       Default = min (collage.sh) — full page restyles on switch
        ============================================================ */
-    [data-theme="light"] {
-      --bg: #f5f5f7;
-      --bg-2: #ffffff;
-      --bg-3: #eaeaee;
-      --surface: #ffffff;
-      --border: #d4d4d8;
-      --border-bright: #a1a1aa;
-      --fg: #0e0e10;
-      --fg-muted: #52525b;
-      --fg-dim: #71717a;
-      --accent: #0891b2;
-      --accent-2: #16a34a;
-      --warn: #d97706;
-      --danger: #dc2626;
-      --success: #16a34a;
+    :root, [data-brand="min"] {
+      --bg: #fafafa; --bg-2: #f0f0f2; --bg-3: #eaeaee; --surface: #ffffff;
+      --border: #e5e5e8; --border-bright: #c8c8d0;
+      --fg: #0e0e10; --fg-muted: #5a5a63; --fg-dim: #8a8a93;
+      --accent: #c8ff00; --accent-2: #84cc16; --warn: #f59e0b; --danger: #ef4444; --success: #16a34a;
+      --font-sans: 'Inter', -apple-system, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --body-bg: #fafafa;
+      --body-glow: none;
+      --title: #0e0e10;
+      --kpi-val: #65a30d;
+      --on-accent: #0e0e10;
+      --btn-bg: #c8ff00; --btn-color: #0e0e10; --btn-border: none; --btn-shadow: none;
+      --glow-accent: rgba(200,255,0,0.35);
+      --zone-hover: rgba(0,0,0,0.03);
     }
-    /* auto light mode if user hasn't picked yet (and not overridden to dark) */
-    @media (prefers-color-scheme: light) {
-      :root:not([data-theme="dark"]):not([data-theme="light"]) {
-        --bg: #f5f5f7;
-        --bg-2: #ffffff;
-        --bg-3: #eaeaee;
-        --surface: #ffffff;
-        --border: #d4d4d8;
-        --border-bright: #a1a1aa;
-        --fg: #0e0e10;
-        --fg-muted: #52525b;
-        --fg-dim: #71717a;
-        --accent: #0891b2;
-        --accent-2: #16a34a;
-        --warn: #d97706;
-        --danger: #dc2626;
-        --success: #16a34a;
-      }
+    [data-brand="rack"] {
+      --bg: #0a0a0c; --bg-2: #111114; --bg-3: #16161a; --surface: #16161a;
+      --border: #2a2a32; --border-bright: #3f3f4a;
+      --fg: #f5f5f7; --fg-muted: #8a8a93; --fg-dim: #5a5a63;
+      --accent: #ffb000; --accent-2: #00ff66; --warn: #ffb000; --danger: #ff3b30; --success: #00ff66;
+      --body-bg: #0a0a0c;
+      --body-glow: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,176,0,0.06), transparent);
+      --title: #ffb000;
+      --kpi-val: #ffb000;
+      --on-accent: #0a0a0c;
+      --btn-bg: linear-gradient(180deg, #ffb000, #cc8800); --btn-color: #0a0a0c; --btn-border: none;
+      --btn-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 16px rgba(255,176,0,0.3);
+      --glow-accent: rgba(255,176,0,0.3);
+      --zone-hover: rgba(255,176,0,0.04);
+    }
+    [data-brand="crt"] {
+      --bg: #050505; --bg-2: #0a0a0a; --bg-3: #001a0c; --surface: #001a0c;
+      --border: #003318; --border-bright: #005522;
+      --fg: #00ff66; --fg-muted: #00cc52; --fg-dim: #005522;
+      --accent: #ffb000; --accent-2: #00ff66; --warn: #ffb000; --danger: #ff3b30; --success: #00ff66;
+      --body-bg: #000000;
+      --body-glow: none;
+      --title: #00ff66;
+      --kpi-val: #00ff66;
+      --on-accent: #000000;
+      --btn-bg: transparent; --btn-color: #ffb000; --btn-border: 1px solid #ffb000;
+      --btn-shadow: inset 0 0 8px rgba(255,176,0,0.1), 0 0 12px rgba(255,176,0,0.15);
+      --glow-accent: rgba(255,176,0,0.25);
+      --zone-hover: rgba(0,255,102,0.05);
+    }
+    [data-brand="noc"] {
+      --bg: #0a0e14; --bg-2: #0f1419; --bg-3: #141a22; --surface: #161c25;
+      --border: #1f2733; --border-bright: #2a3340;
+      --fg: #e6e9ef; --fg-muted: #8b95a7; --fg-dim: #5a6478;
+      --accent: #00d4ff; --accent-2: #00ff9c; --warn: #ffb000; --danger: #ff3b5c; --success: #00ff9c;
+      --body-bg: #0a0e14;
+      --body-glow: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,212,255,0.05), transparent);
+      --title: #00d4ff;
+      --kpi-val: #00d4ff;
+      --on-accent: #0a0e14;
+      --btn-bg: linear-gradient(180deg, #00ff9c, #00cc7d); --btn-color: #0a0e14; --btn-border: none;
+      --btn-shadow: 0 0 20px rgba(0,255,156,0.3);
+      --glow-accent: rgba(0,212,255,0.3);
+      --zone-hover: rgba(0,212,255,0.04);
+    }
+    /* CRT signature: scanlines + vignette overlay */
+    [data-brand="crt"] body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1000;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
+      mix-blend-mode: multiply;
+    }
+    [data-brand="crt"] body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1001;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
     }
 
     /* ============================================================
@@ -533,7 +552,7 @@
     .theme-btn { min-width: 44px; min-height: 44px; }
     .preview-remove { width: 24px; height: 24px; font-size: 14px; }
     /* Better tap feedback */
-    .btn:active { background: linear-gradient(180deg, #00cc7d, #00a364); }
+    .btn:active { filter: brightness(0.92); transform: scale(0.98); }
     .theme-btn:active { transform: scale(0.95); }
     /* Disable tap highlight on iOS */
     * { -webkit-tap-highlight-color: transparent; }
@@ -550,43 +569,11 @@
     }
     /* Smooth touch scrolling */
     .preview-grid { -webkit-overflow-scrolling: touch; }
-    /* Theme toggle button */
-    .theme-toggle {
-      position: fixed;
-      bottom: max(20px, env(safe-area-inset-bottom));
-      right: max(20px, env(safe-area-inset-right));
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      color: var(--fg);
-      font-size: 18px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 100;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    [data-theme="light"] .theme-toggle { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .theme-toggle:hover { transform: scale(1.1); }
-    .theme-toggle:active { transform: scale(0.95); }
-
-    /* Light mode specific tweaks */
-    [data-theme="light"] .card,
-    [data-theme="light"] .kpi,
-    [data-theme="light"] .header,
-    [data-theme="light"] .topbar {
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    [data-theme="light"] .topbar .pulse,
-    [data-theme="light"] .footer span.dot,
-    [data-theme="light"] .kpi.green .k-delta.ok { box-shadow: none; }
 
     @media (max-width: 480px) {
       body { padding: max(10px, env(safe-area-inset-top)) 10px max(40px, env(safe-area-inset-bottom)); }
       .kpi .k-val { font-size: 14px; }
       .header h1 { font-size: 20px; }
-      .theme-toggle { width: 40px; height: 40px; font-size: 16px; }
     }
   </style>
 </head>
@@ -894,16 +881,34 @@
       noc:  { btn: 'TRANSMIT TO GROUP',    sending: 'packing packets · routing to /api/collage', done: 'DELIVERED · 0 drops' },
       min:  { btn: './send --to=line-group', sending: 'building · routing to /api/collage', done: 'SENT · done ✓' },
     };
+    const BRAND_META = {
+      rack: { title: 'STACK<span style="color:var(--accent)">//</span>FRAME', desc: 'Deploy photos · Stack frames · Ship to LINE', top: 'STACK//FRAME', color: '#0a0a0c' },
+      crt:  { title: 'PIXSH<span style="color:var(--accent)">_</span>',        desc: 'Boot · Build · Broadcast — it works on my crt.', top: 'PIXSH v1.0', color: '#000000' },
+      noc:  { title: 'PACKET<span style="color:var(--accent-2)">GRID</span>', desc: 'Lossless photo delivery · BGP-routed to your group', top: 'PACKETGRID', color: '#0a0e14' },
+      min:  { title: 'collage<span style="color:var(--on-accent);background:var(--accent);padding:0 4px;border-radius:4px">.sh</span>', desc: 'It\'s just bash. But for your group photos.', top: 'collage.sh', color: '#fafafa' },
+    };
     const submitLabel = document.getElementById('submitLabel');
     const submitBtn = document.getElementById('submitBtn');
     const dayPresetSection = document.getElementById('dayPresetSection');
 
     function applyBrandTheme() {
+      const brand = BRAND_META[selectedTheme] || BRAND_META.min;
+      // whole page restyles via CSS variables on <html data-brand="...">
+      document.documentElement.dataset.brand = selectedTheme;
       document.querySelectorAll('.bchip').forEach(c =>
         c.classList.toggle('active', c.dataset.brand === selectedTheme));
       const ui = BRAND_UI[selectedTheme] || BRAND_UI.min;
       submitLabel.textContent = ui.btn;
       dayPresetSection.style.display = selectedTheme === 'min' ? 'block' : 'none';
+      // brand identity text
+      const topLabel = document.querySelector('.topbar .label');
+      if (topLabel) topLabel.textContent = brand.top;
+      const h1 = document.querySelector('.header h1');
+      if (h1) h1.innerHTML = brand.title;
+      const hp = document.querySelector('.header p');
+      if (hp) hp.textContent = brand.desc;
+      // mobile status bar color
+      document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', brand.color));
       updateThemePreview();
     }
     document.querySelectorAll('.bchip').forEach(chip => {
@@ -1045,6 +1050,32 @@
       const el = document.getElementById('status'); el.textContent = text; el.className = 'status ' + type;
     }
 
+    /**
+     * Send image to the chat via LIFF, auto-recovering from an expired access
+     * token. The LIFF access token is valid 12h but can be revoked mid-session
+     * (user closed LINE, granted new scopes, etc.). Re-initializing LIFF obtains
+     * a fresh token, then we retry once.
+     */
+    async function sendImage(imageUrl) {
+      const messages = [{
+        type: 'image',
+        originalContentUrl: imageUrl,
+        previewImageUrl: imageUrl,
+      }];
+      try {
+        await liff.sendMessages(messages);
+        return;
+      } catch (err) {
+        const msg = String((err && (err.message || err.code)) || err);
+        if (!/expired|revoked|unauthorized|invalid.*token|access token/i.test(msg)) {
+          throw err;
+        }
+        // token stale — re-init to get a fresh access token, then retry
+        try { await liff.init({ liffId: LIFF_ID }); } catch {}
+        await liff.sendMessages(messages);
+      }
+    }
+
     async function generateCollage() {
       const name = document.getElementById('nameInput').value;
       const date = document.getElementById('dateInput').value;
@@ -1080,11 +1111,7 @@
 
         setStatus('ACK from gateway · pushing to LINE', 'loading');
 
-        await liff.sendMessages([{
-          type: 'image',
-          originalContentUrl: data.imageUrl,
-          previewImageUrl: data.imageUrl,
-        }]);
+        await sendImage(data.imageUrl);
 
         setStatus(ui.done, 'success');
 
@@ -1098,55 +1125,6 @@
 
     // Init
     updateKpi();
-
-    // === Theme toggle (light/dark) ===
-    (function initTheme() {
-      const KEY = 'collage_theme';
-      const saved = localStorage.getItem(KEY);
-      let theme;
-      if (saved === 'light' || saved === 'dark') {
-        // User explicitly chose
-        theme = saved;
-      } else {
-        // First visit: follow system preference
-        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      }
-      document.documentElement.setAttribute('data-theme', theme);
-      updateThemeIcon(theme);
-    })();
-
-    function updateThemeIcon(theme) {
-      const btn = document.querySelector('.theme-toggle');
-      if (!btn) return;
-      btn.textContent = theme === 'light' ? '☾' : '☼';
-      btn.setAttribute('aria-label', theme === 'light' ? 'เปลี่ยนเป็นโหมดมืด' : 'เปลี่ยนเป็นโหมดสว่าง');
-    }
-
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.theme-toggle')) {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
-        const next = current === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('collage_theme', next);
-        updateThemeIcon(next);
-        // Update theme-color meta for mobile status bar
-        const meta = document.querySelector('meta[name="theme-color"]:not([media])');
-        if (meta) meta.setAttribute('content', next === 'light' ? '#fafafa' : '#0a0e14');
-      }
-    });
-
-    // React to system theme change (only if user hasn't picked)
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
-      if (!localStorage.getItem('collage_theme')) {
-        const next = e.matches ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        updateThemeIcon(next);
-      }
-    });
   </script>
-
-  <button class="theme-toggle" aria-label="สลับธีม" title="สลับธีม">
-    <span data-theme-icon>☼</span>
-  </button>
 </body>
 </html>
