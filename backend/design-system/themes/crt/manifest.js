@@ -40,6 +40,17 @@ export const manifest = {
     },
     photoFx: 'saturate(0.85) brightness(0.95)',
     presetAccent: false,
+    /* declarative chrome — rendered by sharp-renderer (mirrors client hooks) */
+    chrome: {
+      bezel: {
+        widthRatio: 0.045,
+        color: '#111111', inner: '#0a0a0a', glow: 'rgba(0,255,102,0.25)',
+      },
+      cornerLeds: [
+        { x: 'left', y: 'bottom', padRatio: 0.035, color: '#00ff66', sizeRatio: 0.009 },
+        { x: 'left', y: 'bottom', padRatio: 0.035, dxRatio: 0.036, color: '#ffb000', sizeRatio: 0.009 },
+      ],
+    },
   },
 
   hooks: {

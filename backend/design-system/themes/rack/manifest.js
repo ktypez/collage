@@ -38,6 +38,17 @@ export const manifest = {
     overlay: 'none',
     photoFx: 'none',
     presetAccent: false,
+    /* declarative chrome — rendered by sharp-renderer (mirrors client hooks) */
+    chrome: {
+      rails: {
+        widthRatio: 0.024,
+        dark: '#0a0a0c', mid: '#2a2a30', screw: '#5a5a63', highlight: 'rgba(255,255,255,0.05)',
+      },
+      leds: {
+        colors: ['#00ff66', '#ffb000', '#00d4ff', '#00ff66', '#ffb000'],
+        sizeRatio: 0.008, gapMul: 3.4, yMul: 3,
+      },
+    },
   },
 
   /* Custom hooks (unique rack chrome) */

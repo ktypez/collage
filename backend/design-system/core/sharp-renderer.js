@@ -94,29 +94,47 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
-  // --- header (theme title big + name/date with Thai-capable font) ---
-  const h = c.header;
-  if (h) {
-    const font = pickFont(manifest) || monoFont;
-    const nameFont = thaiFont || font;
-    const title = h.text || '';
-    const color = h.color || '#fff';
-    const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
-    const pad = Math.round(headerH * 0.06); // ~26
-
-    // theme title — big, top third
-    const titleSize = Math.round(headerH * 0.2);       // ~88 @440
-    if (title) svg.push(textPathSVG(title, font, titleSize, { x: pad, y: Math.round(headerH * 0.36), color }));
-
-    // name — middle (Thai-capable)
-    const nameSize = Math.round(headerH * 0.11);       // ~48 @440
-    if (name) svg.push(textPathSVG(name, nameFont, nameSize, { x: pad, y: Math.round(headerH * 0.62), color: textColor }));
-
-    // date — below name
-    if (date) {
-      const dateSize = Math.round(headerH * 0.085);    // ~37 @440
-      svg.push(textPathSVG(date, nameFont, dateSize, { x: pad, y: Math.round(headerH * 0.82), color: hexToRgba(textColor, 0.85) }));
+  // --- header (name + date only, centered — like the default/min renderer) ---
+  // Theme title intentionally omitted: production output shows just name + date.
+  const nameFont = thaiFont || monoFont;
+  const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
+  if (name || date) {
+    const hasBoth = !!(name && date);
+    if (name) {
+      const nameSize = Math.round(headerH * (hasBoth ? 0.24 : 0.28));
+      svg.push(textPathSVG(name, nameFont, nameSize, {
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.48 : 0.56)), align: 'center', color: textColor,
+      }));
     }
+    if (date) {
+      const dateSize = Math.round(headerH * 0.11);
+      svg.push(textPathSVG(date, nameFont, dateSize, {
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.56)), align: 'center', color: hexToRgba(textColor, 0.85),
+      }));
+    }
+  }
+
+  // --- chrome: side rails (rack) — behind photos ---
+  const ch = c.chrome;
+  if (ch && ch.rails) {
+    const r = ch.rails;
+    const rw = Math.max(10, Math.round(W * r.widthRatio));
+    const screwR = Math.max(2, Math.round(W * 0.006));
+    const nScrews = 8;
+    svg.push(`<defs><linearGradient id="rail" x1="0" y1="0" x2="1" y2="0">` +
+      `<stop offset="0%" stop-color="${r.dark}"/>` +
+      `<stop offset="50%" stop-color="${r.mid}"/>` +
+      `<stop offset="100%" stop-color="${r.dark}"/>` +
+      `</linearGradient></defs>`);
+    svg.push(`<rect x="0" y="0" width="${rw}" height="${H}" fill="url(#rail)"/>`);
+    svg.push(`<rect x="${W - rw}" y="0" width="${rw}" height="${H}" fill="url(#rail)"/>`);
+    for (let i = 0; i < nScrews; i++) {
+      const sy = Math.round((i / (nScrews - 1)) * H);
+      svg.push(`<circle cx="${Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${r.screw}"/>`);
+      svg.push(`<circle cx="${W - Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${r.screw}"/>`);
+    }
+    svg.push(`<line x1="${rw}" y1="0" x2="${rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
+    svg.push(`<line x1="${W - rw}" y1="0" x2="${W - rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
   }
 
   // --- cell chip backgrounds (behind photos) ---
@@ -166,6 +184,47 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
         const y = card.y + card.h - lh;
         parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${lh}" fill="${labelBg}"/>`);
         parts.push(textPathSVG(text, font, ls, { x: x + pad, y: y + lh - 8, color: labelColor }));
+      });
+    }
+  }
+
+  // --- chrome: LEDs (rack) + bezel/corner LEDs (crt) — on top ---
+  const ch = c.chrome;
+  if (ch) {
+    // rack status LEDs (top-right)
+    if (ch.leds) {
+      const l = ch.leds;
+      const n = l.colors.length;
+      const r = Math.max(3, Math.round(W * l.sizeRatio));
+      const gap = r * l.gapMul;
+      const startX = W - r * 2 - gap * n;
+      const y = Math.round(r * l.yMul);
+      l.colors.forEach((color, i) => {
+        const cx = startX + i * gap;
+        parts.push(`<circle cx="${cx}" cy="${y}" r="${r * 3}" fill="${color}" fill-opacity="0.25"/>`);
+        parts.push(`<circle cx="${cx}" cy="${y}" r="${r}" fill="${color}"/>`);
+      });
+    }
+    // CRT bezel frame
+    if (ch.bezel) {
+      const b = ch.bezel;
+      const bw = Math.max(16, Math.round(W * b.widthRatio));
+      parts.push(`<rect x="0" y="0" width="${W}" height="${bw}" fill="${b.color}"/>`);
+      parts.push(`<rect x="0" y="${H - bw}" width="${W}" height="${bw}" fill="${b.color}"/>`);
+      parts.push(`<rect x="0" y="0" width="${bw}" height="${H}" fill="${b.color}"/>`);
+      parts.push(`<rect x="${W - bw}" y="0" width="${bw}" height="${H}" fill="${b.color}"/>`);
+      const gb = Math.round(bw * 0.6);
+      parts.push(`<rect x="${gb}" y="${gb}" width="${W - gb * 2}" height="${H - gb * 2}" fill="none" stroke="${b.glow}" stroke-width="${Math.max(1, Math.round(W * 0.004))}"/>`);
+    }
+    // CRT corner LEDs (power/activity)
+    if (ch.cornerLeds) {
+      ch.cornerLeds.forEach((led) => {
+        const r = Math.max(3, Math.round(W * led.sizeRatio));
+        const pad = Math.round(W * led.padRatio);
+        let x = led.x === 'left' ? pad : W - pad;
+        let y = led.y === 'bottom' ? H - pad : pad;
+        if (led.dxRatio) x += Math.round(W * led.dxRatio);
+        parts.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${led.color}"/>`);
       });
     }
   }
