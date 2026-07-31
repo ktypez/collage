@@ -738,6 +738,7 @@
     const DAY_LABELS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
     const today = DAYS[new Date().getDay()];
     let selectedPreset = today;
+    // Theme brand state — must be declared before preview block uses it
     document.getElementById('todayLabel').innerHTML = 'today: <strong>' + DAY_LABELS[new Date().getDay()] + '</strong> · BGP route to LINE: established';
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -753,6 +754,7 @@
     // --- Brand theme selector (output style: rack/crt/noc/min) ---
     // default = min (collage.sh) — backward compatible with legacy day-gradient
     // --- Theme output preview (SVG mockup of what the collage will look like) ---
+    let selectedTheme = localStorage.getItem('collage_liff_theme') || 'min';
     const TP = {
       rack: {
         name: 'STACK//FRAME',
@@ -892,7 +894,6 @@
       noc:  { btn: 'TRANSMIT TO GROUP',    sending: 'packing packets · routing to /api/collage', done: 'DELIVERED · 0 drops' },
       min:  { btn: './send --to=line-group', sending: 'building · routing to /api/collage', done: 'SENT · done ✓' },
     };
-    let selectedTheme = localStorage.getItem('collage_liff_theme') || 'min';
     const submitLabel = document.getElementById('submitLabel');
     const submitBtn = document.getElementById('submitBtn');
     const dayPresetSection = document.getElementById('dayPresetSection');
