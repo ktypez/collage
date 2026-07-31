@@ -109,6 +109,30 @@
       color: var(--fg-muted);
     }
 
+    /* === BRAND THEME PICKER (output style: rack/crt/noc/min) === */
+    .brand-picker {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; margin-bottom: 14px;
+    }
+    .bchip {
+      padding: 8px 4px;
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--fg-muted); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bchip:hover { border-color: var(--accent); color: var(--fg); }
+    .bchip.active {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 8px rgba(0,212,255,0.3);
+    }
+    .bchip .bdot {
+      display: block; width: 8px; height: 8px; border-radius: 50%;
+      margin: 0 auto 4px; background: var(--accent);
+    }
+
     /* === KPI GRID === */
     .kpi-grid {
       display: grid;
@@ -559,6 +583,22 @@
       <p>Lossless photo delivery · BGP-routed to your group</p>
     </div>
 
+    <!-- BRAND THEME PICKER (output style) -->
+    <div class="brand-picker">
+      <button class="bchip" data-brand="rack" title="STACK//FRAME">
+        <span class="bdot" style="background:#ffb000"></span>RACK
+      </button>
+      <button class="bchip" data-brand="crt" title="PIXSH v1.0">
+        <span class="bdot" style="background:#00ff66"></span>CRT
+      </button>
+      <button class="bchip" data-brand="noc" title="PACKETGRID">
+        <span class="bdot" style="background:#00d4ff"></span>NOC
+      </button>
+      <button class="bchip active" data-brand="min" title="collage.sh (default)">
+        <span class="bdot" style="background:#c8ff00"></span>.sh
+      </button>
+    </div>
+
     <div class="kpi-grid">
       <div class="kpi green">
         <div class="k-label">PHOTO NODES</div>
@@ -594,17 +634,19 @@
       <label class="label" for="dateInput">DATE</label>
       <input class="input" type="date" id="dateInput">
 
-      <label class="label">DAY-OF-WEEK PRESET</label>
-      <div class="theme-grid" id="presetPicker">
-        <button type="button" class="theme-btn" data-preset="sun" style="background:linear-gradient(135deg,#DC2626,#F87171)" title="อาทิตย์"></button>
-        <button type="button" class="theme-btn" data-preset="mon" style="background:linear-gradient(135deg,#854D0E,#FACC15)" title="จันทร์"></button>
-        <button type="button" class="theme-btn" data-preset="tue" style="background:linear-gradient(135deg,#BE185D,#F472B6)" title="อังคาร"></button>
-        <button type="button" class="theme-btn" data-preset="wed" style="background:linear-gradient(135deg,#047857,#34D399)" title="พุธ"></button>
-        <button type="button" class="theme-btn" data-preset="thu" style="background:linear-gradient(135deg,#C2410C,#FB923C)" title="พฤหัสบดี"></button>
-        <button type="button" class="theme-btn" data-preset="fri" style="background:linear-gradient(135deg,#1D4ED8,#60A5FA)" title="ศุกร์"></button>
-        <button type="button" class="theme-btn" data-preset="sat" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)" title="เสาร์"></button>
+      <div id="dayPresetSection">
+        <label class="label">DAY-OF-WEEK PRESET <span class="label-hint">(เฉพาะธีม .sh)</span></label>
+        <div class="theme-grid" id="presetPicker">
+          <button type="button" class="theme-btn" data-preset="sun" style="background:linear-gradient(135deg,#DC2626,#F87171)" title="อาทิตย์"></button>
+          <button type="button" class="theme-btn" data-preset="mon" style="background:linear-gradient(135deg,#854D0E,#FACC15)" title="จันทร์"></button>
+          <button type="button" class="theme-btn" data-preset="tue" style="background:linear-gradient(135deg,#BE185D,#F472B6)" title="อังคาร"></button>
+          <button type="button" class="theme-btn" data-preset="wed" style="background:linear-gradient(135deg,#047857,#34D399)" title="พุธ"></button>
+          <button type="button" class="theme-btn" data-preset="thu" style="background:linear-gradient(135deg,#C2410C,#FB923C)" title="พฤหัสบดี"></button>
+          <button type="button" class="theme-btn" data-preset="fri" style="background:linear-gradient(135deg,#1D4ED8,#60A5FA)" title="ศุกร์"></button>
+          <button type="button" class="theme-btn" data-preset="sat" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)" title="เสาร์"></button>
+        </div>
+        <div class="theme-label" id="todayLabel">today: —</div>
       </div>
-      <div class="theme-label" id="todayLabel">today: —</div>
     </div>
 
     <div class="card">
@@ -628,7 +670,7 @@
     <div class="card">
       <button class="btn btn-primary" id="submitBtn" onclick="generateCollage()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        TRANSMIT TO /DEV/LINE
+        <span id="submitLabel">./send --to=line-group</span>
       </button>
       <div class="status" id="status"></div>
     </div>
@@ -671,6 +713,35 @@
         selectedPreset = btn.dataset.preset;
       });
     });
+
+    // --- Brand theme selector (output style: rack/crt/noc/min) ---
+    // default = min (collage.sh) — backward compatible with legacy day-gradient
+    const BRAND_UI = {
+      rack: { btn: 'DEPLOY TO /DEV/LINE', sending: 'deploying · routing to /api/collage', done: 'DEPLOYED · ACK received' },
+      crt:  { btn: 'EXECUTE BUILD',        sending: 'compiling · routing to /api/collage', done: 'COMPILED · 200 OK' },
+      noc:  { btn: 'TRANSMIT TO GROUP',    sending: 'packing packets · routing to /api/collage', done: 'DELIVERED · 0 drops' },
+      min:  { btn: './send --to=line-group', sending: 'building · routing to /api/collage', done: 'SENT · done ✓' },
+    };
+    let selectedTheme = localStorage.getItem('collage_liff_theme') || 'min';
+    const submitLabel = document.getElementById('submitLabel');
+    const submitBtn = document.getElementById('submitBtn');
+    const dayPresetSection = document.getElementById('dayPresetSection');
+
+    function applyBrandTheme() {
+      document.querySelectorAll('.bchip').forEach(c =>
+        c.classList.toggle('active', c.dataset.brand === selectedTheme));
+      const ui = BRAND_UI[selectedTheme] || BRAND_UI.min;
+      submitLabel.textContent = ui.btn;
+      dayPresetSection.style.display = selectedTheme === 'min' ? 'block' : 'none';
+    }
+    document.querySelectorAll('.bchip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        selectedTheme = chip.dataset.brand;
+        localStorage.setItem('collage_liff_theme', selectedTheme);
+        applyBrandTheme();
+      });
+    });
+    applyBrandTheme();
 
     // --- File management ---
     let imageFiles = [];
@@ -805,6 +876,7 @@
       const name = document.getElementById('nameInput').value;
       const date = document.getElementById('dateInput').value;
       const btn = document.getElementById('submitBtn');
+      const ui = BRAND_UI[selectedTheme] || BRAND_UI.min;
 
       if (!imageFiles.length) {
         setStatus('กรุณาเลือกรูปภาพอย่างน้อย 1 รูป', 'error');
@@ -812,14 +884,15 @@
       }
 
       btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> TRANSMITTING...';
-      setStatus('packing photos · routing to /api/collage', 'loading');
+      btn.innerHTML = '<div class="spinner"></div> ' + ui.sending;
+      setStatus(ui.sending, 'loading');
 
       try {
         const fd = new FormData();
         fd.append('name', name);
         fd.append('date', date);
         fd.append('preset', selectedPreset);
+        fd.append('theme', selectedTheme);
         for (const f of imageFiles) fd.append('images', f);
 
         const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
@@ -840,13 +913,13 @@
           previewImageUrl: data.imageUrl,
         }]);
 
-        setStatus('DELIVERED · 0 drops · 100% integrity', 'success');
+        setStatus(ui.done, 'success');
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
         setStatus(err.message, 'error');
         btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> RETRY TRANSMIT';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> <span id="submitLabel">' + ui.btn + '</span>';
       }
     }
 
