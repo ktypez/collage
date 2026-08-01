@@ -141,15 +141,34 @@
     .ochip.active .osub { color: var(--fg-muted); }
     .ochip:active { transform: scale(0.97); transition-duration: 0.1s; }
 
-    /* === THEME PREVIEW === */
+    /* === THEME PREVIEW (collapsible) === */
     .theme-preview {
       margin-bottom: 14px;
       background: linear-gradient(180deg, #1c1c20, #0a0a0c);
       border: 1px solid var(--border-bright);
       border-radius: 2px;
-      padding: 8px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      overflow: hidden;
     }
+    .theme-preview-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--fg-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    .theme-preview-head .cap { color: var(--fg-dim); text-transform: none; letter-spacing: 0.05em; }
+    .theme-preview-head .chev { color: var(--accent); transition: transform 0.2s; }
+    .theme-preview.open .theme-preview-head .chev { transform: rotate(180deg); }
+    .theme-preview-body {
+      display: none;
+      padding: 8px;
+    }
+    .theme-preview.open .theme-preview-body { display: block; }
     .theme-preview img {
       display: block;
       width: 100%;
@@ -610,10 +629,16 @@
       </button>
     </div>
 
-    <!-- THEME PREVIEW -->
-    <div class="theme-preview">
-      <img id="themePreviewImg" src="previews/pv-min.jpg" alt="ตัวอย่าง output">
-      <div class="theme-preview-cap" id="themePreviewCap">// 7 DAYS · ตัวอย่าง output</div>
+    <!-- THEME PREVIEW (collapsible — tap to expand) -->
+    <div class="theme-preview" id="themePreview">
+      <div class="theme-preview-head" id="themePreviewHead">
+        <span class="lbl">ตัวอย่าง output</span>
+        <span class="cap" id="themePreviewCap">7 DAYS</span>
+        <span class="chev">▼</span>
+      </div>
+      <div class="theme-preview-body">
+        <img id="themePreviewImg" src="previews/pv-min.jpg" alt="ตัวอย่าง output">
+      </div>
     </div>
 
     <div class="card">
@@ -810,6 +835,8 @@
     let outputMode = '7days';
     const submitLabel = document.getElementById('submitLabel');
     const dayPresetSection = document.getElementById('dayPresetSection');
+    const themePreview = document.getElementById('themePreview');
+    const themePreviewHead = document.getElementById('themePreviewHead');
     const themePreviewImg = document.getElementById('themePreviewImg');
     const themePreviewCap = document.getElementById('themePreviewCap');
 
@@ -819,11 +846,13 @@
       // day presets only matter for 7days style
       dayPresetSection.style.display = outputMode === '7days' ? 'block' : 'none';
       submitLabel.textContent = outputMode === 'rack' ? 'DEPLOY TO /DEV/LINE' : 'สร้างและส่งเข้ากลุ่ม';
-      // theme preview follows selection
+      // theme preview follows selection (keeps collapsed state)
       const tid = THEME_IDS[outputMode] || 'min';
       themePreviewImg.src = 'previews/pv-' + tid + '.jpg';
-      themePreviewCap.textContent = '// ' + (THEME_LABELS[outputMode] || outputMode) + ' · ตัวอย่าง output';
+      themePreviewCap.textContent = THEME_LABELS[outputMode] || outputMode;
     }
+    // tap to expand/collapse preview
+    themePreviewHead.addEventListener('click', () => themePreview.classList.toggle('open'));
     document.querySelectorAll('.ochip').forEach(chip => {
       chip.addEventListener('click', () => {
         outputMode = chip.dataset.mode;
