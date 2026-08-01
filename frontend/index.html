@@ -627,6 +627,10 @@
         GLITCH
         <span class="osub">หน้า error / glitch</span>
       </button>
+      <button class="ochip" data-mode="claude">
+        CLAUDE
+        <span class="osub">warm paper / serif</span>
+      </button>
     </div>
 
     <!-- THEME PREVIEW (collapsible — tap to expand) -->
@@ -827,10 +831,10 @@
       setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
-    /* ---- OUTPUT STYLE: 7days (default) / rack / crt / noc / glitchpage ---- */
-    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc', glitchpage: 'glitchpage' };
+    /* ---- OUTPUT STYLE: 7days / rack / crt / noc / glitchpage / claude ---- */
+    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc', glitchpage: 'glitchpage', claude: 'claude' };
     const THEME_LABELS = {
-      '7days': '7 DAYS', rack: 'RACK', crt: 'CRT', noc: 'NOC', glitchpage: 'GLITCH',
+      '7days': '7 DAYS', rack: 'RACK', crt: 'CRT', noc: 'NOC', glitchpage: 'GLITCH', claude: 'CLAUDE',
     };
     let outputMode = '7days';
     const submitLabel = document.getElementById('submitLabel');

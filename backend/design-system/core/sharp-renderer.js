@@ -53,6 +53,7 @@ function esc(s) {
 function pickFont(manifest) {
   const header = manifest.canvas.header || {};
   if (header.font === 'display' && displayFont) return displayFont;
+  if (header.font === 'serif' && chakraFont) return chakraFont; // serif-ish fallback
   return monoFont;
 }
 
