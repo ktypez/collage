@@ -56,14 +56,15 @@ export const manifest = {
 
   /* Canvas manifest — สำหรับ collage output (raw black/white/red) */
   canvas: {
-    bg: { gradient: ['#e8e4da', '#d8d4ca', '#e8e4da'], vertical: true },
+    bg: { gradient: ['#d8d4ca', '#c9c5bb', '#d8d4ca'], vertical: true },
     cell: {
-      border: '#0d0d0d', width: 2, rounded: 0,
+      border: '#0d0d0d', width: 4, rounded: 0,
       bg: '#ffffff',
     },
     header: {
       text: 'BRUT · RAW OUTPUT',
-      color: '#0d0d0d', font: 'mono', size: 36, pad: 48, glow: false,
+      color: '#ff2e00', font: 'mono', size: 40, pad: 48, glow: false,
+      stripe: '#ff2e00', stripeHeight: 20, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',

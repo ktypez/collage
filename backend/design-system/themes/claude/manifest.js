@@ -72,12 +72,13 @@ export const manifest = {
   canvas: {
     bg: { gradient: ['#faf9f5', '#f5f4ed', '#faf9f5'], vertical: true },
     cell: {
-      border: 'rgba(20,20,19,0.14)', width: 1, rounded: 8,
+      border: '#d97757', width: 2, rounded: 8,
       bg: '#ffffff',
     },
     header: {
       text: 'CLAUDE PAPER · NOTES',
-      color: '#141413', font: 'serif', size: 36, pad: 48, glow: false,
+      color: '#d97757', font: 'serif', size: 36, pad: 48, glow: false,
+      stripe: '#d97757', stripeHeight: 8, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',

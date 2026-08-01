@@ -59,14 +59,15 @@ export const manifest = {
 
   /* Canvas manifest — สำหรับ collage output (sand bg, moss cells, rounded) */
   canvas: {
-    bg: { gradient: ['#f5f1e8', '#efe9db', '#f5f1e8'], vertical: true },
+    bg: { gradient: ['#e8eedd', '#dde5c8', '#e8eedd'], vertical: true },
     cell: {
-      border: 'rgba(106,140,63,0.35)', width: 1, rounded: 16,
-      bg: '#fdfbf5',
+      border: '#6a8c3f', width: 2, rounded: 24,
+      bg: '#fbfaf3',
     },
     header: {
       text: 'MOSS · GARDEN',
-      color: '#2e2a24', font: 'serif', size: 36, pad: 48, glow: false,
+      color: '#4f6d2d', font: 'serif', size: 36, pad: 48, glow: false,
+      stripe: '#6a8c3f', stripeHeight: 14, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',

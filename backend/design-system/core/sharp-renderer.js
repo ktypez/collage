@@ -167,11 +167,23 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
+  const ch = c.chrome;
+  const hd = c.header || {};
+
+  // --- header stripe (themed accent bar at top edge) ---
+  if (hd.stripe) {
+    const sh = hd.stripeHeight || Math.round(headerH * 0.06);
+    const where = hd.stripePos || 'bottom'; // bottom = below header, top = above
+    if (where === 'top') {
+      svg.push(`<rect x="0" y="0" width="${W}" height="${sh}" fill="${hd.stripe}"/>`);
+    } else {
+      svg.push(`<rect x="0" y="${headerH}" width="${W}" height="${sh}" fill="${hd.stripe}"/>`);
+    }
+  }
+
   // --- header (name + date, centered, big & clear) ---
   // serif themes (claude) use Source Serif 4 for Latin + Noto Serif Thai for Thai;
   // others use Chakra Petch / Noto Sans Thai
-  const ch = c.chrome;
-  const hd = c.header || {};
   const useSerif = hd.font === 'serif';
   const nameFont = useSerif
     ? (serifFont || thaiSerifFont || thaiFont || monoFont)
