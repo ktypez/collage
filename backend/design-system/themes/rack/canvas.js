@@ -16,9 +16,10 @@ export function drawRackRails(ctx, size, opts) {
   ctx.fillRect(size - railW, 0, railW, size);
 
   // screws
-  const screwColor = '#5a5a63';
+  const screwColor = '#4a4a52';
   const screwR = Math.max(2, size * 0.006);
   const nScrews = 6;
+  ctx.globalAlpha = 0.55;
   for (let i = 0; i < nScrews; i++) {
     const sy = (i / (nScrews - 1)) * size;
     ctx.fillStyle = screwColor;
@@ -29,6 +30,7 @@ export function drawRackRails(ctx, size, opts) {
     ctx.arc(size - railW / 2, sy, screwR, 0, Math.PI * 2);
     ctx.fill();
   }
+  ctx.globalAlpha = 1;
 
   // thin highlight lines on rails
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';

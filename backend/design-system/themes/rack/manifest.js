@@ -42,7 +42,7 @@ export const manifest = {
     chrome: {
       rails: {
         widthRatio: 0.024,
-        dark: '#0a0a0c', mid: '#2a2a30', screw: '#5a5a63', highlight: 'rgba(255,255,255,0.05)',
+        dark: '#0a0a0c', mid: '#2a2a30', screw: '#4a4a52', screwOpacity: 0.55, highlight: 'rgba(255,255,255,0.05)',
       },
       leds: {
         colors: ['#00ff66', '#ffb000', '#00d4ff', '#00ff66', '#ffb000'],

@@ -120,6 +120,8 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     const r = ch.rails;
     const rw = Math.max(10, Math.round(W * r.widthRatio));
     const screwR = Math.max(2, Math.round(W * 0.006));
+    const screwColor = r.screw || '#5a5a63';
+    const screwOpacity = r.screwOpacity ?? 0.55;
     const nScrews = 8;
     svg.push(`<defs><linearGradient id="rail" x1="0" y1="0" x2="1" y2="0">` +
       `<stop offset="0%" stop-color="${r.dark}"/>` +
@@ -130,8 +132,8 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect x="${W - rw}" y="0" width="${rw}" height="${H}" fill="url(#rail)"/>`);
     for (let i = 0; i < nScrews; i++) {
       const sy = Math.round((i / (nScrews - 1)) * H);
-      svg.push(`<circle cx="${Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${r.screw}"/>`);
-      svg.push(`<circle cx="${W - Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${r.screw}"/>`);
+      svg.push(`<circle cx="${Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${screwColor}" fill-opacity="${screwOpacity}"/>`);
+      svg.push(`<circle cx="${W - Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${screwColor}" fill-opacity="${screwOpacity}"/>`);
     }
     svg.push(`<line x1="${rw}" y1="0" x2="${rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
     svg.push(`<line x1="${W - rw}" y1="0" x2="${W - rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
