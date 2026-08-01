@@ -57,12 +57,18 @@ function pickFont(manifest) {
 }
 
 /** Draw text as SVG path (opentype), centered or left-aligned */
-function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff' }) {
+function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', glow = null }) {
   const path = font.getPath(text, 0, 0, size).toSVG(2);
   const w = font.getAdvanceWidth(text, size);
   const tx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
   // y is baseline
-  return `<g fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+  const filter = glow ? ` filter="url(#hglow)"` : '';
+  let extra = '';
+  if (glow) {
+    extra = `<defs><filter id="hglow" x="-50%" y="-50%" width="200%" height="200%">` +
+      `<feGaussianBlur stdDeviation="${glow}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  }
+  return `${extra}<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
 }
 
 function hexToRgba(hex, alpha = 1) {
@@ -106,14 +112,17 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
 
   // --- header (name + date, centered, big & clear — Chakra Petch if available) ---
   const ch = c.chrome;
+  const hd = c.header || {};
   const nameFont = chakraFont || thaiFont || monoFont;
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
+  const glowBlur = hd.glow && hd.color ? 8 : null;
   if (name || date) {
     const hasBoth = !!(name && date);
     if (name) {
       const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
       svg.push(textPathSVG(name, nameFont, nameSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.9),
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center',
+        color: hexToRgba(textColor, 0.9), glow: glowBlur,
       }));
     }
     if (date) {

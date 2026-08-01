@@ -117,7 +117,7 @@
 
     /* === OUTPUT STYLE PICKER (7 days / RACK) === */
     .output-picker {
-      display: grid; grid-template-columns: 1fr 1fr;
+      display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 6px; margin-bottom: 14px;
     }
     .ochip {
@@ -579,6 +579,10 @@
         NOC
         <span class="osub">เครือข่าย / ops</span>
       </button>
+      <button class="ochip" data-mode="glitchpage">
+        GLITCH
+        <span class="osub">หน้า error / glitch</span>
+      </button>
     </div>
 
     <div class="card">
@@ -767,8 +771,8 @@
       setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
-    /* ---- OUTPUT STYLE: 7days (default) / rack / crt / noc ---- */
-    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc' };
+    /* ---- OUTPUT STYLE: 7days (default) / rack / crt / noc / glitchpage ---- */
+    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc', glitchpage: 'glitchpage' };
     let outputMode = '7days';
     const submitLabel = document.getElementById('submitLabel');
     const dayPresetSection = document.getElementById('dayPresetSection');
