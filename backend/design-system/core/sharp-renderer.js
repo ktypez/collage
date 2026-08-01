@@ -113,13 +113,13 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     if (name) {
       const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
       svg.push(textPathSVG(name, nameFont, nameSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center', color: textColor,
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.9),
       }));
     }
     if (date) {
       const dateSize = Math.round(headerH * 0.13);
       svg.push(textPathSVG(date, nameFont, dateSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.9),
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.8),
       }));
     }
   }
@@ -199,7 +199,7 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     if (font) {
       const ls = cell.unitTitleSize || 24;
       const lh = cell.unitHeadH || 40;
-      const ledColor = cell.unitTitleColor || '#ffb000';
+      const ledColor = cell.unitTitleColor || 'rgba(255,176,0,0.85)';
       cards.forEach((card, i) => {
         const text = '// ' + String(cell.unitTitle).replace('{n}', String(i + 1).padStart(2, '0'));
         const tx = card.x + 14;

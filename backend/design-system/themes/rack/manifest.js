@@ -30,7 +30,7 @@ export const manifest = {
       border: '#2a2a32', width: 2, rounded: 4,
       unit: true,
       unitTitle: 'UNIT {n}',
-      unitTitleColor: '#ffb000',
+      unitTitleColor: 'rgba(255,176,0,0.85)',
       unitTitleSize: 24,
       unitHeadH: 48,
       bg: 'linear-gradient(180deg,#1c1c20,#0a0a0c)',
