@@ -31,13 +31,15 @@
       --bg-2: #111114;
       --bg-3: #16161a;
       --surface: #16161a;
+      --metal: linear-gradient(180deg, #2a2a30 0%, #1c1c20 50%, #2a2a30 100%);
       --border: #2a2a32;
-      --border-bright: #3f3f4a;
+      --border-bright: #3a3a42;
       --fg: #f5f5f7;
       --fg-muted: #8a8a93;
       --fg-dim: #5a5a63;
       --accent: #ffb000;
       --accent-2: #00ff66;
+      --led-cyan: #00d4ff;
       --warn: #ffb000;
       --danger: #ff3b30;
       --success: #00ff66;
@@ -61,15 +63,26 @@
 
     /* === TOPBAR === */
     .topbar {
+      position: relative;
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 12px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      background: var(--metal);
+      border: 1px solid var(--border-bright);
+      border-radius: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
       margin-bottom: 14px;
       font-size: 11px;
       color: var(--fg-muted);
       letter-spacing: 0.1em;
+    }
+    /* screws edge (ขวา) — rack chrome */
+    .topbar::after {
+      content: ''; position: absolute; right: 4px; top: 6px; bottom: 6px; width: 8px;
+      background-image: radial-gradient(circle, #5a5a63 1px, transparent 1.4px);
+      background-size: 8px 14px;
+      background-position: 0 3px;
+      opacity: 0.7;
+      pointer-events: none;
     }
     .topbar .left, .topbar .right { display: flex; align-items: center; gap: 8px; }
     .topbar .pulse {
@@ -85,10 +98,11 @@
     .header {
       margin-bottom: 16px;
       padding: 14px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
+      background: var(--metal);
+      border: 1px solid var(--border-bright);
       border-left: 2px solid var(--accent);
-      border-radius: 6px;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
     .header h1 {
       font-family: var(--font-mono);
@@ -109,7 +123,7 @@
     .ochip {
       padding: 10px 8px;
       background: var(--bg-2); border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 2px;
       font-family: var(--font-mono); font-size: 12px;
       letter-spacing: 0.1em;
       color: var(--fg-muted); cursor: pointer;
@@ -129,12 +143,31 @@
 
     /* === CARD === */
     .card {
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      background: linear-gradient(180deg, #1c1c20, #0a0a0c);
+      border: 1px solid var(--border-bright);
+      border-radius: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
       padding: 14px;
       margin-bottom: 12px;
       position: relative;
+    }
+    /* screws edge (ขวา) — rack chrome ทุกการ์ด */
+    .card::after {
+      content: ''; position: absolute; right: 4px; top: 6px; bottom: 6px; width: 8px;
+      background-image: radial-gradient(circle, #5a5a63 1px, transparent 1.4px);
+      background-size: 8px 14px;
+      background-position: 0 3px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    /* screws edge (ซ้าย) — ฝั่งหัวการ์ด */
+    .card::before {
+      content: ''; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 8px;
+      background-image: radial-gradient(circle, #5a5a63 1px, transparent 1.4px);
+      background-size: 8px 14px;
+      background-position: 0 3px;
+      opacity: 0.5;
+      pointer-events: none;
     }
     .card-head {
       display: flex; justify-content: space-between; align-items: baseline;
@@ -168,8 +201,8 @@
       padding: 9px 10px;
       background: var(--bg);
       color: var(--fg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
+      border: 1px solid var(--border-bright);
+      border-radius: 2px;
       font-family: var(--font-mono);
       font-size: 13px;
       outline: none;
@@ -202,10 +235,10 @@
       z-index: 10;
       width: 280px;
       max-width: calc(100vw - 32px);
-      background: var(--bg-2);
+      background: linear-gradient(180deg, #1c1c20, #0a0a0c);
       border: 1px solid var(--border-bright);
-      border-radius: 4px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      border-radius: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.6);
       padding: 8px;
       font-family: var(--font-mono);
     }
@@ -216,8 +249,8 @@
     }
     .cal-nav {
       width: 44px; height: 32px;
-      background: none; border: 1px solid var(--border);
-      border-radius: 4px;
+      background: none; border: 1px solid var(--border-bright);
+      border-radius: 2px;
       color: var(--accent);
       font-family: var(--font-mono);
       font-size: 16px;
@@ -248,7 +281,7 @@
       min-height: 38px;
       display: flex; align-items: center; justify-content: center;
       background: none; border: 1px solid transparent;
-      border-radius: 4px;
+      border-radius: 2px;
       color: var(--fg);
       font-family: var(--font-mono);
       font-size: 12px;
@@ -262,8 +295,8 @@
       width: 100%;
       margin-top: 8px;
       min-height: 36px;
-      background: none; border: 1px solid var(--border);
-      border-radius: 4px;
+      background: none; border: 1px solid var(--border-bright);
+      border-radius: 2px;
       color: var(--accent-2);
       font-family: var(--font-mono);
       font-size: 11px;
@@ -282,7 +315,7 @@
     .theme-btn {
       width: 32px; height: 32px;
       min-width: 44px; min-height: 44px;
-      border-radius: 4px;
+      border-radius: 2px;
       border: 1.5px solid transparent;
       cursor: pointer;
       transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.28s cubic-bezier(0.22,1,0.36,1), border-color 0.22s ease;
@@ -305,7 +338,7 @@
     .upload-zone {
       position: relative;
       border: 2px dashed var(--border-bright);
-      border-radius: 6px;
+      border-radius: 2px;
       padding: 18px 16px;
       text-align: center;
       cursor: pointer;
@@ -327,8 +360,9 @@
       width: 36px; height: 36px;
       margin: 0 auto 8px;
       border: 1px solid var(--border-bright);
-      border-radius: 50%;
-      background: var(--bg-3);
+      border-radius: 2px;
+      background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
       display: flex; align-items: center; justify-content: center;
     }
     .upload-icon svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -344,9 +378,9 @@
     .preview-item {
       position: relative;
       width: 72px; height: 88px;
-      border-radius: 4px;
+      border-radius: 2px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-bright);
       background: var(--bg);
       cursor: grab;
       transition: box-shadow 0.15s, opacity 0.15s;
@@ -387,7 +421,7 @@
     .btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       width: 100%; padding: 13px 16px;
-      border: none; border-radius: 4px;
+      border: none; border-radius: 2px;
       font-family: var(--font-mono);
       font-size: 13px; font-weight: 700;
       letter-spacing: 0.15em;
@@ -412,7 +446,7 @@
     /* === STATUS === */
     .status {
       padding: 8px 10px;
-      border-radius: 4px;
+      border-radius: 2px;
       font-family: var(--font-mono);
       font-size: 11px;
       margin-top: 10px;
