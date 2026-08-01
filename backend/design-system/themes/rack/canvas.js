@@ -4,22 +4,22 @@
 
 /** Side rails + screws on both edges (behind photos) */
 export function drawRackRails(ctx, size, opts) {
-  const railW = Math.max(10, size * 0.024);
+  const railW = Math.max(10, size * 0.03);
   const metal = ctx.createLinearGradient(0, 0, size, 0);
 
   // left rail
   metal.addColorStop(0, '#0a0a0c');
-  metal.addColorStop(0.5, '#2a2a30');
+  metal.addColorStop(0.5, '#3a3a42');
   metal.addColorStop(1, '#0a0a0c');
   ctx.fillStyle = metal;
   ctx.fillRect(0, 0, railW, size);
   ctx.fillRect(size - railW, 0, railW, size);
 
   // screws
-  const screwColor = '#4a4a52';
-  const screwR = Math.max(2, size * 0.006);
-  const nScrews = 6;
-  ctx.globalAlpha = 0.55;
+  const screwColor = '#5a5a63';
+  const screwR = Math.max(2, size * 0.008);
+  const nScrews = 8;
+  ctx.globalAlpha = 0.8;
   for (let i = 0; i < nScrews; i++) {
     const sy = (i / (nScrews - 1)) * size;
     ctx.fillStyle = screwColor;
@@ -33,7 +33,7 @@ export function drawRackRails(ctx, size, opts) {
   ctx.globalAlpha = 1;
 
   // thin highlight lines on rails
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(railW, 0); ctx.lineTo(railW, size); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(size - railW, 0); ctx.lineTo(size - railW, size); ctx.stroke();
@@ -43,7 +43,7 @@ export function drawRackRails(ctx, size, opts) {
 export function drawRackLeds(ctx, size, opts) {
   const ledColors = ['#00ff66', '#ffb000', '#00d4ff', '#00ff66', '#ffb000'];
   const n = ledColors.length;
-  const r = Math.max(3, size * 0.008);
+  const r = Math.max(3, size * 0.012);
   const gap = r * 3.4;
   const startX = size - r * 2 - gap * n;
   const y = r * 3;

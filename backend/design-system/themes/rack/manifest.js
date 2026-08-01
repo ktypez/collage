@@ -25,11 +25,12 @@ export const manifest = {
 
   /* Canvas manifest — single source of truth for rendering */
   canvas: {
-    bg: { gradient: ['#2a2a30', '#1c1c20', '#2a2a30'], vertical: true },
+    bg: { gradient: ['#16161a', '#24242b', '#16161a'], vertical: false },
     cell: {
-      border: '#3a3a42', width: 3, rounded: 0,
-      label: 'UNIT {n}', labelColor: '#ffb000', labelBg: 'rgba(0,0,0,0.65)',
-      bg: '#111114',
+      border: '#2a2a32', width: 12, rounded: 48,
+      label: 'UNIT {n}', labelColor: '#ffb000', labelBg: 'rgba(10,10,12,0.88)',
+      labelSize: 42, labelHeight: 56,
+      bg: '#ffffff', shadow: 0.28,
     },
     header: {
       text: 'STACK//FRAME · RACK 01',
@@ -41,12 +42,12 @@ export const manifest = {
     /* declarative chrome — rendered by sharp-renderer (mirrors client hooks) */
     chrome: {
       rails: {
-        widthRatio: 0.024,
-        dark: '#0a0a0c', mid: '#2a2a30', screw: '#4a4a52', screwOpacity: 0.55, highlight: 'rgba(255,255,255,0.05)',
+        widthRatio: 0.03,
+        dark: '#0a0a0c', mid: '#3a3a42', screw: '#5a5a63', screwOpacity: 0.8, highlight: 'rgba(255,255,255,0.06)',
       },
       leds: {
         colors: ['#00ff66', '#ffb000', '#00d4ff', '#00ff66', '#ffb000'],
-        sizeRatio: 0.008, gapMul: 3.4, yMul: 3,
+        sizeRatio: 0.012, gapMul: 3.4, yMul: 3,
       },
     },
   },

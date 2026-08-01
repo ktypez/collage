@@ -96,6 +96,7 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
 
   // --- header (name + date only, centered — like the default/min renderer) ---
   // Theme title intentionally omitted: production output shows just name + date.
+  const ch = c.chrome;
   const nameFont = thaiFont || monoFont;
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
   if (name || date) {
@@ -114,8 +115,30 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     }
   }
 
+  // --- brand + status LEDs (rack chrome on header) ---
+  const hd = c.header || {};
+  if (hd.text) {
+    const bFont = pickFont(manifest);
+    const bSize = Math.round(headerH * 0.11);
+    svg.push(textPathSVG(hd.text, bFont, bSize, {
+      x: Math.round(W * 0.04), y: Math.round(headerH * 0.22), align: 'left', color: hd.color || '#ffb000',
+    }));
+  }
+  if (ch && ch.leds) {
+    const l = ch.leds;
+    const n = l.colors.length;
+    const r = Math.max(4, Math.round(W * l.sizeRatio * 0.55));
+    const gap = r * l.gapMul;
+    const startX = W - Math.round(W * 0.04) - r * 2 - gap * n;
+    const y = Math.round(headerH * 0.24);
+    l.colors.forEach((color, i) => {
+      const cx = startX + i * gap;
+      svg.push(`<circle cx="${cx}" cy="${y}" r="${r * 3}" fill="${color}" fill-opacity="0.22"/>`);
+      svg.push(`<circle cx="${cx}" cy="${y}" r="${r}" fill="${color}"/>`);
+    });
+  }
+
   // --- chrome: side rails (rack) — behind photos ---
-  const ch = c.chrome;
   if (ch && ch.rails) {
     const r = ch.rails;
     const rw = Math.max(10, Math.round(W * r.widthRatio));
@@ -142,8 +165,10 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   // --- cell chip backgrounds (behind photos) ---
   const cell = c.cell || {};
   if (cell.bg) {
+    const rounded = cell.rounded ? `rx="${cell.rounded}"` : '';
+    const shadow = cell.shadow ? `filter="drop-shadow(0 8px 16px rgba(0,0,0,${cell.shadow}))"` : '';
     for (const card of cards) {
-      svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" fill="${cell.bg}"/>`);
+      svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" ${rounded} fill="${cell.bg}" ${shadow}/>`);
     }
   }
 
@@ -171,9 +196,9 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
   if (cell.label) {
     const font = monoFont;
     if (font) {
-      const ls = 26;
-      const pad = 10;
-      const lh = 34;
+      const ls = cell.labelSize || 26;
+      const pad = 12;
+      const lh = cell.labelHeight || 34;
       cards.forEach((card, i) => {
         const text = cell.label === true
           ? String(i + 1).padStart(2, '0')
@@ -184,8 +209,9 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
         const w = font.getAdvanceWidth(text, ls) + pad * 2;
         const x = align === 'left' ? card.x : card.x + card.w - w;
         const y = card.y + card.h - lh;
-        parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${lh}" fill="${labelBg}"/>`);
-        parts.push(textPathSVG(text, font, ls, { x: x + pad, y: y + lh - 8, color: labelColor }));
+        const rounded = cell.rounded ? `rx="${Math.min(14, cell.rounded / 2)}"` : '';
+        parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${lh}" rx="${Math.min(14, cell.rounded ? cell.rounded / 2 : 0)}" fill="${labelBg}"/>`);
+        parts.push(textPathSVG(text, font, ls, { x: x + pad, y: y + lh - Math.round(ls * 0.3), color: labelColor }));
       });
     }
   }
