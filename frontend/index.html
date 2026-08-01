@@ -605,7 +605,7 @@
       <p>Deploy photos · Stack frames · Ship to LINE</p>
     </div>
 
-    <!-- OUTPUT STYLE: 7 days (default) / RACK / CRT / NOC / GLITCH -->
+    <!-- OUTPUT STYLE: 7 days (default) / RACK / NOC / CLAUDE / MOSS / BRUT -->
     <div class="output-picker">
       <button class="ochip active" data-mode="7days">
         7 DAYS
@@ -615,21 +615,21 @@
         RACK
         <span class="osub">สไตล์ server rack</span>
       </button>
-      <button class="ochip" data-mode="crt">
-        CRT
-        <span class="osub">จอ CRT โบราณ</span>
-      </button>
       <button class="ochip" data-mode="noc">
         NOC
         <span class="osub">เครือข่าย / ops</span>
       </button>
-      <button class="ochip" data-mode="glitchpage">
-        GLITCH
-        <span class="osub">หน้า error / glitch</span>
-      </button>
       <button class="ochip" data-mode="claude">
         CLAUDE
         <span class="osub">warm paper / serif</span>
+      </button>
+      <button class="ochip" data-mode="moss">
+        MOSS
+        <span class="osub">organic / earth tone</span>
+      </button>
+      <button class="ochip" data-mode="brut">
+        BRUT
+        <span class="osub">brutalist / raw</span>
       </button>
     </div>
 
@@ -831,10 +831,10 @@
       setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
-    /* ---- OUTPUT STYLE: 7days / rack / crt / noc / glitchpage / claude ---- */
-    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc', glitchpage: 'glitchpage', claude: 'claude' };
+    /* ---- OUTPUT STYLE: 7days / rack / noc / claude / moss / brut ---- */
+    const THEME_IDS = { '7days': 'min', rack: 'rack', noc: 'noc', claude: 'claude', moss: 'moss', brut: 'brut' };
     const THEME_LABELS = {
-      '7days': '7 DAYS', rack: 'RACK', crt: 'CRT', noc: 'NOC', glitchpage: 'GLITCH', claude: 'CLAUDE',
+      '7days': '7 DAYS', rack: 'RACK', noc: 'NOC', claude: 'CLAUDE', moss: 'MOSS', brut: 'BRUT',
     };
     let outputMode = '7days';
     const submitLabel = document.getElementById('submitLabel');
