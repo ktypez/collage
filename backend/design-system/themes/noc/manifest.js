@@ -32,13 +32,9 @@ export const manifest = {
       text: 'PACKETGRID · UPTIME 99.99%',
       color: '#00d4ff', font: 'mono', size: 40, pad: 56, glow: false,
     },
-    overlay: ['grid', 'connectors'],
+    overlay: ['grid'],
     overlayOpts: {
       grid: { color: 'rgba(0,212,255,0.10)' },
-      connectors: {
-        color: 'rgba(0,212,255,0.45)', width: 2,
-        hubColor: '#00d4ff', nodeColor: '#00d4ff',
-      },
     },
     photoFx: 'none',
     presetAccent: false,
