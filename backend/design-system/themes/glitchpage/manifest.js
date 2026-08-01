@@ -69,6 +69,7 @@ export const manifest = {
     header: {
       text: 'GLITCHPAGE · ERR_OUTPUT',
       color: '#ff3366', font: 'mono', size: 36, pad: 48, glow: true,
+      glitch: ['#33ff66', '#ffff00'], // RGB split — same as the 404 hero
     },
     overlay: 'grid',         // reuse generic blueprint grid
     photoFx: 'none',

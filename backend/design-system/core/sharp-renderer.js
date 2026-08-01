@@ -56,8 +56,9 @@ function pickFont(manifest) {
   return monoFont;
 }
 
-/** Draw text as SVG path (opentype), centered or left-aligned */
-function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', glow = null }) {
+/** Draw text as SVG path (opentype), centered or left-aligned.
+    glitch: RGB-split layers like the 404 hero — [rightColor, leftColor] shadows */
+function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', glow = null, glitch = null }) {
   const path = font.getPath(text, 0, 0, size).toSVG(2);
   const w = font.getAdvanceWidth(text, size);
   const tx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
@@ -68,7 +69,14 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
     extra = `<defs><filter id="hglow" x="-50%" y="-50%" width="200%" height="200%">` +
       `<feGaussianBlur stdDeviation="${glow}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
   }
-  return `${extra}<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+  let layers = `<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+  if (glitch) {
+    const off = Math.round(size * 0.025);
+    // RGB split: right shadow + left shadow (like text-shadow 3px/-3px)
+    if (glitch[0]) layers = `<g${filter} fill="${glitch[0]}" transform="translate(${tx + off} ${y})">${path}</g>` + layers;
+    if (glitch[1]) layers = `<g${filter} fill="${glitch[1]}" transform="translate(${tx - off} ${y})">${path}</g>` + layers;
+  }
+  return extra + layers;
 }
 
 function hexToRgba(hex, alpha = 1) {
@@ -116,13 +124,15 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   const nameFont = chakraFont || thaiFont || monoFont;
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
   const glowBlur = hd.glow && hd.color ? 8 : null;
+  const glitchColors = hd.glitch; // e.g. ['#33ff66', '#ffff00'] — RGB split layers
   if (name || date) {
     const hasBoth = !!(name && date);
     if (name) {
       const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
       svg.push(textPathSVG(name, nameFont, nameSize, {
         x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center',
-        color: hexToRgba(textColor, 0.9), glow: glowBlur,
+        color: hd.glitch ? (hd.color || '#ff3366') : hexToRgba(textColor, 0.9),
+        glow: glowBlur, glitch: glitchColors,
       }));
     }
     if (date) {
