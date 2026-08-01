@@ -22,6 +22,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 let monoFont = null;
 let displayFont = null;
 let thaiFont = null;
+let chakraFont = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
 } catch {}
@@ -31,6 +32,15 @@ try {
 try {
   // Thai-capable font (backend root — for user name/date). Mono fonts have no Thai glyphs.
   thaiFont = opentype.parse(readFileSync(resolve(__dirname, '../../NotoSansThai.ttf')));
+} catch {}
+try {
+  // Chakra Petch — Thai + Latin, techy look (preferred for big clear header text)
+  chakraFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/ChakraPetch-SemiBold.ttf')));
+  // opentype.js chokes on Chakra Petch's Thai GSUB (substitution type 11). Drop
+  // non-latin features so Thai renders from raw glyphs (fine for plain Thai text).
+  if (chakraFont && chakraFont.defaultRenderOptions && Array.isArray(chakraFont.defaultRenderOptions.features)) {
+    chakraFont.defaultRenderOptions.features = chakraFont.defaultRenderOptions.features.filter(f => f.script === 'latn');
+  }
 } catch {}
 
 /* =============================================================================
@@ -94,48 +104,24 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
-  // --- header (name + date only, centered — like the default/min renderer) ---
-  // Theme title intentionally omitted: production output shows just name + date.
+  // --- header (name + date, centered, big & clear — Chakra Petch if available) ---
   const ch = c.chrome;
-  const nameFont = thaiFont || monoFont;
+  const nameFont = chakraFont || thaiFont || monoFont;
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
   if (name || date) {
     const hasBoth = !!(name && date);
     if (name) {
-      const nameSize = Math.round(headerH * (hasBoth ? 0.24 : 0.28));
+      const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
       svg.push(textPathSVG(name, nameFont, nameSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.48 : 0.56)), align: 'center', color: textColor,
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center', color: textColor,
       }));
     }
     if (date) {
-      const dateSize = Math.round(headerH * 0.11);
+      const dateSize = Math.round(headerH * 0.13);
       svg.push(textPathSVG(date, nameFont, dateSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.56)), align: 'center', color: hexToRgba(textColor, 0.85),
+        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.9),
       }));
     }
-  }
-
-  // --- brand + status LEDs (rack chrome on header) ---
-  const hd = c.header || {};
-  if (hd.text) {
-    const bFont = pickFont(manifest);
-    const bSize = Math.round(headerH * 0.11);
-    svg.push(textPathSVG(hd.text, bFont, bSize, {
-      x: Math.round(W * 0.04), y: Math.round(headerH * 0.22), align: 'left', color: hd.color || '#ffb000',
-    }));
-  }
-  if (ch && ch.leds) {
-    const l = ch.leds;
-    const n = l.colors.length;
-    const r = Math.max(4, Math.round(W * l.sizeRatio * 0.55));
-    const gap = r * l.gapMul;
-    const startX = W - Math.round(W * 0.04) - r * 2 - gap * n;
-    const y = Math.round(headerH * 0.24);
-    l.colors.forEach((color, i) => {
-      const cx = startX + i * gap;
-      svg.push(`<circle cx="${cx}" cy="${y}" r="${r * 3}" fill="${color}" fill-opacity="0.22"/>`);
-      svg.push(`<circle cx="${cx}" cy="${y}" r="${r}" fill="${color}"/>`);
-    });
   }
 
   // --- chrome: side rails (rack) — behind photos ---
@@ -207,30 +193,18 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
-  // --- unit heads (rack): '// UNIT 01' + status LEDs per card — like /status ---
+  // --- unit heads (rack): '// UNIT 01' per card — like /status, no LEDs ---
   if (cell.unit && cell.unitTitle) {
     const font = monoFont;
     if (font) {
       const ls = cell.unitTitleSize || 24;
       const lh = cell.unitHeadH || 40;
-      const ledR = cell.unitLedR || 6;
-      const ledGap = cell.unitLedGap || 10;
       const ledColor = cell.unitTitleColor || '#ffb000';
-      const leds = cell.unitLeds || ['#00ff66'];
       cards.forEach((card, i) => {
         const text = '// ' + String(cell.unitTitle).replace('{n}', String(i + 1).padStart(2, '0'));
         const tx = card.x + 14;
         const ty = card.y + lh - 7;
         parts.push(textPathSVG(text, font, ls, { x: tx, y: ty, color: ledColor }));
-        // LEDs on the right
-        const ledsW = leds.length * ledR * 2 + (leds.length - 1) * ledGap;
-        const lx0 = card.x + card.w - 14 - ledsW;
-        const ly = card.y + lh / 2;
-        leds.forEach((color, j) => {
-          const cx = lx0 + j * (ledR * 2 + ledGap) + ledR;
-          parts.push(`<circle cx="${cx}" cy="${ly}" r="${ledR * 3}" fill="${color}" fill-opacity="0.25"/>`);
-          parts.push(`<circle cx="${cx}" cy="${ly}" r="${ledR}" fill="${color}"/>`);
-        });
         // bottom-left index tag
         const tag = String(i + 1).padStart(2, '0');
         const tagSize = 22;
@@ -263,23 +237,9 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
-  // --- chrome: LEDs (rack) + bezel/corner LEDs (crt) — on top ---
+  // --- chrome: bezel/corner LEDs (crt) — on top ---
   const ch = c.chrome;
   if (ch) {
-    // rack status LEDs (top-right)
-    if (ch.leds) {
-      const l = ch.leds;
-      const n = l.colors.length;
-      const r = Math.max(3, Math.round(W * l.sizeRatio));
-      const gap = r * l.gapMul;
-      const startX = W - r * 2 - gap * n;
-      const y = Math.round(r * l.yMul);
-      l.colors.forEach((color, i) => {
-        const cx = startX + i * gap;
-        parts.push(`<circle cx="${cx}" cy="${y}" r="${r * 3}" fill="${color}" fill-opacity="0.25"/>`);
-        parts.push(`<circle cx="${cx}" cy="${y}" r="${r}" fill="${color}"/>`);
-      });
-    }
     // CRT bezel frame
     if (ch.bezel) {
       const b = ch.bezel;

@@ -33,11 +33,10 @@ export const manifest = {
       unitTitleColor: '#ffb000',
       unitTitleSize: 24,
       unitHeadH: 48,
-      unitLeds: ['#00ff66', '#ffb000', '#00d4ff'],
       bg: 'linear-gradient(180deg,#1c1c20,#0a0a0c)',
     },
     header: {
-      text: 'STACK//FRAME · RACK 01',
+      text: '', // theme title intentionally empty — shows only name + date
       color: '#ffb000', font: 'mono', size: 40, pad: 60, glow: false,
     },
     overlay: 'none',
@@ -48,10 +47,6 @@ export const manifest = {
       rails: {
         widthRatio: 0.02,
         dark: '#0a0a0c', mid: '#2a2a30', screw: '#5a5a63', screwOpacity: 0.7, highlight: 'rgba(255,255,255,0.05)',
-      },
-      leds: {
-        colors: ['#00ff66', '#ffb000', '#00d4ff', '#00ff66', '#ffb000'],
-        sizeRatio: 0.01, gapMul: 3.4, yMul: 3,
       },
     },
   },
