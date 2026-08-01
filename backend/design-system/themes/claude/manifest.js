@@ -73,7 +73,6 @@ export const manifest = {
     bg: { gradient: ['#faf9f5', '#f5f4ed', '#faf9f5'], vertical: true },
     cell: {
       border: 'rgba(20,20,19,0.14)', width: 1, rounded: 8,
-      label: 'note {n}', labelColor: 'rgba(20,20,19,0.5)', labelBg: 'rgba(250,249,245,0.9)',
       bg: '#ffffff',
     },
     header: {
