@@ -22,11 +22,11 @@ export const manifest = {
   },
 
   canvas: {
-    bg: '#0a0e14',
+    bg: { gradient: ['#1c2c3e', '#14202e', '#0e1a26'], vertical: true },
     cell: {
-      border: '#1f2733', width: 1.5, rounded: 3,
+      border: '#2a3b4f', width: 1.5, rounded: 3,
       label: 'P{n}', labelColor: '#00d4ff', labelBg: 'rgba(10,14,20,0.8)', labelAlign: 'left',
-      bg: '#0f1419',
+      bg: '#1a2a3a',
     },
     header: {
       text: 'PACKETGRID · UPTIME 99.99%',
@@ -34,8 +34,11 @@ export const manifest = {
     },
     overlay: ['grid', 'connectors'],
     overlayOpts: {
-      grid: { color: 'rgba(0,212,255,0.05)' },
-      connectors: { color: 'rgba(0,212,255,0.30)' },
+      grid: { color: 'rgba(0,212,255,0.10)' },
+      connectors: {
+        color: 'rgba(0,212,255,0.45)', width: 2,
+        hubColor: '#00d4ff', nodeColor: '#00d4ff',
+      },
     },
     photoFx: 'none',
     presetAccent: false,

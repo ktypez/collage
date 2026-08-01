@@ -294,15 +294,30 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
       parts.push(grid);
     } else if (name === 'connectors') {
       const color = o.color ?? 'rgba(0,212,255,0.30)';
+      const width = o.width ?? 2;
       if (cards.length) {
         const cx = W / 2, cy = Math.round(H * 0.55);
         let conn = '';
         for (const card of cards) {
           const mx = card.x + card.w / 2;
           const my = card.y + card.h / 2;
-          conn += `<line x1="${mx}" y1="${my}" x2="${cx + (mx - cx) * 0.25}" y2="${cy + (my - cy) * 0.25}" stroke="${color}" stroke-width="2"/>`;
+          conn += `<line x1="${mx}" y1="${my}" x2="${cx + (mx - cx) * 0.25}" y2="${cy + (my - cy) * 0.25}" stroke="${color}" stroke-width="${width}"/>`;
         }
         conn += `<circle cx="${cx}" cy="${cy}" r="10" fill="${color}"/>`;
+        // data-center hub: glowing cyan core + node dots on each link
+        if (o.hubColor) {
+          conn += `<circle cx="${cx}" cy="${cy}" r="22" fill="${o.hubColor}" fill-opacity="0.15"/>`;
+          conn += `<circle cx="${cx}" cy="${cy}" r="6" fill="${o.hubColor}"/>`;
+        }
+        if (o.nodeColor) {
+          for (const card of cards) {
+            const mx = card.x + card.w / 2;
+            const my = card.y + card.h / 2;
+            const nx = cx + (mx - cx) * 0.25;
+            const ny = cy + (my - cy) * 0.25;
+            conn += `<circle cx="${nx}" cy="${ny}" r="4" fill="${o.nodeColor}"/>`;
+          }
+        }
         parts.push(conn);
       }
     }
