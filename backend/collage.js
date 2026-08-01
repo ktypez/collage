@@ -278,11 +278,11 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
   }
 
   const contentH = Math.max(...colHeights) - G;
-  // themed: tighter padding below the date header than the default renderer
-  const themePT = Math.max(24, Math.round(PT * 0.55)); // 80 → 44
-  const rest = contentH + DH + themePT + PB;
-  const totalH = HEADER_H + rest;
-  const contentY = HEADER_H + DH + themePT;
+  // themed: content starts exactly 44px below the date baseline (mirrors the
+  // date y-position formula in sharp-renderer's renderBackdrop)
+  const dateBaseY = Math.round(HEADER_H * ((name && date) ? 0.78 : 0.55));
+  const contentY = dateBaseY + 44;
+  const totalH = contentY + contentH + PB;
 
   // pixel-space card rects (for sharp-renderer)
   const cards = placements.map(p => ({ x: p.x, y: contentY + p.y, w: cardW, h: p.ch }));
