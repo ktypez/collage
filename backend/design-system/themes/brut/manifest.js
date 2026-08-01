@@ -64,7 +64,7 @@ export const manifest = {
     header: {
       text: 'BRUT · RAW OUTPUT',
       color: '#ff2e00', font: 'mono', size: 40, pad: 48, glow: false,
-      stripe: '#ff2e00', stripeHeight: 20, stripePos: 'top',
+      stripe: '#e02900', stripeHeight: 20, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',

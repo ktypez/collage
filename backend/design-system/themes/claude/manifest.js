@@ -78,7 +78,7 @@ export const manifest = {
     header: {
       text: 'CLAUDE PAPER · NOTES',
       color: '#d97757', font: 'serif', size: 36, pad: 48, glow: false,
-      stripe: '#d97757', stripeHeight: 8, stripePos: 'top',
+      stripe: '#c05f3a', stripeHeight: 8, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',

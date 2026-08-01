@@ -67,7 +67,7 @@ export const manifest = {
     header: {
       text: 'MOSS · GARDEN',
       color: '#4f6d2d', font: 'serif', size: 36, pad: 48, glow: false,
-      stripe: '#6a8c3f', stripeHeight: 14, stripePos: 'top',
+      stripe: '#55782e', stripeHeight: 14, stripePos: 'top',
     },
     overlay: 'none',
     photoFx: 'none',
