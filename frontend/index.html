@@ -561,7 +561,7 @@
       <p>Deploy photos · Stack frames · Ship to LINE</p>
     </div>
 
-    <!-- OUTPUT STYLE: 7 days (default) / RACK -->
+    <!-- OUTPUT STYLE: 7 days (default) / RACK / CRT / NOC -->
     <div class="output-picker">
       <button class="ochip active" data-mode="7days">
         7 DAYS
@@ -570,6 +570,14 @@
       <button class="ochip" data-mode="rack">
         RACK
         <span class="osub">สไตล์ server rack</span>
+      </button>
+      <button class="ochip" data-mode="crt">
+        CRT
+        <span class="osub">จอ CRT โบราณ</span>
+      </button>
+      <button class="ochip" data-mode="noc">
+        NOC
+        <span class="osub">เครือข่าย / ops</span>
       </button>
     </div>
 
@@ -759,7 +767,8 @@
       setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
     });
 
-    /* ---- OUTPUT STYLE: 7days (default) / rack ---- */
+    /* ---- OUTPUT STYLE: 7days (default) / rack / crt / noc ---- */
+    const THEME_IDS = { '7days': 'min', rack: 'rack', crt: 'crt', noc: 'noc' };
     let outputMode = '7days';
     const submitLabel = document.getElementById('submitLabel');
     const dayPresetSection = document.getElementById('dayPresetSection');
@@ -954,7 +963,7 @@
         fd.append('name', name);
         fd.append('date', date);
         fd.append('preset', selectedPreset);
-        fd.append('theme', outputMode === 'rack' ? 'rack' : 'min');
+        fd.append('theme', THEME_IDS[outputMode] || 'min');
         for (const f of imageFiles) fd.append('images', f);
 
         const res = await fetch(API_BASE.replace(/\/+$/, '') + '/api/collage', {
