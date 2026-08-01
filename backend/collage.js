@@ -201,17 +201,15 @@ export async function createCollage(files, name, date, preset, theme) {
   }
 
   const contentH = Math.max(...colHeights) - G;
-  // default renderer: content starts exactly 44px below the date baseline
-  // (mirrors headerSVG's date y-position so all output styles match)
-  const dateBaseY = Math.round(HEADER_H * 0.55) + (name ? 114 : 20);
-  const contentY = dateBaseY + 44;
-  const totalH = contentY + contentH + PB;
+  const rest = contentH + DH + PT + PB;
+  const totalH = HEADER_H + rest;
 
   const composites = [];
 
   composites.push({ input: Buffer.from(headerSVG(name, date, HEADER_H, t)), top: 0, left: 0 });
-  // divider sits in the 44px gap as a separator (above the cards, below the date)
-  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: contentY - DH, left: 0 });
+  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: HEADER_H, left: 0 });
+
+  const contentY = HEADER_H + DH + PT;
 
   const imgs = await Promise.all(
     dims.map((d, i) =>
