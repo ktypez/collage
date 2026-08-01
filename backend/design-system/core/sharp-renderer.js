@@ -162,13 +162,28 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<line x1="${W - rw}" y1="0" x2="${W - rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
   }
 
-  // --- cell chip backgrounds (behind photos) ---
+  // --- cell chip backgrounds (behind photos) — supports hex or linear-gradient ---
   const cell = c.cell || {};
   if (cell.bg) {
     const rounded = cell.rounded ? `rx="${cell.rounded}"` : '';
     const shadow = cell.shadow ? `filter="drop-shadow(0 8px 16px rgba(0,0,0,${cell.shadow}))"` : '';
-    for (const card of cards) {
-      svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" ${rounded} fill="${cell.bg}" ${shadow}/>`);
+    const isGrad = typeof cell.bg === 'string' && cell.bg.startsWith('linear-gradient');
+    if (isGrad) {
+      // parse linear-gradient(180deg,#1c1c20,#0a0a0c)
+      const m = cell.bg.match(/linear-gradient\(\s*([\d.]+deg)\s*,(.+)\)/);
+      const deg = m ? parseFloat(m[1]) : 180;
+      const stops = (m ? m[2] : cell.bg).split(',').map(s => s.trim());
+      const vert = deg >= 135 && deg <= 225;
+      svg.push(`<defs><linearGradient id="cellbg" x1="0" y1="0" x2="${vert ? 0 : 1}" y2="${vert ? 1 : 0}">` +
+        stops.map((s, i) => `<stop offset="${(i / (stops.length - 1)) * 100}%" stop-color="${s}"/>`).join('') +
+        `</linearGradient></defs>`);
+      for (const card of cards) {
+        svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" ${rounded} fill="url(#cellbg)" ${shadow}/>`);
+      }
+    } else {
+      for (const card of cards) {
+        svg.push(`<rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" ${rounded} fill="${cell.bg}" ${shadow}/>`);
+      }
     }
   }
 
@@ -192,8 +207,40 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
-  // --- cell labels (UNIT 01 / P1 / 01) ---
-  if (cell.label) {
+  // --- unit heads (rack): '// UNIT 01' + status LEDs per card — like /status ---
+  if (cell.unit && cell.unitTitle) {
+    const font = monoFont;
+    if (font) {
+      const ls = cell.unitTitleSize || 24;
+      const lh = cell.unitHeadH || 40;
+      const ledR = cell.unitLedR || 6;
+      const ledGap = cell.unitLedGap || 10;
+      const ledColor = cell.unitTitleColor || '#ffb000';
+      const leds = cell.unitLeds || ['#00ff66'];
+      cards.forEach((card, i) => {
+        const text = '// ' + String(cell.unitTitle).replace('{n}', String(i + 1).padStart(2, '0'));
+        const tx = card.x + 14;
+        const ty = card.y + lh - 7;
+        parts.push(textPathSVG(text, font, ls, { x: tx, y: ty, color: ledColor }));
+        // LEDs on the right
+        const ledsW = leds.length * ledR * 2 + (leds.length - 1) * ledGap;
+        const lx0 = card.x + card.w - 14 - ledsW;
+        const ly = card.y + lh / 2;
+        leds.forEach((color, j) => {
+          const cx = lx0 + j * (ledR * 2 + ledGap) + ledR;
+          parts.push(`<circle cx="${cx}" cy="${ly}" r="${ledR * 3}" fill="${color}" fill-opacity="0.25"/>`);
+          parts.push(`<circle cx="${cx}" cy="${ly}" r="${ledR}" fill="${color}"/>`);
+        });
+        // bottom-left index tag
+        const tag = String(i + 1).padStart(2, '0');
+        const tagSize = 22;
+        const tw = font.getAdvanceWidth(tag, tagSize) + 20;
+        const tagY = card.y + card.h - 40;
+        parts.push(`<rect x="${card.x + 10}" y="${tagY}" width="${tw}" height="30" rx="4" fill="rgba(10,10,12,0.85)"/>`);
+        parts.push(textPathSVG(tag, font, tagSize, { x: card.x + 20, y: tagY + 22, color: '#8a8a93' }));
+      });
+    }
+  } else if (cell.label) {
     const font = monoFont;
     if (font) {
       const ls = cell.labelSize || 26;

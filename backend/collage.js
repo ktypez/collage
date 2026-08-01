@@ -255,12 +255,16 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
   const usable = W - PS * 2;
   const cardW = Math.floor((usable - G * (c - 1)) / c);
   const iw = cardW - CP * 2;
+  const cell = manifest.canvas.cell || {};
+  const unitHeadH = cell.unit ? (cell.unitHeadH || 48) : 0;
+  const topPad = cell.unit ? (unitHeadH + 8) : CP; // unit head occupies top
+  const botPad = CP;
 
   const dims = metas.map(m => {
     const w = m.width && m.width > 0 ? m.width : iw;
     const h = m.height && m.height > 0 ? m.height : iw;
     const ih = Math.round(iw * h / w) || iw;
-    return { iw, ih, ch: ih + CP * 2 };
+    return { iw, ih, ch: ih + topPad + botPad };
   });
 
   const colHeights = new Array(c).fill(0);
@@ -293,7 +297,7 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
     let buf = rounded.buf;
     if (fx) buf = await sharp(buf).modulate(fx).png().toBuffer();
     const cx = placements[i].x + CP + Math.max(0, Math.round((dims[i].iw - rounded.w) / 2));
-    const cy = contentY + placements[i].y + CP + Math.max(0, Math.round((dims[i].ih - rounded.h) / 2));
+    const cy = contentY + placements[i].y + topPad + Math.max(0, Math.round((dims[i].ih - rounded.h) / 2));
     imgs.push({ input: buf, top: cy, left: cx });
   }
 
