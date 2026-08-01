@@ -67,6 +67,44 @@ function pickFont(manifest) {
   return monoFont;
 }
 
+/** Split text into runs: Thai chars → thaiFont, everything else → base font */
+function splitTextRuns(text, isThai) {
+  const runs = [];
+  let cur = '', curThai = null;
+  for (const ch of text) {
+    const th = isThai(ch);
+    if (cur && th !== curThai) { runs.push({ text: cur, thai: curThai }); cur = ''; }
+    curThai = th; cur += ch;
+  }
+  if (cur) runs.push({ text: cur, thai: curThai });
+  return runs;
+}
+
+/** Render text with per-script fonts (Latin serif + Thai serif fallback). */
+function textPathSVGMulti(text, baseFont, thaiF, size, { x, y, align = 'left', color = '#fff', glow = null }) {
+  if (!thaiF) return textPathSVG(text, baseFont, size, { x, y, align, color, glow });
+  const isThaiCh = (ch) => /[\u0E00-\u0E7F]/.test(ch);
+  const runs = splitTextRuns(text, isThaiCh);
+  // compute total width for centering
+  let totalW = 0;
+  for (const r of runs) totalW += (r.thai ? thaiF : baseFont).getAdvanceWidth(r.text, size);
+  let tx = align === 'center' ? x - totalW / 2 : align === 'right' ? x - totalW : x;
+  const filter = glow ? ` filter="url(#hglow)"` : '';
+  let extra = '';
+  if (glow) {
+    extra = `<defs><filter id="hglow" x="-50%" y="-50%" width="200%" height="200%">` +
+      `<feGaussianBlur stdDeviation="${glow}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  }
+  let out = '';
+  for (const r of runs) {
+    const f = r.thai ? thaiF : baseFont;
+    const path = f.getPath(r.text, 0, 0, size).toSVG(2);
+    out += `<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+    tx += f.getAdvanceWidth(r.text, size);
+  }
+  return extra + out;
+}
+
 /** Draw text as SVG path (opentype), centered or left-aligned.
     glitch: RGB-split layers like the 404 hero — [rightColor, leftColor] shadows */
 function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', glow = null, glitch = null }) {
@@ -130,7 +168,8 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   }
 
   // --- header (name + date, centered, big & clear) ---
-  // serif themes (claude) use Source Serif 4; others use Chakra Petch / Noto Sans Thai
+  // serif themes (claude) use Source Serif 4 for Latin + Noto Serif Thai for Thai;
+  // others use Chakra Petch / Noto Sans Thai
   const ch = c.chrome;
   const hd = c.header || {};
   const useSerif = hd.font === 'serif';
@@ -140,11 +179,14 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
   const glowBlur = hd.glow && hd.color ? 8 : null;
   const glitchColors = hd.glitch; // e.g. ['#33ff66', '#ffff00'] — RGB split layers
+  const drawText = useSerif
+    ? (txt, f, sz, o) => textPathSVGMulti(txt, f, thaiSerifFont || null, sz, o)
+    : textPathSVG;
   if (name || date) {
     const hasBoth = !!(name && date);
     if (name) {
       const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
-      svg.push(textPathSVG(name, nameFont, nameSize, {
+      svg.push(drawText(name, nameFont, nameSize, {
         x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center',
         color: hd.glitch ? (hd.color || '#ff3366') : hexToRgba(textColor, 0.9),
         glow: glowBlur, glitch: glitchColors,
@@ -152,7 +194,7 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     }
     if (date) {
       const dateSize = Math.round(headerH * 0.13);
-      svg.push(textPathSVG(date, nameFont, dateSize, {
+      svg.push(drawText(date, nameFont, dateSize, {
         x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.8),
       }));
     }
