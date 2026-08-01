@@ -23,6 +23,8 @@ let monoFont = null;
 let displayFont = null;
 let thaiFont = null;
 let chakraFont = null;
+let serifFont = null;
+let thaiSerifFont = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
 } catch {}
@@ -41,6 +43,14 @@ try {
   if (chakraFont && chakraFont.defaultRenderOptions && Array.isArray(chakraFont.defaultRenderOptions.features)) {
     chakraFont.defaultRenderOptions.features = chakraFont.defaultRenderOptions.features.filter(f => f.script === 'latn');
   }
+} catch {}
+try {
+  // Source Serif 4 — real serif (Latin + Thai glyphs), for editorial themes
+  serifFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/SourceSerif4-VF.ttf')));
+} catch {}
+try {
+  // Noto Serif Thai — Thai serif fallback for editorial themes
+  thaiSerifFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/NotoSerifThai-VF.ttf')));
 } catch {}
 
 /* =============================================================================
@@ -119,10 +129,14 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
-  // --- header (name + date, centered, big & clear — Chakra Petch if available) ---
+  // --- header (name + date, centered, big & clear) ---
+  // serif themes (claude) use Source Serif 4; others use Chakra Petch / Noto Sans Thai
   const ch = c.chrome;
   const hd = c.header || {};
-  const nameFont = chakraFont || thaiFont || monoFont;
+  const useSerif = hd.font === 'serif';
+  const nameFont = useSerif
+    ? (serifFont || thaiSerifFont || thaiFont || monoFont)
+    : (chakraFont || thaiFont || monoFont);
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
   const glowBlur = hd.glow && hd.color ? 8 : null;
   const glitchColors = hd.glitch; // e.g. ['#33ff66', '#ffff00'] — RGB split layers
