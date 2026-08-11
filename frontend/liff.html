@@ -842,9 +842,43 @@
       return Promise.resolve(liff.login({ redirectUri: window.location.href, scope: REQUIRED_SCOPES }));
     }
 
+    // Does the current token actually include chat_message.write? (LIFF v2.27+)
+    function hasGrantedSendScope() {
+      if (typeof liff.permission === 'undefined' ||
+          typeof liff.permission.getGrantedAll !== 'function') {
+        return Promise.resolve(true); // can't check → let sendMessages surface errors
+      }
+      return liff.permission.getGrantedAll().then(
+        scopes => Array.isArray(scopes) && scopes.includes('chat_message.write'),
+        () => true
+      );
+    }
+
+    // A revoked/expired token can't be fixed by re-init — must re-authenticate
+    // so LINE issues a fresh token (and re-shows consent for missing scopes).
+    function forceReAuth(message) {
+      if (message) setStatus(message, 'loading');
+      try { liff.logout(); } catch (e) {}
+      liff.login({ redirectUri: window.location.href, scope: REQUIRED_SCOPES });
+    }
+
     initLiff()
       .then(ensureLogin)
-      .then(() => {
+      .then(hasGrantedSendScope)
+      .then(ok => {
+        if (!ok) {
+          // chat_message.write not granted → re-login once so the consent screen
+          // appears. sessionStorage guards against a redirect loop if denied.
+          let tried = false;
+          try { tried = sessionStorage.getItem('collageReauth') === '1'; } catch (e) {}
+          if (!tried) {
+            try { sessionStorage.setItem('collageReauth', '1'); } catch (e) {}
+            forceReAuth('ยังไม่ได้ให้สิทธิ์ส่งข้อความ กำลังขอสิทธิ์ใหม่...');
+            return;
+          }
+          setStatus('ยังไม่ได้ให้สิทธิ์ส่งข้อความ กรุณากด "สร้างและส่งเข้ากลุ่ม" อีกครั้ง', 'error');
+          return;
+        }
         setDateValue(new Date().toISOString().split('T')[0]);
       })
       .catch(err => {
@@ -1030,8 +1064,9 @@
     }
 
     /**
-     * Send image via LIFF, auto-recovering from an expired access token
-     * (12h validity, can be revoked mid-session). Re-init gets a fresh token.
+     * Send image via LIFF, auto-recovering from a revoked/expired access token
+     * (12h validity, can be revoked mid-session). A fresh token requires a
+     * re-login, not just re-init — so we hand control back to generateCollage.
      */
     async function sendImage(imageUrl) {
       const messages = [{
@@ -1048,9 +1083,11 @@
           // Not a token expiry — the user never granted chat_message.write.
           throw Object.assign(err, { needsScope: true });
         }
-        if (!/expired|revoked|unauthorized|invalid.*token|access token/i.test(msg)) throw err;
-        try { await liff.init({ liffId: LIFF_ID }); } catch {}
-        await liff.sendMessages(messages);
+        if (/revoked|expired|unauthorized|invalid.*token|access token/i.test(msg)) {
+          // Token revoked/expired mid-session — re-login to mint a fresh one.
+          throw Object.assign(err, { needsReAuth: true });
+        }
+        throw err;
       }
     }
 
@@ -1093,22 +1130,15 @@
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
-        if (err && err.needsScope) {
-          // Never granted chat_message.write — re-init and re-login so LINE
-          // shows the consent screen, then hand control back to the user.
-          try {
-            await initLiff();
-            if (!liff.isLoggedIn()) {
-              await ensureLogin();
-            }
-            btn.disabled = false;
-            setStatus(
-              'ยังไม่ได้ให้สิทธิ์ส่งข้อความ กรุณาอนุญาตสิทธิ์ที่ LINE ขอ แล้วกด "สร้างคอลลาจ" อีกครั้ง',
-              'error'
-            );
-          } catch (re) {
-            setStatus('ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาเปิดใหม่', 'error');
-          }
+        if (err && (err.needsScope || err.needsReAuth)) {
+          // Scope never granted OR token revoked/expired — a re-login mints a
+          // fresh token and re-shows the consent screen, then the user taps
+          // "สร้างและส่งเข้ากลุ่ม" again.
+          forceReAuth(
+            err.needsReAuth
+              ? 'เซสชันหมดอายุ กำลังเข้าสู่ระบบใหม่...'
+              : 'ยังไม่ได้ให้สิทธิ์ส่งข้อความ กำลังขอสิทธิ์ใหม่...'
+          );
           return;
         }
         setStatus(err.message, 'error');
