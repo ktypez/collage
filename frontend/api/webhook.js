@@ -44,6 +44,13 @@ export default async function handler(req, res) {
 }
 
 async function handleEvent(event) {
+  // User added the bot as a friend (or unblocked) → greet with the same flex
+  // menu as *เมนู. Follow events carry a replyToken, so this uses the Reply
+  // API which does NOT count toward the monthly message quota.
+  if (event.type === 'follow') {
+    return client.replyMessage(event.replyToken, mainMenu());
+  }
+
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
   const text = event.message.text.trim();
