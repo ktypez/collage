@@ -108,9 +108,6 @@ function textPathSVGMulti(text, baseFont, thaiF, size, { x, y, align = 'left', c
 /** Draw text as SVG path (opentype), centered or left-aligned.
     glitch: RGB-split layers like the 404 hero — [rightColor, leftColor] shadows */
 function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', glow = null, glitch = null }) {
-  const path = font.getPath(text, 0, 0, size).toSVG(2);
-  const w = font.getAdvanceWidth(text, size);
-  const tx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
   // y is baseline
   const filter = glow ? ` filter="url(#hglow)"` : '';
   let extra = '';
@@ -118,12 +115,29 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
     extra = `<defs><filter id="hglow" x="-50%" y="-50%" width="200%" height="200%">` +
       `<feGaussianBlur stdDeviation="${glow}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
   }
-  let layers = `<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
+  // Render in Thai/Latin runs: opentype v2 emits NaN control points halfway
+  // through long mixed Thai+Latin strings (ChakraPetch), and librsvg silently
+  // drops the rest of the <path> from the first NaN onward — cutting the date/
+  // name short. Splitting isolates each run so every glyph actually renders.
+  const mkLayers = (col, dx) => {
+    const runs = splitTextRuns(text, (ch) => /[\u0E00-\u0E7F]/.test(ch));
+    let totalW = 0;
+    for (const r of runs) totalW += font.getAdvanceWidth(r.text, size);
+    let tx = (align === 'center' ? x - totalW / 2 : align === 'right' ? x - totalW : x) + (dx || 0);
+    let out = '';
+    for (const r of runs) {
+      const path = font.getPath(r.text, 0, 0, size).toSVG(2);
+      out += `<g${filter} fill="${col}" transform="translate(${tx} ${y})">${path}</g>`;
+      tx += font.getAdvanceWidth(r.text, size);
+    }
+    return out;
+  };
+  let layers = mkLayers(color, 0);
   if (glitch) {
     const off = Math.round(size * 0.025);
     // RGB split: right shadow + left shadow (like text-shadow 3px/-3px)
-    if (glitch[0]) layers = `<g${filter} fill="${glitch[0]}" transform="translate(${tx + off} ${y})">${path}</g>` + layers;
-    if (glitch[1]) layers = `<g${filter} fill="${glitch[1]}" transform="translate(${tx - off} ${y})">${path}</g>` + layers;
+    if (glitch[0]) layers = mkLayers(glitch[0], off) + layers;
+    if (glitch[1]) layers = mkLayers(glitch[1], -off) + layers;
   }
   return extra + layers;
 }
