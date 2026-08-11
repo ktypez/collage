@@ -821,15 +821,45 @@
       if (e.key === 'Escape' && isDatePopupOpen()) closeDatePopup();
     });
 
-    /* ---- LIFF init ---- */
-    liff.init({ liffId: LIFF_ID }).then(() => {
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
-      }
-      setDateValue(new Date().toISOString().split('T')[0]);
-    }).catch(err => {
-      setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
-    });
+    /* ---- LIFF init ----
+       Request the scopes the app actually uses up-front (chat_message.write is
+       required by liff.sendMessages) so LINE shows the consent screen and we
+       never hit "user doesn't grant required permissions yet" at send time.
+       ------------------------------------------------------------------ */
+    const REQUIRED_SCOPES = ['openid', 'profile', 'chat_message.write'];
+
+    function isPermissionError(err) {
+      const msg = String((err && (err.message || err.code || err)) || '');
+      return /permission|scope|grant|authoriz/i.test(msg);
+    }
+
+    function initLiff() {
+      return liff.init({ liffId: LIFF_ID });
+    }
+
+    function ensureLogin() {
+      if (liff.isLoggedIn()) return Promise.resolve();
+      return Promise.resolve(liff.login({ redirectUri: window.location.href, scope: REQUIRED_SCOPES }));
+    }
+
+    initLiff()
+      .then(ensureLogin)
+      .then(() => {
+        setDateValue(new Date().toISOString().split('T')[0]);
+      })
+      .catch(err => {
+        console.error('LIFF init error:', err);
+        const btn = document.getElementById('submitBtn');
+        if (btn) btn.disabled = true;
+        if (isPermissionError(err)) {
+          setStatus(
+            'ยังไม่ได้ให้สิทธิ์บอท กรุณาแตะ "เปิดใน LINE" ด้านบน แล้วอนุญาตสิทธิ์ที่บอทขอ (ส่งข้อความ) ให้ครบก่อนใช้งาน',
+            'error'
+          );
+        } else {
+          setStatus('ไม่สามารถเชื่อมต่อ LINE: ' + err.message, 'error');
+        }
+      });
 
     /* ---- OUTPUT STYLE: 7days / rack / noc / claude / moss / brut ---- */
     const THEME_IDS = { '7days': 'min', rack: 'rack', noc: 'noc', claude: 'claude', moss: 'moss', brut: 'brut' };
@@ -1014,6 +1044,10 @@
         return;
       } catch (err) {
         const msg = String((err && (err.message || err.code)) || err);
+        if (/permission|scope|grant|authoriz/i.test(msg)) {
+          // Not a token expiry — the user never granted chat_message.write.
+          throw Object.assign(err, { needsScope: true });
+        }
         if (!/expired|revoked|unauthorized|invalid.*token|access token/i.test(msg)) throw err;
         try { await liff.init({ liffId: LIFF_ID }); } catch {}
         await liff.sendMessages(messages);
@@ -1059,6 +1093,24 @@
 
         setTimeout(() => liff.closeWindow(), 1500);
       } catch (err) {
+        if (err && err.needsScope) {
+          // Never granted chat_message.write — re-init and re-login so LINE
+          // shows the consent screen, then hand control back to the user.
+          try {
+            await initLiff();
+            if (!liff.isLoggedIn()) {
+              await ensureLogin();
+            }
+            btn.disabled = false;
+            setStatus(
+              'ยังไม่ได้ให้สิทธิ์ส่งข้อความ กรุณาอนุญาตสิทธิ์ที่ LINE ขอ แล้วกด "สร้างคอลลาจ" อีกครั้ง',
+              'error'
+            );
+          } catch (re) {
+            setStatus('ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาเปิดใหม่', 'error');
+          }
+          return;
+        }
         setStatus(err.message, 'error');
         btn.disabled = false;
         btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> <span id="submitLabel">' + (outputMode === 'rack' ? 'DEPLOY TO /DEV/LINE' : 'สร้างและส่งเข้ากลุ่ม') + '</span>';

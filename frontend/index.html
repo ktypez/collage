@@ -107,6 +107,22 @@
     .btn-liff:hover { background: rgba(74, 222, 128, .22); }
     .btn-liff:active { transform: scale(.97); }
     .btn-liff svg { flex: none; }
+    .btn-friend {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 44px; padding: 0 18px;
+      border-radius: 999px;
+      font-family: var(--font-display); font-weight: 600; font-size: 14px;
+      color: var(--ink-dim);
+      border: 1px solid var(--border);
+      transition: background .18s ease, color .18s ease, transform .12s ease;
+    }
+    .btn-friend:hover { background: var(--surface); color: var(--ink); border-color: var(--ink-faint); }
+    .btn-friend:active { transform: scale(.97); }
+    .btn-friend svg { flex: none; color: var(--line-accent); }
+    @media (max-width: 520px) {
+      .btn-friend { padding: 0 14px; }
+      .btn-friend span.txt { display: none; }
+    }
 
     /* ---------- hero ---------- */
     .hero { padding: 44px 0 28px; }
@@ -421,6 +437,10 @@
         <div class="brand-name">STACK<span>//</span>FRAME</div>
       </div>
       <div class="top-actions">
+        <a class="btn-friend" href="https://line.me/ti/p/484cgfku" target="_blank" rel="noopener" aria-label="เพิ่มเพื่อนบอท LINE">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          <span class="txt">เพิ่มเพื่อน</span>
+        </a>
         <a class="btn-liff" href="https://liff.line.me/2010606328-7UnH1Yre" target="_blank" rel="noopener">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 3 1.6 5.6 4.1 7.2V22l2.8-1.5c1 .3 2 .4 3.1.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3zm-3.1 9.6c-.8 0-1.4-.7-1.4-1.5s.6-1.5 1.4-1.5 1.4.7 1.4 1.5-.6 1.5-1.4 1.5zm3.1 0c-.8 0-1.4-.7-1.4-1.5s.6-1.5 1.4-1.5 1.4.7 1.4 1.5-.6 1.5-1.4 1.5zm3.1 0c-.8 0-1.4-.7-1.4-1.5s.6-1.5 1.4-1.5 1.4.7 1.4 1.5-.6 1.5-1.4 1.5z"/></svg>
           เปิดใน LINE
