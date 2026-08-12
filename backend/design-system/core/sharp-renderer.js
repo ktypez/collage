@@ -16,6 +16,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { DAY_PRESETS, DAY_NAMES } from '../engine/layout.js';
+import { getThaiShaper, shapeThai } from './hb-shape.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,6 +26,10 @@ let thaiFont = null;
 let chakraFont = null;
 let serifFont = null;
 let thaiSerifFont = null;
+// HarfBuzz shaper for ChakraPetch Thai runs (opentype.js can't shape Thai —
+// its GSUB handling chokes on Chakra Petch; harfbuzz does it properly, keeping
+// tone marks above the consonants instead of dropping them at the baseline).
+let chakraShaper = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
 } catch {}
@@ -37,13 +42,20 @@ try {
 } catch {}
 try {
   // Chakra Petch — Thai + Latin, techy look (preferred for big clear header text)
-  chakraFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/ChakraPetch-SemiBold.ttf')));
-  // opentype.js chokes on Chakra Petch's Thai GSUB (substitution type 11). Drop
-  // non-latin features so Thai renders from raw glyphs (fine for plain Thai text).
+  const chakraBuffer = readFileSync(resolve(__dirname, '../fonts/ChakraPetch-SemiBold.ttf'));
+  chakraFont = opentype.parse(chakraBuffer);
+  // opentype.js chokes on Chakra Petch's Thai GSUB (substitution type 11), so
+  // keep its feature list to latn-only. Thai runs are shaped by HarfBuzz below
+  // (hb-shape.js) instead — it handles Chakra Petch's Thai GSUB/GPOS correctly.
   if (chakraFont && chakraFont.defaultRenderOptions && Array.isArray(chakraFont.defaultRenderOptions.features)) {
     chakraFont.defaultRenderOptions.features = chakraFont.defaultRenderOptions.features.filter(f => f.script === 'latn');
   }
-} catch {}
+  // Warm the HarfBuzz shaper (loads wasm + parses the font once).
+  chakraShaper = await getThaiShaper(chakraBuffer);
+} catch (e) {
+  console.error('[sharp-renderer] Chakra Petch / harfbuzz init failed:', e.message);
+  chakraShaper = null;
+}
 try {
   // Source Serif 4 — real serif (Latin + Thai glyphs), for editorial themes
   serifFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/SourceSerif4-VF.ttf')));
@@ -119,16 +131,29 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
   // through long mixed Thai+Latin strings (ChakraPetch), and librsvg silently
   // drops the rest of the <path> from the first NaN onward — cutting the date/
   // name short. Splitting isolates each run so every glyph actually renders.
+  //
+  // Thai runs ALSO go through HarfBuzz (hb-shape.js) when the font is Chakra
+  // Petch: opentype's Thai GSUB handling is broken for that font, which used to
+  // drop tone marks (วรรณยุกต์) to the baseline — "วันที่" → "วันที".
+  const shaper = chakraShaper && font === chakraFont ? chakraShaper : null;
+  // per-run: { text, thai } → SVG fragment + advance width (px at `size`)
+  const runLayer = (r, col) => {
+    if (r.thai && shaper) {
+      const shaped = shapeThai(shaper, r.text, size, col);
+      return { svg: shaped.svg, w: shaped.width };
+    }
+    return { svg: font.getPath(r.text, 0, 0, size).toSVG(2), w: font.getAdvanceWidth(r.text, size) };
+  };
   const mkLayers = (col, dx) => {
     const runs = splitTextRuns(text, (ch) => /[\u0E00-\u0E7F]/.test(ch));
+    const layers = runs.map(r => runLayer(r, col));
     let totalW = 0;
-    for (const r of runs) totalW += font.getAdvanceWidth(r.text, size);
+    for (const l of layers) totalW += l.w;
     let tx = (align === 'center' ? x - totalW / 2 : align === 'right' ? x - totalW : x) + (dx || 0);
     let out = '';
-    for (const r of runs) {
-      const path = font.getPath(r.text, 0, 0, size).toSVG(2);
-      out += `<g${filter} fill="${col}" transform="translate(${tx} ${y})">${path}</g>`;
-      tx += font.getAdvanceWidth(r.text, size);
+    for (const l of layers) {
+      out += `<g${filter} fill="${col}" transform="translate(${tx} ${y})">${l.svg}</g>`;
+      tx += l.w;
     }
     return out;
   };
