@@ -2,14 +2,15 @@
    core/hb-shape.js — Thai text shaping via HarfBuzz (harfbuzzjs)
    -----------------------------------------------------------------------------
    Why this exists:
-     opentype.js 2.x crashes on ChakraPetch's Thai GSUB ("chaining substitution
-     type 11 not supported"). The old workaround filtered defaultRenderOptions
-     down to latn-only features, which silently dropped GPOS mark positioning —
-     so Thai tone marks (วรรณยุกต์) lost their "above the consonant" placement
-     and rendered at the baseline: "วันที่" looked like "วันที".
+     opentype.js 2.x can't shape some Thai fonts correctly. For ChakraPetch it
+     crashes outright on GSUB type 11; for Source Serif 4 / Noto Serif Thai /
+     Noto Sans Thai it silently drops GPOS mark positioning — so Thai tone marks
+     (วรรณยุกต์) lose their "above the consonant" placement and render at the
+     baseline: "วันที่" looked like "วันที".
 
      HarfBuzz is the shaping engine browsers use under the hood. It applies Thai
-     GSUB + GPOS correctly, so ่ ้ ๊ ๋ land where the type designer put them.
+     GSUB + GPOS correctly, so ่ ้ ๊ ๋ land where the type designer put them —
+     across every Thai-capable font we ship.
 
      The wasm is loaded from node_modules (relative to import.meta.url) with no
      native compile step, so it runs unchanged on Render.com / Vercel.
@@ -23,29 +24,50 @@ function getHarfBuzz() {
   return hbPromise;
 }
 
-let shaperPromise = null;
+/** Cache shaper instances by font buffer identity — one HarfBuzz Font per file.
+ *  Buffer is a Node Buffer; Node Buffers compare by reference, so the same file
+ *  read once + cached yields the same shaper across calls. */
+const shaperCache = new Map();
 
 /**
- * Lazily create a shared HarfBuzz font from a font buffer.
- * Returns a promise resolving to { hb, blob, face, font } — resolved ONCE and
- * reused by every shape call (HarfBuzz Font objects are stateful — each shape
- * call must reset the scale via shapeThai()).
+ * Lazily create a HarfBuzz font from a font buffer. Returns a promise resolving
+ * to { hb, blob, face, font } — created ONCE per buffer and reused by every
+ * shape call (HarfBuzz Font objects are stateful — each shape call must reset
+ * the scale via shapeThai()).
+ *
+ * If buffer is null/undefined, returns null (caller should fall back to opentype).
  */
 export function getThaiShaper(fontBuffer) {
-  if (!shaperPromise) {
-    shaperPromise = (async () => {
+  if (!fontBuffer) return Promise.resolve(null);
+  let p = shaperCache.get(fontBuffer);
+  if (!p) {
+    p = (async () => {
       const hb = await getHarfBuzz();
       // hb.Blob takes an ArrayBuffer; keep a stable view of the Node Buffer.
       const ab = fontBuffer.buffer.slice(fontBuffer.byteOffset, fontBuffer.byteOffset + fontBuffer.byteLength);
       const blob = new hb.Blob(ab);
       const face = new hb.Face(blob);
       const font = new hb.Font(face);
+      // Smoke-test: shape a known Thai word. If the font has no Thai glyphs,
+      // every codepoint comes back as .notdef (0) and we should bail to opentype
+      // instead of emitting empty boxes.
+      const buf = new hb.Buffer();
+      buf.addText('ที่');
+      buf.guessSegmentProperties();
+      buf.setDirection(hb.Direction.LTR);
+      buf.setScript(hb.otTagToScript('thai'));
+      buf.setLanguage(hb.otTagToLanguage('th-TH'));
+      hb.shape(font, buf);
+      const infos = buf.getGlyphInfos();
+      const hasThai = infos.some(i => i.codepoint !== 0);
+      if (!hasThai) return null;
       return { hb, blob, face, font };
     })();
-    // On init failure, forget the promise so a later call can retry.
-    shaperPromise.catch(() => { shaperPromise = null; });
+    // On init failure, forget the entry so a later call can retry.
+    p.catch(() => { shaperCache.delete(fontBuffer); });
+    shaperCache.set(fontBuffer, p);
   }
-  return shaperPromise;
+  return p;
 }
 
 /**

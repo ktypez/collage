@@ -26,10 +26,19 @@ let thaiFont = null;
 let chakraFont = null;
 let serifFont = null;
 let thaiSerifFont = null;
-// HarfBuzz shaper for ChakraPetch Thai runs (opentype.js can't shape Thai —
-// its GSUB handling chokes on Chakra Petch; harfbuzz does it properly, keeping
-// tone marks above the consonants instead of dropping them at the baseline).
+// HarfBuzz shapers for every Thai-capable font we ship. opentype.js 2.x can't
+// shape Thai correctly for any of them (ChakraPetch outright crashes; Source
+// Serif 4 / Noto Serif Thai / Noto Sans Thai silently drop GPOS, dropping tone
+// marks to the baseline). HarfBuzz applies Thai GSUB+GPOS the way browsers do,
+// keeping วรรณยุกต์ above the consonant across the whole font stack.
+let chakraBuffer = null;
+let serifBuffer = null;
+let thaiSerifBuffer = null;
+let thaiBuffer = null;
 let chakraShaper = null;
+let serifShaper = null;
+let thaiSerifShaper = null;
+let thaiShaper = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
 } catch {}
@@ -38,13 +47,18 @@ try {
 } catch {}
 try {
   // Thai-capable font (backend root — for user name/date). Mono fonts have no Thai glyphs.
-  thaiFont = opentype.parse(readFileSync(resolve(__dirname, '../../NotoSansThai.ttf')));
-} catch {}
+  thaiBuffer = readFileSync(resolve(__dirname, '../../NotoSansThai.ttf'));
+  thaiFont = opentype.parse(thaiBuffer);
+  thaiShaper = await getThaiShaper(thaiBuffer);
+} catch (e) {
+  console.error('[sharp-renderer] NotoSansThai / shaper init failed:', e.message);
+  thaiShaper = null;
+}
 try {
   // Chakra Petch — Thai + Latin, techy look (preferred for big clear header text)
-  const chakraBuffer = readFileSync(resolve(__dirname, '../fonts/ChakraPetch-SemiBold.ttf'));
+  chakraBuffer = readFileSync(resolve(__dirname, '../fonts/ChakraPetch-SemiBold.ttf'));
   chakraFont = opentype.parse(chakraBuffer);
-  // opentype.js chokes on Chakra Petch's Thai GSUB (substitution type 11), so
+  // opentype.js chokes on Chakra Petch's Thai GSUB (chaining substitution type 11), so
   // keep its feature list to latn-only. Thai runs are shaped by HarfBuzz below
   // (hb-shape.js) instead — it handles Chakra Petch's Thai GSUB/GPOS correctly.
   if (chakraFont && chakraFont.defaultRenderOptions && Array.isArray(chakraFont.defaultRenderOptions.features)) {
@@ -58,12 +72,22 @@ try {
 }
 try {
   // Source Serif 4 — real serif (Latin + Thai glyphs), for editorial themes
-  serifFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/SourceSerif4-VF.ttf')));
-} catch {}
+  serifBuffer = readFileSync(resolve(__dirname, '../fonts/SourceSerif4-VF.ttf'));
+  serifFont = opentype.parse(serifBuffer);
+  serifShaper = await getThaiShaper(serifBuffer);
+} catch (e) {
+  console.error('[sharp-renderer] Source Serif 4 / shaper init failed:', e.message);
+  serifShaper = null;
+}
 try {
   // Noto Serif Thai — Thai serif fallback for editorial themes
-  thaiSerifFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/NotoSerifThai-VF.ttf')));
-} catch {}
+  thaiSerifBuffer = readFileSync(resolve(__dirname, '../fonts/NotoSerifThai-VF.ttf'));
+  thaiSerifFont = opentype.parse(thaiSerifBuffer);
+  thaiSerifShaper = await getThaiShaper(thaiSerifBuffer);
+} catch (e) {
+  console.error('[sharp-renderer] Noto Serif Thai / shaper init failed:', e.message);
+  thaiSerifShaper = null;
+}
 
 /* =============================================================================
    helpers
@@ -92,27 +116,36 @@ function splitTextRuns(text, isThai) {
   return runs;
 }
 
-/** Render text with per-script fonts (Latin serif + Thai serif fallback). */
+/** Render text with per-script fonts (Latin serif + Thai serif fallback).
+ *  Thai runs go through HarfBuzz when a shaper is ready so tone marks sit
+ *  above the consonant (see hb-shape.js). */
 function textPathSVGMulti(text, baseFont, thaiF, size, { x, y, align = 'left', color = '#fff', glow = null }) {
   if (!thaiF) return textPathSVG(text, baseFont, size, { x, y, align, color, glow });
-  const isThaiCh = (ch) => /[\u0E00-\u0E7F]/.test(ch);
+  const isThaiCh = (ch) => /[฀-๿]/.test(ch);
   const runs = splitTextRuns(text, isThaiCh);
-  // compute total width for centering
-  let totalW = 0;
-  for (const r of runs) totalW += (r.thai ? thaiF : baseFont).getAdvanceWidth(r.text, size);
-  let tx = align === 'center' ? x - totalW / 2 : align === 'right' ? x - totalW : x;
   const filter = glow ? ` filter="url(#hglow)"` : '';
   let extra = '';
   if (glow) {
     extra = `<defs><filter id="hglow" x="-50%" y="-50%" width="200%" height="200%">` +
       `<feGaussianBlur stdDeviation="${glow}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
   }
-  let out = '';
-  for (const r of runs) {
+  // Thai run -> HarfBuzz (if shaper ready), else fall back to opentype.getPath
+  const runLayer = (r, col) => {
     const f = r.thai ? thaiF : baseFont;
-    const path = f.getPath(r.text, 0, 0, size).toSVG(2);
-    out += `<g${filter} fill="${color}" transform="translate(${tx} ${y})">${path}</g>`;
-    tx += f.getAdvanceWidth(r.text, size);
+    if (r.thai && thaiSerifShaper) {
+      const shaped = shapeThai(thaiSerifShaper, r.text, size, col);
+      return { svg: shaped.svg, w: shaped.width };
+    }
+    return { svg: f.getPath(r.text, 0, 0, size).toSVG(2), w: f.getAdvanceWidth(r.text, size) };
+  };
+  const layers = runs.map(r => runLayer(r, color));
+  let totalW = 0;
+  for (const l of layers) totalW += l.w;
+  let tx = align === 'center' ? x - totalW / 2 : align === 'right' ? x - totalW : x;
+  let out = '';
+  for (const l of layers) {
+    out += `<g${filter} fill="${color}" transform="translate(${tx} ${y})">${l.svg}</g>`;
+    tx += l.w;
   }
   return extra + out;
 }
@@ -135,14 +168,31 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
   // Thai runs ALSO go through HarfBuzz (hb-shape.js) when the font is Chakra
   // Petch: opentype's Thai GSUB handling is broken for that font, which used to
   // drop tone marks (วรรณยุกต์) to the baseline — "วันที่" → "วันที".
-  const shaper = chakraShaper && font === chakraFont ? chakraShaper : null;
+  // Pick the HarfBuzz shaper that matches the active font, so Thai tone marks
+  // are raised above the consonant for every Thai-capable font we ship.
+  let shaper = null;
+  if (font === chakraFont) shaper = chakraShaper;
+  else if (font === serifFont) shaper = serifShaper;
+  else if (font === thaiSerifFont) shaper = thaiSerifShaper;
+  else if (font === thaiFont) shaper = thaiShaper;
+  // Fallback Thai font: mono / display fonts (JetBrainsMono, VT323) have no
+  // Thai glyphs and silently emit empty boxes for Thai characters. When the
+  // active font lacks a Thai shaper, fall through to thaiFont (Noto Sans Thai)
+  // for Thai runs so the name/date still renders correctly.
+  const fallbackThai = !shaper && thaiFont;
+  const fallbackShaper = !shaper ? thaiShaper : null;
   // per-run: { text, thai } → SVG fragment + advance width (px at `size`)
   const runLayer = (r, col) => {
     if (r.thai && shaper) {
       const shaped = shapeThai(shaper, r.text, size, col);
       return { svg: shaped.svg, w: shaped.width };
     }
-    return { svg: font.getPath(r.text, 0, 0, size).toSVG(2), w: font.getAdvanceWidth(r.text, size) };
+    if (r.thai && fallbackShaper) {
+      const shaped = shapeThai(fallbackShaper, r.text, size, col);
+      return { svg: shaped.svg, w: shaped.width };
+    }
+    const f = (r.thai && fallbackThai) ? fallbackThai : font;
+    return { svg: f.getPath(r.text, 0, 0, size).toSVG(2), w: f.getAdvanceWidth(r.text, size) };
   };
   const mkLayers = (col, dx) => {
     const runs = splitTextRuns(text, (ch) => /[\u0E00-\u0E7F]/.test(ch));
