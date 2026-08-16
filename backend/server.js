@@ -28,13 +28,31 @@ app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 
-const upload = multer({ dest: '/tmp/uploads/' });
+const upload = multer({
+  dest: '/tmp/uploads/',
+  limits: {
+    files: 20,
+    fileSize: 20 * 1024 * 1024,
+    fields: 10,
+  },
+  fileFilter(_req, file, cb) {
+    if (/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null, true);
+    else {
+      const err = new Error('Only JPEG, PNG, and WEBP images are allowed');
+      err.code = 'INVALID_FILE_TYPE';
+      cb(err);
+    }
+  },
+});
 
 app.post('/api/collage', upload.array('images'), async (req, res) => {
   try {
     const files = req.files;
     if (!files || files.length === 0) {
       return res.status(400).json({ success: false, error: 'No images uploaded' });
+    }
+    if (files.length > 20) {
+      return res.status(400).json({ success: false, error: 'Too many images (max 20)' });
     }
 
     const name = (req.body.name || '').trim();
@@ -55,7 +73,19 @@ app.post('/api/collage', upload.array('images'), async (req, res) => {
     res.json({ success: true, imageUrl });
   } catch (error) {
     console.error('Collage error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    const status =
+      error.code === 'LIMIT_FILE_SIZE' ? 413 :
+      error.code === 'INVALID_FILE_TYPE' ? 400 :
+      (error.code === 'LIMIT_FILE_COUNT' || error.code === 'LIMIT_UNEXPECTED_FILE') ? 400 :
+      500;
+    if (status === 500) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+    const message =
+      error.code === 'LIMIT_FILE_SIZE' ? 'Image too large (max 20MB per file)' :
+      error.code === 'INVALID_FILE_TYPE' ? error.message :
+      error.message;
+    return res.status(status).json({ success: false, error: message });
   }
 });
 
@@ -63,7 +93,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.post('/api/cleanup', async (_req, res) => {
+app.post('/api/cleanup', async (req, res) => {
+  const auth = req.get('x-cleanup-key');
+  if (!auth || auth !== process.env.CLEANUP_SECRET) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
   try {
     const result = await cleanupOldCollages(15);
     res.json({ success: true, ...result });
@@ -74,8 +108,12 @@ app.post('/api/cleanup', async (_req, res) => {
 });
 
 app.get('/api/image/:filename', async (req, res) => {
+  const filename = req.params.filename;
+  if (!/^collage-\d+\.jpg$/.test(filename)) {
+    return res.status(400).json({ success: false, error: 'Invalid filename' });
+  }
   try {
-    const stream = await getCollageStream(req.params.filename);
+    const stream = await getCollageStream(filename);
     res.set('Content-Type', 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
     stream.pipe(res);

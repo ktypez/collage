@@ -66,7 +66,8 @@ function isScreenshot(meta) {
 }
 
 function fmtDate(s) {
-  const d = s && s.trim() ? new Date(s + 'T00:00:00') : new Date();
+  let d = s && s.trim() ? new Date(s + 'T00:00:00') : new Date();
+  if (Number.isNaN(d.getTime())) d = new Date(); // invalid input -> today
   return `วันที่ ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
