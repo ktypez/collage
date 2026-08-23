@@ -256,6 +256,20 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
+  // --- background image (texture/pattern overlay, behind everything else) ---
+  if (c.bgImage) {
+    try {
+      const imgPath = resolve(__dirname, '../../..', c.bgImage);
+      const imgBuf = readFileSync(imgPath);
+      const ext = imgPath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      const b64 = imgBuf.toString('base64');
+      const opacity = c.bgImageOpacity ?? 0.15;
+      svg.push(`<image href="data:${ext};base64,${b64}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" opacity="${opacity}"/>`);
+    } catch (e) {
+      console.error('[sharp-renderer] bgImage load failed:', e.message);
+    }
+  }
+
   const ch = c.chrome;
   const hd = c.header || {};
 

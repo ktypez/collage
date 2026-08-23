@@ -28,6 +28,8 @@ export const manifest = {
 
   canvas: {
     bg: { gradient: ['#17171b', '#0f0f13', '#0a0a0c'], vertical: true },
+    bgImage: 'frontend/previews/demo/renovation.jpg',
+    bgImageOpacity: 0.08,
     cell: {
       border: '#2a2a32', width: 2, rounded: 14,
       label: '{n}', labelColor: '#c7f464', labelBg: 'rgba(10,10,12,0.85)',
