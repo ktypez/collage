@@ -4,7 +4,7 @@
    โมเดิร์นเข้มข้น จัดเต็มทุก element:
    - bg: deep navy gradient + generated grid texture (bgImage)
    - corner: 4 neon LEDs + bezel frame
-   - divider: grid overlay + scanline
+    - divider: grid overlay
    - vignette + photoFx for depth
    ============================================================================= */
 
@@ -17,14 +17,14 @@ export const manifest = {
     heroMeta: 'NEO_GRID // MODERN INTENSE',
     genIdle: '▶ NEO STANDBY',
     genReady: '▶ NEO RENDER READY',
-    genHint: '// grid · scanline · vignette · bezel',
+    genHint: '// grid · vignette · bezel',
     outputTitle: 'NEO GRID · RENDERED',
     outputTag: 'NEO',
     uploadText: 'วางรูปที่นี่ — NEO',
     logIntro: '$ neo.grid --render',
-    ach: ['◆ Grid locked', '◆ Scanline active', '◆ Bezel engaged', '◆ NEO online'],
+    ach: ['◆ Grid locked', '◆ Vignette active', '◆ Bezel engaged', '◆ NEO online'],
     heroTitle: 'NEO<span class="ext">_GRID</span>',
-    heroDesc: 'โมเดิร์นเข้มข้น — bg texture + corner LEDs + grid + scanline<br><span style="color:var(--fg-dim)">neon cyan × magenta · vignette · bezel</span>',
+    heroDesc: 'โมเดิร์นเข้มข้น — bg texture + corner LEDs + grid<br><span style="color:var(--fg-dim)">neon cyan × magenta · vignette · bezel</span>',
   },
 
   canvas: {
@@ -56,10 +56,9 @@ export const manifest = {
       stripePos: 'top',
     },
 
-    overlay: ['grid', 'scanline', 'vignette'],
+    overlay: ['grid', 'vignette'],
     overlayOpts: {
       grid: { color: 'rgba(0,255,208,0.07)', spacing: 48 },
-      scanline: { spacing: 3, alpha: 0.08 },
       vignette: { intensity: 0.42 },
     },
 
