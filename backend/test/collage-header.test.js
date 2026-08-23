@@ -39,7 +39,7 @@ const HEADER_H = 440;
 const NAME = 'Rennie แรนนี่';
 const DATE = 'วันที่ 11 สิงหาคม 2569';
 
-const THEME_IDS = ['rack', 'noc', 'claude'];
+const THEME_IDS = ['rack', 'noc', 'claude', 'neo'];
 
 /*
    Detect text ink as PIXELS THAT CONTRAST against the theme background gradient
