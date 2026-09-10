@@ -658,12 +658,15 @@ function cardGold(c, i, p) {
   const cw = COL - pad * 2;
   const cy0 = 116;
   const ch = H - cy0 - 30;
+  const midY = cy0 + ch / 2;
   return `
+    <defs><clipPath id="ic${i}"><rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="6"/></clipPath></defs>
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="6" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="4" fill="${p.accent}"/>
+    <g clip-path="url(#ic${i})">
+      <g transform="translate(${cx}, ${midY}) scale(25)" fill="none" stroke="${p.accent}" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">${ICONS[c.key]}</g>
+    </g>
     <text x="${x + pad + 34}" y="${cy0 + 48}" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">NO · ${c.num}</text>
-    <circle cx="${x + pad + cw - 64}" cy="${cy0 + 92}" r="38" fill="none" stroke="${p.accent}" stroke-opacity="0.55" stroke-width="3"/>
-    <g transform="translate(${x + pad + cw - 64 - 33}, ${cy0 + 92 - 33}) scale(2.75)" fill="none" stroke="${p.accent}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
     <text x="${cx}" y="${cy0 + 300}" text-anchor="middle" font-family="CP" font-weight="700" font-size="70" fill="${p.ink}">${c.title}</text>
     <text x="${cx}" y="${cy0 + 366}" text-anchor="middle" font-family="JM" font-size="19" letter-spacing="7" fill="${p.accent}">${c.sub}</text>
     <line x1="${cx - 120}" y1="${cy0 + ch - 120}" x2="${cx + 120}" y2="${cy0 + ch - 120}" stroke="${p.accent}" stroke-opacity="0.3" stroke-width="1.5"/>
