@@ -135,6 +135,8 @@ function neoOverlay() {
     ]
       .map(([lx, ly, col]) => `<rect x="${lx}" y="${ly}" width="20" height="20" rx="4" fill="${col}"/>`)
       .join('')}
+    <!-- off-black lift: guarantee no pure #000 pixels anywhere -->
+    <rect width="${W}" height="${H}" fill="#0d1018" opacity="0.10"/>
   </svg>`;
 }
 
@@ -190,6 +192,7 @@ function studioBase() {
         <stop offset="0" stop-color="${p.accent}" stop-opacity="0.05"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
+    <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
     <rect width="${W}" height="${H}" fill="url(#ease)"/>
   </svg>`;
@@ -315,6 +318,7 @@ function editorialBase() {
         <stop offset="0" stop-color="${p.accent}" stop-opacity="0.06"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
+    <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
     <rect width="${W}" height="${H}" fill="url(#ease)"/>
   </svg>`;
@@ -362,7 +366,7 @@ const TYPO = {
   name: 'MONO TYPE',
   tag: 'MONOCHROME · BIG TYPE',
   palette: {
-    bg: ['#000000', '#040404', '#090909'],
+    bg: ['#0a0a0a', '#0e0e0e', '#121212'],
     ink: '#f5f5f5',
     dim: '#a3a3a3',
     faint: '#555555',
@@ -377,6 +381,7 @@ function typoBase() {
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.55" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
       </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
   </svg>`;
 }
@@ -624,6 +629,7 @@ function goldBase() {
         <stop offset="0" stop-color="${p.accent}" stop-opacity="0.07"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
+    <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
     <rect width="${W}" height="${H}" fill="url(#ease)"/>
   </svg>`;
