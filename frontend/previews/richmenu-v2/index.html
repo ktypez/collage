@@ -1,0 +1,31 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rich menu redesign · 4 concepts</title>
+<style>
+  :root{--bg:#0d0d10;--ink:#f4f4f0;--dim:#a1a1a8;--line:#2a2a32;--acc:#c7f464}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  header{padding:36px 44px 20px;border-bottom:1px solid var(--line)}header h1{margin:0;font-size:26px;letter-spacing:.5px}
+  header p{margin:6px 0 0;color:var(--dim)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:28px;padding:28px 44px 60px}
+  .card{background:#15181d;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card img{width:100%;display:block;border-bottom:1px solid var(--line)}
+  .meta{padding:14px 18px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .meta b{font-size:17px}.meta span{color:var(--dim);font-size:13px;letter-spacing:1px}
+  .note{font-size:13px;color:var(--dim);padding:0 18px 16px;margin:0}
+  footer{padding:0 44px 40px;color:var(--dim);font-size:13px}
+  footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
+</style></head><body>
+<header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
+<p>4 concepts, 2500×843, black backgrounds. Tap areas identical in all: 5 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts · เปิดสมาชิก me.mcky.space)</p></header>
+<div class="grid">
+<div class="card"><img src="f-noir-web.jpg" alt="NOIR NIGHTS">
+<div class="meta"><b>NOIR NIGHTS</b><span>FILM NOIR / CRIMSON NEON</span></div>
+<p class="note">Full size: <a href="f-noir.png" style="color:#7db8ff">f-noir.png</a></p></div><div class="card"><img src="g-volt-web.jpg" alt="SITE VOLT">
+<div class="meta"><b>SITE VOLT</b><span>INDUSTRIAL / HAZARD</span></div>
+<p class="note">Full size: <a href="g-volt.png" style="color:#7db8ff">g-volt.png</a></p></div><div class="card"><img src="h-core-web.jpg" alt="DATA CORE">
+<div class="meta"><b>DATA CORE</b><span>TERMINAL / CYAN TECH</span></div>
+<p class="note">Full size: <a href="h-core.png" style="color:#7db8ff">h-core.png</a></p></div><div class="card"><img src="i-gold-web.jpg" alt="ROYAL GOLD">
+<div class="meta"><b>ROYAL GOLD</b><span>LUXURY / GOLD ON BLACK</span></div>
+<p class="note">Full size: <a href="i-gold.png" style="color:#7db8ff">i-gold.png</a></p></div>
+</div>
+<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy e-mono</code></footer>
+</body></html>
