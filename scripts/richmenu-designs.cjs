@@ -11,13 +11,13 @@
  *
  * All designs use near-black backgrounds.
  *
- * Layout: 4 top columns + one full-width bottom bar. Tap areas IDENTICAL in
- * every design (5 zones):
- *   1. ส่งรูปงาน      -> LIFF collage app              (top col 1)
- *   2. บันทึกงาน      -> truck.mcky.space              (top col 2)
- *   3. เปิดหน้าลูกค้า -> data.mcky.space                (top col 3)
- *   4. เปิด STS       -> oms.cfwenterprise.com/sts      (top col 4)
- *   5. เปิดสมาชิก     -> me.mcky.space                  (bottom full-width bar)
+ * Layout: 5 equal buttons in a single full-height row. Tap areas IDENTICAL in
+ * every design:
+ *   1. ส่งรูปงาน      -> LIFF collage app              (col 1)
+ *   2. บันทึกงาน      -> truck.mcky.space              (col 2)
+ *   3. เปิดหน้าลูกค้า -> data.mcky.space                (col 3)
+ *   4. เปิด STS       -> oms.cfwenterprise.com/sts      (col 4)
+ *   5. เปิดสมาชิก     -> me.mcky.space                  (col 5)
  *
  * Usage:
  *   NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs
@@ -41,16 +41,7 @@ const STS_URL = 'https://oms.cfwenterprise.com/sts';
 
 const W = 2500;
 const H = 843;
-const COL = W / 4; // 625
-const TOP_H = 643; // top columns tap height
-const BAR_Y = 643; // bottom bar tap start
-const BAR_H = H - BAR_Y; // 200
-
-// Bottom full-width bar (visual box)
-const BB_X0 = 30;
-const BB_W = W - BB_X0 * 2; // 2440
-const BB_Y = 652;
-const BB_H = H - BB_Y - 24; // 167
+const COL = W / 5; // 500
 
 const FONT_CP = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-SemiBold.ttf');
 const FONT_CP_R = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-Regular.ttf');
@@ -60,10 +51,8 @@ const CELLS = [
   { key: 'collage', num: '01', title: 'ส่งรูปงาน', sub: 'COLLAGE', uri: `https://liff.line.me/${LIFF_ID}` },
   { key: 'truck', num: '02', title: 'บันทึกงาน', sub: 'TRUCK', uri: TRUCK_URL },
   { key: 'data', num: '03', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: DATA_URL },
-  { key: 'sts', num: '04', title: 'เปิด STS', sub: 'WORK WEB', icon: 'sts', uri: STS_URL },
-];
-const BARS = [
-  { num: '05', title: 'เปิดสมาชิก', sub: 'PORTAL', icon: 'portal', uriShort: 'ME.MCKY.SPACE', uri: PORTAL_URL },
+  { key: 'sts', num: '04', title: 'เปิด STS', sub: 'WORK WEB', uri: STS_URL },
+  { key: 'portal', num: '05', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL },
 ];
 
 const ICONS = {
@@ -86,6 +75,84 @@ const defs = (extra = '') => `
       ${extra}
     </style>
   </defs>`;
+
+/* =============================================================================
+   Theme B — NEO GRID (selected; others share the same 5-col geometry)
+   ============================================================================= */
+const NEO = {
+  id: 'b-neo',
+  name: 'NEO GRID',
+  tag: 'NEON CYAN x MAGENTA',
+  bgImg: join(__dirname, 'richmenu-bg/neo.png'),
+  palette: {
+    accent: '#00ffd0',
+    accent2: '#ff3be8',
+    surface: 'rgba(5,8,15,0.92)',
+    border: '#1d2b4a',
+    ink: '#eafcf8',
+    dim: '#6f7a9a',
+  },
+};
+
+function neoBase() {
+  // Pure black fallback base (used when no bgImg provided)
+  return null;
+}
+
+function neoOverlay() {
+  const p = NEO.palette;
+  const gridLines = [];
+  for (let gx = 0; gx <= W; gx += 92) gridLines.push(`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${p.accent}" stroke-opacity="0.04"/>`);
+  for (let gy = 0; gy <= H; gy += 76) gridLines.push(`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="${p.accent}" stroke-opacity="0.03"/>`);
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#020308" stop-opacity="0.34"/>
+        <stop offset="0.55" stop-color="#020308" stop-opacity="0.68"/>
+        <stop offset="1" stop-color="#020308" stop-opacity="0.9"/>
+      </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="url(#scrim)"/>
+    ${gridLines.join('')}
+
+    <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
+    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">NEO_GRID · 5 CHANNELS</text>
+    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">B / NEO</text>
+
+    ${CELLS.map((c, i) => cardNeo(c, i, p)).join('')}
+
+    <!-- bezel -->
+    <rect x="10" y="10" width="${W - 20}" height="${H - 20}" rx="12" fill="none" stroke="${p.accent}" stroke-opacity="0.32" stroke-width="3"/>
+    <rect x="21" y="21" width="${W - 42}" height="${H - 42}" rx="8" fill="none" stroke="${p.accent2}" stroke-opacity="0.2" stroke-width="2"/>
+    ${[
+      ['6', '6', p.accent], ['6', H - 26, p.accent2], [W - 26, '6', p.accent2], [W - 26, H - 26, p.accent],
+    ]
+      .map(([lx, ly, col]) => `<rect x="${lx}" y="${ly}" width="20" height="20" rx="4" fill="${col}"/>`)
+      .join('')}
+  </svg>`;
+}
+
+function cardNeo(c, i, p) {
+  const x = i * COL;
+  const cx = x + COL / 2;
+  const pad = 26;
+  const cw = COL - pad * 2;
+  const cy0 = 108;
+  const ch = H - cy0 - 30;
+  const bar = i % 2 === 0 ? p.accent : p.accent2;
+  const bars = [p.accent, p.accent2, p.accent, p.accent2, p.accent][i];
+  return `
+    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="6" rx="3" fill="${bars}"/>
+    <rect x="${x + pad + 28}" y="${cy0 + 30}" width="62" height="32" rx="6" fill="none" stroke="${p.border}" stroke-width="2"/>
+    <text x="${x + pad + 59}" y="${cy0 + 52}" text-anchor="middle" font-family="JM" font-size="18" fill="${bars}">${c.num}</text>
+    <rect x="${cx - 60}" y="${cy0 + 118}" width="120" height="120" rx="14" fill="#0a0f22" stroke="${bars}" stroke-opacity="0.55" stroke-width="2"/>
+    <g transform="translate(${cx - 52}, ${cy0 + 134}) scale(4.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <text x="${cx}" y="${cy0 + ch - 206}" text-anchor="middle" font-family="CP" font-size="48" fill="${p.ink}">${c.title}</text>
+    <text x="${cx}" y="${cy0 + ch - 148}" text-anchor="middle" font-family="JM" font-size="18" letter-spacing="4" fill="${bars}">// ${c.sub}</text>
+    <text x="${cx}" y="${cy0 + ch - 104}" text-anchor="middle" font-family="JM" font-size="14" letter-spacing="4" fill="${p.dim}">ACCESS 0${i + 1}</text>
+    <rect x="${x + pad}" y="${cy0 + ch - 24}" width="${cw}" height="5" rx="2" fill="${bars}"/>
+  `;
+}
 
 /* =============================================================================
    A — STUDIO 03 : mirrors the web app (frontend/style.css), solid black
@@ -112,7 +179,7 @@ function studioBase() {
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.6" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
       </linearGradient>
-      <radialGradient id="ease" cx="0.5" cy="0.08" r="0.9">
+      <radialGradient id="ease" cx="0.5" cy="0.06" r="0.9">
         <stop offset="0" stop-color="${p.accent}" stop-opacity="0.05"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
@@ -125,136 +192,33 @@ function studioOverlay() {
   const p = STUDIO.palette;
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
-    <text x="36" y="58" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="88" font-family="JM" font-size="18" letter-spacing="3" fill="${p.faint}">COLLAGE STUDIO // MENU</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="18" letter-spacing="4" fill="${p.faint}">A / 4+1</text>
+    <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
+    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="3" fill="${p.faint}">COLLAGE STUDIO // MENU</text>
+    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">A / 5</text>
 
     ${CELLS.map((c, i) => cardStudio(c, i, p)).join('')}
-    ${barStudio(p)}
   </svg>`;
 }
 
 function cardStudio(c, i, p) {
   const x = i * COL;
   const cx = x + COL / 2;
-  const pad = 24;
+  const pad = 26;
   const cw = COL - pad * 2;
-  const cy0 = 116;
-  const ch = TOP_H - cy0 - 22;
+  const cy0 = 108;
+  const ch = H - cy0 - 30;
   const isPrimary = i === 0;
   return `
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="20" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
     ${isPrimary
       ? `<rect x="${x + pad}" y="${cy0}" width="${cw}" height="7" fill="${p.accent}"/>`
-      : `<rect x="${x + pad + 30}" y="${cy0}" width="56" height="7" rx="3" fill="${p.accent}"/>`}
-    <text x="${x + pad + 34}" y="${cy0 + 64}" font-family="JM" font-size="21" letter-spacing="3" fill="${p.faint}">${c.num}</text>
-    <text x="${cx}" y="${cy0 + 128}" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="7" fill="${p.accent}">${c.sub}</text>
-    <g transform="translate(${cx - 41}, ${cy0 + 168}) scale(3.4)" fill="none" stroke="${p.accent}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 44}" y1="${cy0 + ch - 120}" x2="${x + pad + cw - 44}" y2="${cy0 + ch - 120}" stroke="${p.border}" stroke-width="3"/>
-    <text x="${cx}" y="${cy0 + ch - 58}" text-anchor="middle" font-family="CP" font-size="44" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 22}" text-anchor="middle" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">TAP</text>
-  `;
-}
-
-function barStudio(p) {
-  const b = BARS[0];
-  const bx = BB_X0;
-  const by = BB_Y;
-  const bh = BB_H;
-  return `
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="20" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="7" fill="${p.accent}"/>
-    <g transform="translate(${bx + 52}, ${by + bh / 2 - 34}) scale(2.85)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
-    <text x="${bx + 140}" y="${by + bh / 2 + 16}" font-family="CP" font-size="52" fill="${p.ink}">${b.title}</text>
-    <text x="${bx + 140}" y="${by + bh / 2 + 64}" font-family="JM" font-size="19" letter-spacing="5" fill="${p.accent}">${b.num} // ${b.sub}</text>
-    <text x="${bx + BB_W - 40}" y="${by + bh / 2 + 16}" text-anchor="end" font-family="JM" font-size="17" letter-spacing="2" fill="${p.dim}">${b.uriShort}</text>
-  `;
-}
-
-/* =============================================================================
-   B — NEO GRID : neon tech, AI art floor + bezel + corner LEDs
-   ============================================================================= */
-const NEO = {
-  id: 'b-neo',
-  name: 'NEO GRID',
-  tag: 'NEON CYAN x MAGENTA',
-  bgImg: join(__dirname, 'richmenu-bg/neo.png'),
-  palette: {
-    accent: '#00ffd0',
-    accent2: '#ff3be8',
-    surface: 'rgba(6,9,17,0.9)',
-    border: '#1d2b4a',
-    ink: '#eafcf8',
-    dim: '#6f7a9a',
-  },
-};
-
-function neoOverlay() {
-  const p = NEO.palette;
-  const gridLines = [];
-  for (let gx = 0; gx <= W; gx += 92) gridLines.push(`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${p.accent}" stroke-opacity="0.04"/>`);
-  for (let gy = 0; gy <= H; gy += 76) gridLines.push(`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="${p.accent}" stroke-opacity="0.03"/>`);
-  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-    ${defs(`
-      <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#04060b" stop-opacity="0.28"/>
-        <stop offset="0.55" stop-color="#04060b" stop-opacity="0.6"/>
-        <stop offset="1" stop-color="#04060b" stop-opacity="0.82"/>
-      </linearGradient>`)}
-    <rect width="${W}" height="${H}" fill="url(#scrim)"/>
-    ${gridLines.join('')}
-
-    <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="86" font-family="JM" font-size="18" letter-spacing="4" fill="${p.accent}">NEO_GRID · READY</text>
-    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="18" letter-spacing="4" fill="${p.dim}">B / 4+1</text>
-
-    ${CELLS.map((c, i) => cardNeo(c, i, p)).join('')}
-    ${barNeo(p)}
-
-    <!-- bezel -->
-    <rect x="10" y="10" width="${W - 20}" height="${H - 20}" rx="12" fill="none" stroke="${p.accent}" stroke-opacity="0.32" stroke-width="3"/>
-    <rect x="21" y="21" width="${W - 42}" height="${H - 42}" rx="8" fill="none" stroke="${p.accent2}" stroke-opacity="0.2" stroke-width="2"/>
-    ${[
-      ['6', '6', p.accent], ['6', H - 26, p.accent2], [W - 26, '6', p.accent2], [W - 26, H - 26, p.accent],
-    ]
-      .map(([lx, ly, col]) => `<rect x="${lx}" y="${ly}" width="20" height="20" rx="4" fill="${col}"/>`)
-      .join('')}
-  </svg>`;
-}
-
-function cardNeo(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 24;
-  const cw = COL - pad * 2;
-  const cy0 = 116;
-  const ch = TOP_H - cy0 - 22;
-  const bar = i % 2 === 0 ? p.accent : p.accent2;
-  return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="5" rx="2" fill="${bar}"/>
-    <rect x="${x + pad + 24}" y="${cy0 + 20}" width="56" height="30" rx="5" fill="none" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 52}" y="${cy0 + 41}" text-anchor="middle" font-family="JM" font-size="18" fill="${bar}">${c.num}</text>
-    <rect x="${cx - 50}" y="${cy0 + 76}" width="100" height="100" rx="12" fill="#0a0f22" stroke="${bar}" stroke-opacity="0.55" stroke-width="2"/>
-    <g transform="translate(${cx - 43}, ${cy0 + 90}) scale(3.55)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <text x="${cx}" y="${cy0 + ch - 122}" text-anchor="middle" font-family="CP" font-size="44" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 78}" text-anchor="middle" font-family="JM" font-size="17" letter-spacing="4" fill="${bar}">// ${c.sub}</text>
-    <text x="${cx}" y="${cy0 + ch - 46}" text-anchor="middle" font-family="JM" font-size="14" letter-spacing="4" fill="${p.dim}">ACCESS 0${i + 1}</text>
-  `;
-}
-
-function barNeo(p) {
-  const b = BARS[0];
-  const bx = BB_X0;
-  const by = BB_Y;
-  const bh = BB_H;
-  return `
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="5" rx="2" fill="${p.accent2}"/>
-    <g transform="translate(${bx + 52}, ${by + bh / 2 - 38}) scale(3.15)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
-    <text x="${bx + 140}" y="${by + bh / 2 + 18}" font-family="CP" font-size="52" fill="${p.ink}">${b.title}</text>
-    <text x="${bx + 140}" y="${by + bh / 2 + 68}" font-family="JM" font-size="19" letter-spacing="5" fill="${p.accent2}">${b.num} // ${b.sub}</text>
-    <text x="${bx + BB_W - 40}" y="${by + bh / 2 + 18}" text-anchor="end" font-family="JM" font-size="17" letter-spacing="2" fill="${p.dim}">${b.uriShort}</text>
+      : `<rect x="${x + pad + 30}" y="${cy0}" width="52" height="7" rx="3" fill="${p.accent}"/>`}
+    <text x="${x + pad + 34}" y="${cy0 + 64}" font-family="JM" font-size="20" letter-spacing="3" fill="${p.faint}">${c.num}</text>
+    <text x="${cx}" y="${cy0 + 128}" text-anchor="middle" font-family="JM" font-size="20" letter-spacing="6" fill="${p.accent}">${c.sub}</text>
+    <g transform="translate(${cx - 43}, ${cy0 + 182}) scale(3.55)" fill="none" stroke="${p.accent}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${x + pad + 44}" y1="${cy0 + ch - 170}" x2="${x + pad + cw - 44}" y2="${cy0 + ch - 170}" stroke="${p.border}" stroke-width="3"/>
+    <text x="${cx}" y="${cy0 + ch - 96}" text-anchor="middle" font-family="CP" font-size="44" fill="${p.ink}">${c.title}</text>
+    <text x="${cx}" y="${cy0 + ch - 52}" text-anchor="middle" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">TAP</text>
   `;
 }
 
@@ -268,7 +232,7 @@ const FIELD = {
   bgImg: join(__dirname, 'richmenu-bg/field.png'),
   palette: {
     accent: '#ffb45e',
-    surface: 'rgba(16,13,10,0.87)',
+    surface: 'rgba(15,12,9,0.9)',
     border: '#4a3b2c',
     ink: '#f4ecdf',
     dim: '#c9b49c',
@@ -281,54 +245,37 @@ function fieldOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#0b0805" stop-opacity="0.2"/>
-        <stop offset="0.6" stop-color="#0b0805" stop-opacity="0.55"/>
-        <stop offset="1" stop-color="#0b0805" stop-opacity="0.84"/>
+        <stop offset="0" stop-color="#090604" stop-opacity="0.24"/>
+        <stop offset="0.6" stop-color="#090604" stop-opacity="0.6"/>
+        <stop offset="1" stop-color="#090604" stop-opacity="0.88"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
 
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="24" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="18" letter-spacing="3" fill="${p.dim}">FIELD_01 · SITE LOG</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="18" letter-spacing="4" fill="${p.faint}">C / 4+1</text>
+    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">FIELD_01 · SITE LOG</text>
+    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">C / 5</text>
 
     ${CELLS.map((c, i) => cardField(c, i, p)).join('')}
-    ${barField(p)}
 
-    <rect x="36" y="${H - 18}" width="66" height="6" rx="3" fill="${p.accent}"/>
+    <rect x="36" y="${H - 16}" width="60" height="6" rx="3" fill="${p.accent}"/>
   </svg>`;
 }
 
 function cardField(c, i, p) {
   const x = i * COL;
-  const pad = 24;
+  const pad = 26;
   const cw = COL - pad * 2;
-  const cy0 = 116;
-  const ch = TOP_H - cy0 - 70;
+  const cy0 = 108;
+  const ch = H - cy0 - 40;
   return `
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="18" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 40}" y="${cy0 + 118}" font-family="CPR" font-size="118" fill="${p.accent}" opacity="0.28">${c.num}</text>
-    <text x="${x + pad + 40}" y="${cy0 + 56}" font-family="JM" font-size="17" letter-spacing="2" fill="${p.dim}">REC ${c.num}</text>
-    <circle cx="${x + pad + cw - 76}" cy="${cy0 + 82}" r="44" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
-    <g transform="translate(${x + pad + cw - 76 - 40}, ${cy0 + 82 - 40}) scale(3.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 40}" y1="${cy0 + ch - 130}" x2="${x + pad + cw - 40}" y2="${cy0 + ch - 130}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 40}" y="${cy0 + ch - 62}" font-family="CP" font-size="42" fill="${p.ink}">${c.title}</text>
-    <text x="${x + pad + 40}" y="${cy0 + ch - 24}" font-family="JM" font-size="17" letter-spacing="3" fill="${p.accent}">${c.sub}</text>
-  `;
-}
-
-function barField(p) {
-  const b = BARS[0];
-  const bx = BB_X0;
-  const by = BB_Y;
-  const bh = BB_H;
-  return `
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="18" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="7" fill="${p.accent}"/>
-    <circle cx="${bx + 78}" cy="${by + bh / 2}" r="38" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
-    <g transform="translate(${bx + 78 - 34}, ${by + bh / 2 - 34}) scale(2.85)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
-    <text x="${bx + 158}" y="${by + bh / 2 + 18}" font-family="CP" font-size="52" fill="${p.ink}">${b.title}</text>
-    <text x="${bx + 158}" y="${by + bh / 2 + 66}" font-family="JM" font-size="19" letter-spacing="5" fill="${p.accent}">${b.num} // ${b.sub}</text>
-    <text x="${bx + BB_W - 40}" y="${by + bh / 2 + 18}" text-anchor="end" font-family="JM" font-size="17" letter-spacing="2" fill="${p.dim}">${b.uriShort}</text>
+    <text x="${x + pad + 38}" y="${cy0 + 128}" font-family="CPR" font-size="114" fill="${p.accent}" opacity="0.28">${c.num}</text>
+    <text x="${x + pad + 38}" y="${cy0 + 62}" font-family="JM" font-size="16" letter-spacing="2" fill="${p.dim}">REC ${c.num}</text>
+    <circle cx="${x + pad + cw - 76}" cy="${cy0 + 92}" r="44" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
+    <g transform="translate(${x + pad + cw - 76 - 40}, ${cy0 + 92 - 40}) scale(3.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${x + pad + 38}" y1="${cy0 + ch - 180}" x2="${x + pad + cw - 38}" y2="${cy0 + ch - 180}" stroke="${p.border}" stroke-width="2"/>
+    <text x="${x + pad + 38}" y="${cy0 + ch - 102}" font-family="CP" font-size="40" fill="${p.ink}">${c.title}</text>
+    <text x="${x + pad + 38}" y="${cy0 + ch - 52}" font-family="JM" font-size="16" letter-spacing="3" fill="${p.accent}">${c.sub}</text>
   `;
 }
 
@@ -342,7 +289,7 @@ const EDITORIAL = {
   palette: {
     bg: ['#161310', '#0d0b09', '#060505'],
     accent: '#ff4d1c',
-    surface: 'rgba(22,19,16,0.93)',
+    surface: 'rgba(22,19,16,0.94)',
     border: '#3a352c',
     ink: '#f6f1e7',
     dim: '#b8ab97',
@@ -357,7 +304,7 @@ function editorialBase() {
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.6" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
       </linearGradient>
-      <radialGradient id="ease" cx="0.5" cy="0.08" r="0.9">
+      <radialGradient id="ease" cx="0.5" cy="0.06" r="0.9">
         <stop offset="0" stop-color="${p.accent}" stop-opacity="0.06"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
@@ -372,12 +319,11 @@ function editorialOverlay() {
     ${defs()}
 
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="18" letter-spacing="3" fill="${p.dim}">EDIT_01 · WORK MENU</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="18" letter-spacing="4" fill="${p.ink}">2026</text>
-    <text x="${W - 36}" y="90" text-anchor="end" font-family="JM" font-size="16" letter-spacing="4" fill="${p.dim}">D / 4+1</text>
+    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">EDIT_01 · WORK MENU</text>
+    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.ink}">2026</text>
+    <text x="${W - 36}" y="90" text-anchor="end" font-family="JM" font-size="15" letter-spacing="4" fill="${p.dim}">D / 5</text>
 
     ${CELLS.map((c, i) => cardEditorial(c, i, p)).join('')}
-    ${barEditorial(p)}
 
     <rect x="0" y="${H - 7}" width="${W}" height="7" fill="${p.accent}"/>
   </svg>`;
@@ -386,33 +332,18 @@ function editorialOverlay() {
 function cardEditorial(c, i, p) {
   const x = i * COL;
   const cx = x + COL / 2;
-  const pad = 24;
+  const pad = 26;
   const cw = COL - pad * 2;
-  const cy0 = 116;
-  const ch = TOP_H - cy0 - 22;
+  const cy0 = 108;
+  const ch = H - cy0 - 30;
   return `
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="10" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="9" fill="${p.accent}"/>
-    <text x="${x + pad + cw - 36}" y="${cy0 + 108}" text-anchor="end" font-family="CPR" font-size="118" fill="${p.accent}">${c.num}</text>
-    <g transform="translate(${cx - 43}, ${cy0 + 118}) scale(3.6)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 36}" y1="${cy0 + ch - 126}" x2="${x + pad + cw - 36}" y2="${cy0 + ch - 126}" stroke="${p.dim}" stroke-opacity="0.35" stroke-width="2"/>
-    <text x="${x + pad + 36}" y="${cy0 + ch - 58}" font-family="CP" font-weight="700" font-size="46" fill="${p.ink}">${c.title}</text>
-    <text x="${x + pad + 36}" y="${cy0 + ch - 20}" font-family="JM" font-size="18" letter-spacing="4" fill="${p.accent}">${c.sub}</text>
-  `;
-}
-
-function barEditorial(p) {
-  const b = BARS[0];
-  const bx = BB_X0;
-  const by = BB_Y;
-  const bh = BB_H;
-  return `
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="10" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
-    <rect x="${bx}" y="${by}" width="${BB_W}" height="9" fill="${p.accent}"/>
-    <g transform="translate(${bx + 50}, ${by + bh / 2 - 36}) scale(3)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
-    <text x="${bx + 138}" y="${by + bh / 2 + 18}" font-family="CP" font-weight="700" font-size="54" fill="${p.ink}">${b.title}</text>
-    <text x="${bx + 138}" y="${by + bh / 2 + 66}" font-family="JM" font-size="19" letter-spacing="5" fill="${p.accent}">${b.num} // ${b.sub}</text>
-    <text x="${bx + BB_W - 40}" y="${by + bh / 2 + 18}" text-anchor="end" font-family="JM" font-size="17" letter-spacing="2" fill="${p.dim}">${b.uriShort}</text>
+    <text x="${x + pad + cw - 34}" y="${cy0 + 122}" text-anchor="end" font-family="CPR" font-size="112" fill="${p.accent}">${c.num}</text>
+    <g transform="translate(${cx - 43}, ${cy0 + 160}) scale(3.6)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${x + pad + 36}" y1="${cy0 + ch - 160}" x2="${x + pad + cw - 36}" y2="${cy0 + ch - 160}" stroke="${p.dim}" stroke-opacity="0.35" stroke-width="2"/>
+    <text x="${x + pad + 36}" y="${cy0 + ch - 88}" font-family="CP" font-weight="700" font-size="44" fill="${p.ink}">${c.title}</text>
+    <text x="${x + pad + 36}" y="${cy0 + ch - 42}" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">${c.sub}</text>
   `;
 }
 
@@ -420,8 +351,8 @@ function barEditorial(p) {
    Render pipeline
    ============================================================================= */
 const VARIANTS = [
-  { def: STUDIO, base: studioBase, overlay: studioOverlay },
   { def: NEO, base: null, overlay: neoOverlay },
+  { def: STUDIO, base: studioBase, overlay: studioOverlay },
   { def: FIELD, base: null, overlay: fieldOverlay },
   { def: EDITORIAL, base: editorialBase, overlay: editorialOverlay },
 ];
@@ -491,7 +422,7 @@ function accentOf(def) {
 }
 
 /* =============================================================================
-   LINE deploy (5 tap areas: 4 top cols + 1 bottom bar)
+   LINE deploy (5 equal tap areas, full height)
    ============================================================================= */
 async function deploy(v) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
@@ -499,13 +430,10 @@ async function deploy(v) {
   }
   const client = new Client({ channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN });
 
-  const areas = [
-    ...CELLS.map((c, i) => ({
-      bounds: { x: Math.round(i * COL), y: 0, width: Math.round(COL), height: TOP_H },
-      action: { type: 'uri', uri: c.uri },
-    })),
-    { bounds: { x: 0, y: BAR_Y, width: W, height: BAR_H }, action: { type: 'uri', uri: BARS[0].uri } },
-  ];
+  const areas = CELLS.map((c, i) => ({
+    bounds: { x: Math.round(i * COL), y: 0, width: Math.round(COL), height: H },
+    action: { type: 'uri', uri: c.uri },
+  }));
 
   const richMenu = {
     size: { width: W, height: H },
@@ -587,7 +515,7 @@ async function main() {
   footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
 </style></head><body>
 <header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
-<p>4 concepts, 2500×843, black backgrounds. Tap areas identical in all: แถวบน 4 ปุ่ม (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts) + แถวล่างเต็มความกว้าง 1 ปุ่ม (เปิดสมาชิก → me.mcky.space)</p></header>
+<p>4 concepts, 2500×843, black backgrounds. Tap areas identical in all: 5 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts · เปิดสมาชิก me.mcky.space)</p></header>
 <div class="grid">
 ${results
   .map(
@@ -597,7 +525,7 @@ ${results
   )
   .join('')}
 </div>
-<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy a-studio</code></footer>
+<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy b-neo</code></footer>
 </body></html>`,
   );
   console.log(`Gallery -> ${gallery}`);
