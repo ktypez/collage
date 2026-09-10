@@ -539,11 +539,18 @@ async function main() {
   const onlyArg = args.find((a) => a.startsWith('--only'));
   const only = onlyArg ? onlyArg.split('=')[1].split(',').map((s) => s.trim().toLowerCase()) : null;
   const noSheet = args.includes('--no-sheet');
-  const deployArg = args.find((a) => a.startsWith('--deploy'));
+  const deployIdx = args.indexOf('--deploy');
+  let deployId = null;
+  if (deployIdx !== -1) {
+    deployId = args[deployIdx + 1];
+  } else {
+    const eq = args.find((a) => a.startsWith('--deploy='));
+    if (eq) deployId = eq.split('=')[1];
+  }
   const outDir = (args.find((a) => a.startsWith('-o=')) || '').split('=')[1] || 'frontend/previews/richmenu';
 
-  if (deployArg) {
-    const id = deployArg.split('=')[1];
+  if (deployId) {
+    const id = deployId;
     const v = VARIANTS.find((x) => x.def.id === id || x.def.name.toLowerCase() === id);
     if (!v) throw new Error(`Unknown design: ${id}. Available: ${VARIANTS.map((x) => x.def.id).join(', ')}`);
     await deploy(v);
