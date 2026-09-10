@@ -9,12 +9,13 @@
  *   C. FIELD 01   — cinematic work-site art (amber on dark, docu captions)
  *   D. EDITORIAL  — light poster style (ink on off-white, high contrast)
  *
- * Layout: 3 top columns + a full-width bottom bar.
+ * Layout: 3 top columns + two bottom buttons (full-width split).
  * Tap areas are IDENTICAL in every design:
- *   1. ส่งรูปงาน      -> LIFF collage app        (top-left col)
- *   2. บันทึกงาน      -> truck.mcky.space        (top-mid col)
- *   3. เปิดหน้าลูกค้า -> data.mcky.space          (top-right col)
- *   4. เปิดสมาชิก     -> me.mcky.space            (bottom full-width bar)
+ *   1. ส่งรูปงาน      -> LIFF collage app              (top-left col)
+ *   2. บันทึกงาน      -> truck.mcky.space              (top-mid col)
+ *   3. เปิดหน้าลูกค้า -> data.mcky.space                (top-right col)
+ *   4. เปิดสมาชิก     -> me.mcky.space                  (bottom-left)
+ *   5. เปิด STS       -> oms.cfwenterprise.com/sts      (bottom-right)
  *
  * Usage:
  *   NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs
@@ -34,6 +35,7 @@ const LIFF_ID = process.env.LIFF_ID || '2010606328-7UnH1Yre';
 const TRUCK_URL = 'https://truck.mcky.space';
 const DATA_URL = 'https://data.mcky.space';
 const PORTAL_URL = 'https://me.mcky.space';
+const STS_URL = 'https://oms.cfwenterprise.com/sts';
 
 const W = 2500;
 const H = 1686;
@@ -41,6 +43,13 @@ const COL = W / 3;
 const TOP_H = 1252; // top columns tap height
 const BAR_Y = 1252; // bottom bar tap start
 const BAR_H = H - BAR_Y; // 434
+
+// Bottom two-button geometry (visual boxes)
+const BB_X0 = 36;
+const BB_GAP = 44;
+const BB_W = (W - BB_X0 * 2 - BB_GAP) / 2; // 1188
+const BB_Y = 1262;
+const BB_H = H - BB_Y - 28; // 396
 
 const FONT_CP = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-SemiBold.ttf');
 const FONT_CP_R = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-Regular.ttf');
@@ -51,7 +60,10 @@ const CELLS = [
   { key: 'truck', num: '02', title: 'บันทึกงาน', sub: 'TRUCK', uri: TRUCK_URL },
   { key: 'data', num: '03', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: DATA_URL },
 ];
-const BAR = { num: '04', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL };
+const BARS = [
+  { num: '04', title: 'เปิดสมาชิก', sub: 'PORTAL', icon: 'portal', uriShort: 'ME.MCKY.SPACE', uri: PORTAL_URL },
+  { num: '05', title: 'เปิด STS', sub: 'WORK WEB', icon: 'sts', uriShort: 'OMS.CFW.COM/STS', uri: STS_URL },
+];
 
 const ICONS = {
   collage:
@@ -61,6 +73,7 @@ const ICONS = {
   data:
     '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
   portal: '<rect x="8" y="6" width="8" height="12" rx="4"/><circle cx="11" cy="11" r="1.2"/>',
+  sts: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/><path d="M8 4v16"/>',
 };
 
 const defs = (extra = '') => `
@@ -113,7 +126,7 @@ function studioOverlay() {
     ${defs()}
     <text x="58" y="96" font-family="JM" font-size="32" letter-spacing="6" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="58" y="144" font-family="JM" font-size="28" letter-spacing="5" fill="${p.faint}">COLLAGE STUDIO // MENU</text>
-    <text x="${W - 58}" y="96" text-anchor="end" font-family="JM" font-size="28" letter-spacing="5" fill="${p.faint}">A / 03 + PORTAL</text>
+    <text x="${W - 58}" y="96" text-anchor="end" font-family="JM" font-size="28" letter-spacing="5" fill="${p.faint}">A / 03 + 2 SYS</text>
 
     ${CELLS.map((c, i) => cardStudio(c, i, p)).join('')}
     ${barStudio(p)}
@@ -143,18 +156,19 @@ function cardStudio(c, i, p) {
 }
 
 function barStudio(p) {
-  const bx = 44;
-  const bw = W - bx * 2;
-  const by = BAR_Y + 26;
-  const bh = BAR_H - 52;
-  return `
-    <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="26" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
-    <rect x="${bx}" y="${by}" width="${bw}" height="10" fill="${p.accent}"/>
-    <g transform="translate(${bx + 56}, ${by + bh / 2 - 58}) scale(4.85)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.portal}</g>
-    <text x="${bx + 200}" y="${by + bh / 2 + 26}" font-family="CP" font-size="78" fill="${p.ink}">${BAR.title}</text>
-    <text x="${bx + 200}" y="${by + bh / 2 + 96}" font-family="JM" font-size="27" letter-spacing="8" fill="${p.accent}">${BAR.num} // ${BAR.sub}</text>
-    <text x="${bx + bw - 60}" y="${by + bh / 2 + 26}" text-anchor="end" font-family="JM" font-size="28" letter-spacing="5" fill="${p.dim}">${BAR.uri.replace('https://', '').toUpperCase()}</text>
+  return BARS.map((b, i) => {
+    const bx = BB_X0 + i * (BB_W + BB_GAP);
+    const by = BB_Y;
+    const bh = BB_H;
+    return `
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="26" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="10" fill="${p.accent}"/>
+    <g transform="translate(${bx + 54}, ${by + bh / 2 - 56}) scale(4.7)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
+    <text x="${bx + 190}" y="${by + bh / 2 + 22}" font-family="CP" font-size="72" fill="${p.ink}">${b.title}</text>
+    <text x="${bx + 190}" y="${by + bh / 2 + 90}" font-family="JM" font-size="26" letter-spacing="7" fill="${p.accent}">${b.num} // ${b.sub}</text>
+    <text x="${bx + BB_W - 44}" y="${by + bh / 2 + 22}" text-anchor="end" font-family="JM" font-size="23" letter-spacing="3" fill="${p.dim}">${b.uriShort}</text>
   `;
+  }).join('');
 }
 
 /* =============================================================================
@@ -192,7 +206,7 @@ function neoOverlay() {
 
     <text x="58" y="96" font-family="JM" font-size="31" letter-spacing="6" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="58" y="144" font-family="JM" font-size="27" letter-spacing="5" fill="${p.accent}">NEO_GRID · SYSTEM READY</text>
-    <text x="${W - 58}" y="96" text-anchor="end" font-family="JM" font-size="27" letter-spacing="5" fill="${p.dim}">B / 4 ZONES</text>
+    <text x="${W - 58}" y="96" text-anchor="end" font-family="JM" font-size="27" letter-spacing="5" fill="${p.dim}">B / 5 ZONES</text>
 
     ${CELLS.map((c, i) => cardNeo(c, i, p)).join('')}
     ${barNeo(p)}
@@ -231,18 +245,20 @@ function cardNeo(c, i, p) {
 }
 
 function barNeo(p) {
-  const bx = 44;
-  const bw = W - bx * 2;
-  const by = BAR_Y + 26;
-  const bh = BAR_H - 52;
-  return `
-    <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="20" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${bx}" y="${by}" width="${bw}" height="7" rx="3" fill="${p.accent2}"/>
-    <g transform="translate(${bx + 62}, ${by + bh / 2 - 66}) scale(5.5)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.portal}</g>
-    <text x="${bx + 224}" y="${by + bh / 2 + 34}" font-family="CP" font-size="84" fill="${p.ink}">${BAR.title}</text>
-    <text x="${bx + 224}" y="${by + bh / 2 + 112}" font-family="JM" font-size="28" letter-spacing="8" fill="${p.accent}">${BAR.num} // ${BAR.sub}</text>
-    <text x="${bx + bw - 60}" y="${by + bh / 2 + 34}" text-anchor="end" font-family="JM" font-size="29" letter-spacing="5" fill="${p.dim}">${BAR.uri.replace('https://', '').toUpperCase()}</text>
+  return BARS.map((b, i) => {
+    const bx = BB_X0 + i * (BB_W + BB_GAP);
+    const by = BB_Y;
+    const bh = BB_H;
+    const bar = i % 2 === 0 ? p.accent : p.accent2;
+    return `
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="20" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="7" rx="3" fill="${bar}"/>
+    <g transform="translate(${bx + 62}, ${by + bh / 2 - 64}) scale(5.3)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
+    <text x="${bx + 218}" y="${by + bh / 2 + 32}" font-family="CP" font-size="80" fill="${p.ink}">${b.title}</text>
+    <text x="${bx + 218}" y="${by + bh / 2 + 104}" font-family="JM" font-size="27" letter-spacing="7" fill="${bar}">${b.num} // ${b.sub}</text>
+    <text x="${bx + BB_W - 44}" y="${by + bh / 2 + 32}" text-anchor="end" font-family="JM" font-size="24" letter-spacing="3" fill="${p.dim}">${b.uriShort}</text>
   `;
+  }).join('');
 }
 
 /* =============================================================================
@@ -277,7 +293,7 @@ function fieldOverlay() {
     <text x="58" y="98" font-family="CP" font-weight="700" font-size="38" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="58" y="144" font-family="JM" font-size="28" letter-spacing="5" fill="${p.dim}">FIELD_01 · SITE LOG</text>
     <text x="${W - 58}" y="98" text-anchor="end" font-family="JM" font-size="27" letter-spacing="5" fill="${p.faint}">N 13.75 · E 100.53</text>
-    <text x="${W - 58}" y="144" text-anchor="end" font-family="JM" font-size="24" letter-spacing="4" fill="${p.faint}">C / DAILY OPS</text>
+    <text x="${W - 58}" y="144" text-anchor="end" font-family="JM" font-size="24" letter-spacing="4" fill="${p.faint}">C / 5 ZONES</text>
 
     ${CELLS.map((c, i) => cardField(c, i, p)).join('')}
     ${barField(p)}
@@ -305,19 +321,20 @@ function cardField(c, i, p) {
 }
 
 function barField(p) {
-  const bx = 44;
-  const bw = W - bx * 2;
-  const by = BAR_Y + 26;
-  const bh = BAR_H - 68;
-  return `
-    <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="24" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${bx}" y="${by}" width="${bw}" height="10" fill="${p.accent}"/>
-    <circle cx="${bx + 150}" cy="${by + bh / 2}" r="58" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
-    <g transform="translate(${bx + 150 - 58}, ${by + bh / 2 - 58}) scale(4.8)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.portal}</g>
-    <text x="${bx + 300}" y="${by + bh / 2 + 36}" font-family="CP" font-size="86" fill="${p.ink}">${BAR.title}</text>
-    <text x="${bx + 300}" y="${by + bh / 2 + 118}" font-family="JM" font-size="28" letter-spacing="7" fill="${p.accent}">${BAR.num} // ${BAR.sub}</text>
-    <text x="${bx + bw - 60}" y="${by + bh / 2 + 36}" text-anchor="end" font-family="JM" font-size="29" letter-spacing="5" fill="${p.dim}">${BAR.uri.replace('https://', '').toUpperCase()}</text>
+  return BARS.map((b, i) => {
+    const bx = BB_X0 + i * (BB_W + BB_GAP);
+    const by = BB_Y;
+    const bh = BB_H;
+    return `
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="24" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="10" fill="${p.accent}"/>
+    <circle cx="${bx + 140}" cy="${by + bh / 2}" r="54" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
+    <g transform="translate(${bx + 140 - 54}, ${by + bh / 2 - 54}) scale(4.5)" fill="none" stroke="${p.accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
+    <text x="${bx + 272}" y="${by + bh / 2 + 34}" font-family="CP" font-size="82" fill="${p.ink}">${b.title}</text>
+    <text x="${bx + 272}" y="${by + bh / 2 + 108}" font-family="JM" font-size="27" letter-spacing="7" fill="${p.accent}">${b.num} // ${b.sub}</text>
+    <text x="${bx + BB_W - 44}" y="${by + bh / 2 + 34}" text-anchor="end" font-family="JM" font-size="24" letter-spacing="3" fill="${p.dim}">${b.uriShort}</text>
   `;
+  }).join('');
 }
 
 /* =============================================================================
@@ -351,7 +368,7 @@ function editorialOverlay() {
     <text x="58" y="100" font-family="CP" font-weight="700" font-size="42" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="58" y="150" font-family="JM" font-size="28" letter-spacing="5" fill="${p.dim}">EDIT_01 · WORK MENU</text>
     <text x="${W - 58}" y="100" text-anchor="end" font-family="JM" font-size="28" letter-spacing="4" fill="${p.ink}">2026</text>
-    <text x="${W - 58}" y="150" text-anchor="end" font-family="JM" font-size="24" letter-spacing="4" fill="${p.dim}">D / FOUR ZONES</text>
+    <text x="${W - 58}" y="150" text-anchor="end" font-family="JM" font-size="24" letter-spacing="4" fill="${p.dim}">D / FIVE ZONES</text>
 
     ${CELLS.map((c, i) => cardEditorial(c, i, p)).join('')}
     ${barEditorial(p)}
@@ -379,18 +396,19 @@ function cardEditorial(c, i, p) {
 }
 
 function barEditorial(p) {
-  const bx = 44;
-  const bw = W - bx * 2;
-  const by = BAR_Y + 26;
-  const bh = BAR_H - 54;
-  return `
-    <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="14" fill="${p.surface}" stroke="${p.border}" stroke-width="4"/>
-    <rect x="${bx}" y="${by}" width="${bw}" height="14" fill="${p.accent}"/>
-    <g transform="translate(${bx + 72}, ${by + bh / 2 - 72}) scale(6)" fill="none" stroke="${p.ink}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${ICONS.portal}</g>
-    <text x="${bx + 250}" y="${by + bh / 2 + 44}" font-family="CP" font-weight="700" font-size="92" fill="${p.ink}">${BAR.title}</text>
-    <text x="${bx + 250}" y="${by + bh / 2 + 130}" font-family="JM" font-size="29" letter-spacing="7" fill="${p.accent}">${BAR.num} // ${BAR.sub}</text>
-    <text x="${bx + bw - 60}" y="${by + bh / 2 + 44}" text-anchor="end" font-family="JM" font-size="30" letter-spacing="5" fill="${p.ink}">${BAR.uri.replace('https://', '').toUpperCase()}</text>
+  return BARS.map((b, i) => {
+    const bx = BB_X0 + i * (BB_W + BB_GAP);
+    const by = BB_Y;
+    const bh = BB_H;
+    return `
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="${bh}" rx="14" fill="${p.surface}" stroke="${p.border}" stroke-width="4"/>
+    <rect x="${bx}" y="${by}" width="${BB_W}" height="14" fill="${p.accent}"/>
+    <g transform="translate(${bx + 66}, ${by + bh / 2 - 66}) scale(5.5)" fill="none" stroke="${p.ink}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</g>
+    <text x="${bx + 238}" y="${by + bh / 2 + 42}" font-family="CP" font-weight="700" font-size="88" fill="${p.ink}">${b.title}</text>
+    <text x="${bx + 238}" y="${by + bh / 2 + 120}" font-family="JM" font-size="28" letter-spacing="6" fill="${p.accent}">${b.num} // ${b.sub}</text>
+    <text x="${bx + BB_W - 44}" y="${by + bh / 2 + 42}" text-anchor="end" font-family="JM" font-size="25" letter-spacing="3" fill="${p.ink}">${b.uriShort}</text>
   `;
+  }).join('');
 }
 
 /* =============================================================================
@@ -483,7 +501,10 @@ async function deploy(v) {
       bounds: { x: Math.round(i * COL), y: 0, width: Math.round(COL), height: TOP_H },
       action: { type: 'uri', uri: c.uri },
     })),
-    { bounds: { x: 0, y: BAR_Y, width: W, height: BAR_H }, action: { type: 'uri', uri: BAR.uri } },
+    ...BARS.map((b, i) => ({
+      bounds: { x: Math.round(i * (W / 2)), y: BAR_Y, width: Math.round(W / 2), height: BAR_H },
+      action: { type: 'uri', uri: b.uri },
+    })),
   ];
 
   const richMenu = {
@@ -559,7 +580,7 @@ async function main() {
   footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
 </style></head><body>
 <header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
-<p>4 concepts, 2500×1686. Tap areas identical in all: 3 ช่องบน (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data) + แถบล่างเต็มความกว้าง (เปิดสมาชิก → me.mcky.space)</p></header>
+<p>4 concepts, 2500×1686. Tap areas identical in all: 3 ช่องบน (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data) + แถบล่าง 2 ปุ่ม (เปิดสมาชิก → me.mcky.space · เปิด STS → oms.cfwenterprise.com/sts)</p></header>
 <div class="grid">
 ${results
   .map(
