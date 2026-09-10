@@ -1,13 +1,14 @@
 /**
  * Rich menu design showcase + deploy.
  *
- * Renders 4 distinct 2500x843 rich menu designs for the collage LINE bot and
+ * Renders 5 distinct 2500x843 rich menu designs for the collage LINE bot and
  * composites them into preview images:
  *
  *   A. STUDIO 03  — clean "web edition" (lime on black, mirrors frontend)
  *   B. NEO GRID   — neon cyan/magenta tech (AI art bg + bezel + corner LEDs)
  *   C. FIELD 01   — cinematic work-site art (amber on dark, docu captions)
  *   D. EDITORIAL  — dark poster style (cream ink + orange, high contrast)
+ *   E. MONO TYPE  — pure black & white, typography-first (big type)
  *
  * All designs use near-black backgrounds.
  *
@@ -348,6 +349,63 @@ function cardEditorial(c, i, p) {
 }
 
 /* =============================================================================
+   E — MONO TYPE : pure black & white, typography-first
+   ============================================================================= */
+const TYPO = {
+  id: 'e-mono',
+  name: 'MONO TYPE',
+  tag: 'MONOCHROME · BIG TYPE',
+  palette: {
+    bg: ['#000000', '#040404', '#090909'],
+    ink: '#f5f5f5',
+    dim: '#a3a3a3',
+    faint: '#555555',
+    hair: '#2b2b2b',
+  },
+};
+
+function typoBase() {
+  const p = TYPO.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.55" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
+      </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  </svg>`;
+}
+
+function typoOverlay() {
+  const p = TYPO.palette;
+  const hairs = [1, 2, 3, 4]
+    .map((i) => `<line x1="${i * COL}" y1="120" x2="${i * COL}" y2="${H - 24}" stroke="${p.hair}" stroke-width="2"/>`)
+    .join('');
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs()}
+    <text x="36" y="64" font-family="CP" font-weight="700" font-size="34" fill="${p.ink}">STACK<span fill="${p.ink}">//</span>FRAME</text>
+    <text x="36" y="100" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">WORK MENU — 5 CHANNELS</text>
+    <text x="${W - 36}" y="64" text-anchor="end" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">E / MONO</text>
+    <line x1="36" y1="114" x2="${W - 36}" y2="114" stroke="${p.hair}" stroke-width="2"/>
+    ${hairs}
+    ${CELLS.map((c, i) => cardTypo(c, i, p)).join('')}
+  </svg>`;
+}
+
+function cardTypo(c, i, p) {
+  const x = i * COL;
+  const cx = x + COL / 2;
+  const pad = 26;
+  const cw = COL - pad * 2;
+  return `
+    <text x="${cx}" y="382" text-anchor="middle" font-family="CPR" font-size="250" fill="${p.ink}" opacity="0.08">${c.num}</text>
+    <text x="${cx}" y="442" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="8" fill="${p.ink}">— ${c.sub} —</text>
+    <text x="${cx}" y="${H - 256}" text-anchor="middle" font-family="CP" font-weight="700" font-size="62" fill="${p.ink}">${c.title}</text>
+    <line x1="${x + pad}" y1="${H - 196}" x2="${x + pad + cw}" y2="${H - 196}" stroke="${p.hair}" stroke-width="2"/>
+    <text x="${cx}" y="${H - 150}" text-anchor="middle" font-family="JM" font-size="19" letter-spacing="6" fill="${p.dim}">OPEN →</text>
+  `;
+}
+
+/* =============================================================================
    Render pipeline
    ============================================================================= */
 const VARIANTS = [
@@ -355,6 +413,7 @@ const VARIANTS = [
   { def: STUDIO, base: studioBase, overlay: studioOverlay },
   { def: FIELD, base: null, overlay: fieldOverlay },
   { def: EDITORIAL, base: editorialBase, overlay: editorialOverlay },
+  { def: TYPO, base: typoBase, overlay: typoOverlay },
 ];
 
 async function renderBase(v) {
@@ -499,7 +558,7 @@ async function main() {
   writeFileSync(
     gallery,
     `<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rich menu redesign · 4 concepts</title>
+<title>Rich menu redesign · 5 concepts</title>
 <style>
   :root{--bg:#0d0d10;--ink:#f4f4f0;--dim:#a1a1a8;--line:#2a2a32;--acc:#c7f464}
   *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
@@ -515,7 +574,7 @@ async function main() {
   footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
 </style></head><body>
 <header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
-<p>4 concepts, 2500×843, black backgrounds. Tap areas identical in all: 5 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts · เปิดสมาชิก me.mcky.space)</p></header>
+<p>5 concepts, 2500×843, black backgrounds. Tap areas identical in all: 5 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts · เปิดสมาชิก me.mcky.space)</p></header>
 <div class="grid">
 ${results
   .map(
@@ -525,7 +584,7 @@ ${results
   )
   .join('')}
 </div>
-<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy b-neo</code></footer>
+<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy e-mono</code></footer>
 </body></html>`,
   );
   console.log(`Gallery -> ${gallery}`);
