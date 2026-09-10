@@ -664,7 +664,7 @@ function cardGold(c, i, p) {
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="6" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
     <rect x="${x + pad}" y="${cy0}" width="${cw}" height="4" fill="${p.accent}"/>
     <g clip-path="url(#ic${i})">
-      <g transform="translate(${cx}, ${midY}) scale(25)" fill="none" stroke="${p.accent}" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">${ICONS[c.key]}</g>
+      <g transform="translate(${cx - 300}, ${midY - 300}) scale(25)" fill="none" stroke="${p.accent}" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">${ICONS[c.key]}</g>
     </g>
     <text x="${x + pad + 34}" y="${cy0 + 48}" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">NO · ${c.num}</text>
     <text x="${cx}" y="${cy0 + 300}" text-anchor="middle" font-family="CP" font-weight="700" font-size="70" fill="${p.ink}">${c.title}</text>
