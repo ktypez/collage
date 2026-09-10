@@ -18,13 +18,12 @@
  *
  * All designs use near-black backgrounds.
  *
- * Layout: 5 equal buttons in a single full-height row. Tap areas IDENTICAL in
+ * Layout: 4 equal buttons in a single full-height row. Tap areas IDENTICAL in
  * every design:
- *   1. ส่งรูปงาน      -> LIFF collage app              (col 1)
- *   2. บันทึกงาน      -> truck.mcky.space              (col 2)
- *   3. เปิดหน้าลูกค้า -> data.mcky.space                (col 3)
- *   4. เปิด STS       -> oms.cfwenterprise.com/sts      (col 4)
- *   5. เปิดสมาชิก     -> me.mcky.space                  (col 5)
+ *   1. ส่งรูปงาน      -> LIFF collage app      (col 1)
+ *   2. บันทึกงาน      -> truck.mcky.space      (col 2)
+ *   3. เปิดหน้าลูกค้า -> data.mcky.space        (col 3)
+ *   4. เปิดสมาชิก     -> me.mcky.space          (col 4)
  *
  * Usage:
  *   NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs
@@ -44,11 +43,10 @@ const LIFF_ID = process.env.LIFF_ID || '2010606328-7UnH1Yre';
 const TRUCK_URL = 'https://truck.mcky.space';
 const DATA_URL = 'https://data.mcky.space';
 const PORTAL_URL = 'https://me.mcky.space';
-const STS_URL = 'https://oms.cfwenterprise.com/sts';
 
 const W = 2500;
 const H = 843;
-const COL = W / 5; // 500
+const COL = W / 4; // 625
 
 const FONT_CP = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-SemiBold.ttf');
 const FONT_CP_R = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-Regular.ttf');
@@ -58,8 +56,7 @@ const CELLS = [
   { key: 'collage', num: '01', title: 'ส่งรูปงาน', sub: 'COLLAGE', uri: `https://liff.line.me/${LIFF_ID}` },
   { key: 'truck', num: '02', title: 'บันทึกงาน', sub: 'TRUCK', uri: TRUCK_URL },
   { key: 'data', num: '03', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: DATA_URL },
-  { key: 'sts', num: '04', title: 'เปิด STS', sub: 'WORK WEB', uri: STS_URL },
-  { key: 'portal', num: '05', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL },
+  { key: 'portal', num: '04', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL },
 ];
 
 const ICONS = {
@@ -70,7 +67,6 @@ const ICONS = {
   data:
     '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
   portal: '<rect x="8" y="6" width="8" height="12" rx="4"/><circle cx="11" cy="11" r="1.2"/>',
-  sts: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/><path d="M8 4v16"/>',
 };
 
 const defs = (extra = '') => `
@@ -122,7 +118,7 @@ function neoOverlay() {
     ${gridLines.join('')}
 
     <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">NEO_GRID · 5 CHANNELS</text>
+    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">NEO_GRID · 4 CHANNELS</text>
     <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">B / NEO</text>
 
     ${CELLS.map((c, i) => cardNeo(c, i, p)).join('')}
@@ -204,7 +200,7 @@ function studioOverlay() {
     ${defs()}
     <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="3" fill="${p.faint}">COLLAGE STUDIO // MENU</text>
-    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">A / 5</text>
+    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">A / 4</text>
 
     ${CELLS.map((c, i) => cardStudio(c, i, p)).join('')}
   </svg>`;
@@ -263,7 +259,7 @@ function fieldOverlay() {
 
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="24" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">FIELD_01 · SITE LOG</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">C / 5</text>
+    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">C / 4</text>
 
     ${CELLS.map((c, i) => cardField(c, i, p)).join('')}
 
@@ -332,7 +328,7 @@ function editorialOverlay() {
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
     <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">EDIT_01 · WORK MENU</text>
     <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.ink}">2026</text>
-    <text x="${W - 36}" y="90" text-anchor="end" font-family="JM" font-size="15" letter-spacing="4" fill="${p.dim}">D / 5</text>
+    <text x="${W - 36}" y="90" text-anchor="end" font-family="JM" font-size="15" letter-spacing="4" fill="${p.dim}">D / 4</text>
 
     ${CELLS.map((c, i) => cardEditorial(c, i, p)).join('')}
 
@@ -394,7 +390,7 @@ function typoOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
     <text x="36" y="64" font-family="CP" font-weight="700" font-size="34" fill="${p.ink}">STACK<span fill="${p.ink}">//</span>FRAME</text>
-    <text x="36" y="100" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">WORK MENU — 5 CHANNELS</text>
+    <text x="36" y="100" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">WORK MENU — 4 CHANNELS</text>
     <text x="${W - 36}" y="64" text-anchor="end" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">E / MONO</text>
     <line x1="36" y1="114" x2="${W - 36}" y2="114" stroke="${p.hair}" stroke-width="2"/>
     ${hairs}
@@ -446,7 +442,7 @@ function noirOverlay() {
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">NOIR_NIGHT · REEL FIVE</text>
+    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">NOIR_NIGHT · REEL FOUR</text>
     <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">F / NOIR</text>
 
     ${CELLS.map((c, i) => cardNoir(c, i, p)).join('')}
@@ -508,7 +504,7 @@ function voltOverlay() {
       </pattern>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
     <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">SITE_VOLT · CREW 5</text>
+    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">SITE_VOLT · CREW 4</text>
     <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">G / VOLT</text>
 
     ${CELLS.map((c, i) => cardVolt(c, i, p)).join('')}
@@ -569,7 +565,7 @@ function coreOverlay() {
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
     <text x="36" y="58" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">CORE_OS · 5 NODES</text>
+    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">CORE_OS · 4 NODES</text>
     <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">H / CORE</text>
 
     ${CELLS.map((c, i) => cardCore(c, i, p)).join('')}
@@ -846,7 +842,7 @@ async function main() {
   footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
 </style></head><body>
 <header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
-<p>${results.length} concepts, 2500×843, black backgrounds. Tap areas identical in all: 5 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิด STS oms.cfwenterprise.com/sts · เปิดสมาชิก me.mcky.space)</p></header>
+<p>${results.length} concepts, 2500×843, black backgrounds. Tap areas identical in all: 4 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิดสมาชิก me.mcky.space)</p></header>
 <div class="grid">
 ${results
   .map(
