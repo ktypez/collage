@@ -638,6 +638,55 @@ function cardGold(c, i, p) {
 }
 
 /* =============================================================================
+   J — BRIGHT BLOCKS : vivid full-bleed color blocks per button
+   ============================================================================= */
+const BRIGHT = {
+  id: 'j-bright',
+  name: 'BRIGHT BLOCKS',
+  tag: 'VIVID COLOR / FULL BLEED',
+  palette: {
+    gap: '#0d0d12',
+    ink: '#14171f',
+    chips: ['#d9ff4b', '#41e8ff', '#ffc233', '#b18bff', '#ff6ea8'],
+    deeps: ['#a8e600', '#00b4d8', '#ff9800', '#7c4dff', '#f23aa0'],
+  },
+};
+
+function brightBase() {
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><rect width="${W}" height="${H}" fill="#0d0d12"/></svg>`;
+}
+
+function brightOverlay() {
+  const p = BRIGHT.palette;
+  const divs = `
+    <line x1="${W / 2}" y1="0" x2="${W / 2}" y2="${H / 2}" stroke="${p.gap}" stroke-width="6"/>
+    <line x1="${W / 3}" y1="${H / 2}" x2="${W / 3}" y2="${H}" stroke="${p.gap}" stroke-width="6"/>
+    <line x1="${(W / 3) * 2}" y1="${H / 2}" x2="${(W / 3) * 2}" y2="${H}" stroke="${p.gap}" stroke-width="6"/>
+    <line x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}" stroke="${p.gap}" stroke-width="6"/>`;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs()}
+    ${CELLS.map((c, i) => cardBright(c, i, p)).join('')}
+    ${divs}
+  </svg>`;
+}
+
+function cardBright(c, i, p) {
+  const g = cellGeom(i);
+  const t = g.row === 0 ? 86 : 80;
+  return `
+    <defs><linearGradient id="blk${i}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${p.chips[i]}"/><stop offset="1" stop-color="${p.deeps[i]}"/>
+    </linearGradient></defs>
+    <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" fill="url(#blk${i})"/>
+    <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.ink}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">${ICONS[c.key]}</g>
+    <text x="${g.x + 50}" y="${g.y + 80}" font-family="JM" font-size="20" letter-spacing="5" fill="${p.ink}" opacity="0.8">${c.num}</text>
+    <text x="${g.cx}" y="${g.cy - 8}" text-anchor="middle" font-family="CP" font-weight="700" font-size="${t}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.cy + 74}" text-anchor="middle" font-family="JM" font-size="22" letter-spacing="10" fill="${p.ink}" opacity="0.75">${c.sub}</text>
+    <text x="${g.cx}" y="${g.y + g.h - 34}" text-anchor="middle" font-family="JM" font-size="18" letter-spacing="9" fill="${p.ink}" opacity="0.5">OPEN →</text>
+  `;
+}
+
+/* =============================================================================
    Render pipeline
    ============================================================================= */
 const VARIANTS = [
@@ -650,6 +699,7 @@ const VARIANTS = [
   { def: VOLT, base: null, overlay: voltOverlay },
   { def: CORE, base: null, overlay: coreOverlay },
   { def: GOLD, base: goldBase, overlay: goldOverlay },
+  { def: BRIGHT, base: brightBase, overlay: brightOverlay },
 ];
 
 async function renderBase(v) {
