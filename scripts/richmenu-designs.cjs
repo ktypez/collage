@@ -793,6 +793,19 @@ async function deploy(v) {
   const overlayBuf = await sharp(Buffer.from(v.overlay())).png().toBuffer();
   await sharp(baseBuf).composite([{ input: overlayBuf, top: 0, left: 0 }]).png().toFile(tmpPng);
 
+  // sanity log — verify what we're about to upload actually looks like the variant
+  {
+    const raw = await sharp(tmpPng).raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = raw;
+    const cc = info.channels;
+    const at = (x, y) => `[${data[(y * info.width + x) * cc]},${data[(y * info.width + x) * cc + 1]},${data[(y * info.width + x) * cc + 2]}]`;
+    const fsize = (await import('fs')).statSync(tmpPng).size;
+    console.log(
+      `  pre-upload sanity ${info.width}x${info.height} bytes=${fsize} ` +
+      `(625,421)=${at(625, 421)} (1875,421)=${at(1875, 421)} (1250,1264)=${at(1250, 1264)} (2083,1264)=${at(2083, 1264)}`
+    );
+  }
+
   const richMenuId = await client.createRichMenu(richMenu);
   console.log('Rich menu created:', richMenuId);
   const image = readFileSync(tmpPng);
