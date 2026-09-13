@@ -1,35 +1,31 @@
 /**
  * Rich menu design showcase + deploy.
  *
- * Renders 5 distinct 2500x843 rich menu designs for the collage LINE bot and
- * composites them into preview images:
+ * Renders 9 distinct 2500x1686 rich menu designs for the collage LINE bot and
+ * composites them into preview images. Layout: two rows of tappable buttons
+ * (top 2, bottom 3) — see ROW_COLS.
  *
  *   A. STUDIO 03  — clean "web edition" (lime on black, mirrors frontend)
  *   B. NEO GRID   — neon cyan/magenta tech (AI art bg + bezel + corner LEDs)
  *   C. FIELD 01   — cinematic work-site art (amber on dark, docu captions)
  *   D. EDITORIAL  — dark poster style (cream ink + orange, high contrast)
  *   E. MONO TYPE  — pure black & white, typography-first (big type)
- *
- *   Gen-2 concepts (F–I):
  *   F. NOIR NIGHTS — crimson neon film-noir on black (AI night city art)
  *   G. SITE VOLT   — industrial amber/yellow, hazard stripes (AI site art)
  *   H. DATA CORE   — navy/cyan terminal console (AI server art)
- *   I. ROYAL GOLD  — luxury gold/cream on black (pure SVG)
+ *   I. ROYAL GOLD  — bright gold/cream on black, luxury (pure SVG)
  *
- * All designs use near-black backgrounds.
+ * All designs use near-black (never pure #000) backgrounds.
  *
- * Layout: 4 equal buttons in a single full-height row. Tap areas IDENTICAL in
- * every design:
- *   1. ส่งรูปงาน      -> LIFF collage app      (col 1)
- *   2. บันทึกงาน      -> truck.mcky.space      (col 2)
- *   3. เปิดหน้าลูกค้า -> data.mcky.space        (col 3)
- *   4. เปิดสมาชิก     -> me.mcky.space          (col 4)
+ * Layout: 2 rows / 5 buttons. Tap areas IDENTICAL in every design:
+ *   Top  row:  1. ส่งรูปงาน (LIFF)     2. ไรเดอร์ (rider.ezzytransporter.com)
+ *   Bottom row:3. บันทึกงาน (truck)    4. เปิดหน้าลูกค้า (data)   5. เปิดสมาชิก (me)
  *
  * Usage:
  *   NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs
  *       [-o <outdir>]        default: frontend/previews/richmenu
- *       [--only a,b]         render a subset of {a,b,c,d}
- *       [--no-sheet]         skip the 2x2 contact sheet
+ *       [--only a,b]         render a subset (by first letter of id)
+ *       [--no-sheet]         skip the contact sheet
  *       [--deploy <id>]      render <id>, then create+upload+set-default on LINE
  *
  * LINE deploy needs LINE_CHANNEL_ACCESS_TOKEN=xxx (also read from backend/.env).
@@ -37,16 +33,17 @@
 const sharp = require('sharp');
 const { Client } = require('@line/bot-sdk');
 const { join, resolve } = require('path');
-const { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } = require('fs');
+const { readFileSync, writeFileSync, mkdirSync, rmSync } = require('fs');
 
 const LIFF_ID = process.env.LIFF_ID || '2010606328-7UnH1Yre';
 const TRUCK_URL = 'https://truck.mcky.space';
 const DATA_URL = 'https://data.mcky.space';
 const PORTAL_URL = 'https://me.mcky.space';
+const RIDER_URL = 'https://rider.ezzytransporter.com';
 
 const W = 2500;
-const H = 843;
-const COL = W / 4; // 625
+const H = 1686;
+const ROW_COLS = [2, 3]; // top row 2 buttons, bottom row 3 buttons
 
 const FONT_CP = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-SemiBold.ttf');
 const FONT_CP_R = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-Regular.ttf');
@@ -54,14 +51,17 @@ const FONT_MONO = resolve(__dirname, '../backend/design-system/fonts/JetBrainsMo
 
 const CELLS = [
   { key: 'collage', num: '01', title: 'ส่งรูปงาน', sub: 'COLLAGE', uri: `https://liff.line.me/${LIFF_ID}` },
-  { key: 'truck', num: '02', title: 'บันทึกงาน', sub: 'TRUCK', uri: TRUCK_URL },
-  { key: 'data', num: '03', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: DATA_URL },
-  { key: 'portal', num: '04', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL },
+  { key: 'rider', num: '02', title: 'ไรเดอร์', sub: 'RIDER', uri: RIDER_URL },
+  { key: 'truck', num: '03', title: 'บันทึกงาน', sub: 'TRUCK', uri: TRUCK_URL },
+  { key: 'data', num: '04', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: DATA_URL },
+  { key: 'portal', num: '05', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: PORTAL_URL },
 ];
 
 const ICONS = {
   collage:
     '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/>',
+  rider:
+    '<circle cx="5.5" cy="17.5" r="2.6"/><circle cx="18.5" cy="17.5" r="2.6"/><path d="M5.5 14.9l1.8-3.6h3.3l1.6 2.4 2.3-.1"/><path d="M8 15.6h9.5"/><path d="M14.5 15.6l3-2.2"/><path d="M3 17.5h2.5"/><path d="M16 17.5h2.5"/>',
   truck:
     '<path d="M1 8h12v9H1z"/><path d="M13 11h5l3 3v3h-8"/><circle cx="5.5" cy="19" r="1.8"/><circle cx="16.5" cy="19" r="1.8"/>',
   data:
@@ -79,8 +79,35 @@ const defs = (extra = '') => `
     </style>
   </defs>`;
 
+/** Cell geometry for render + tap areas (top row 2 cols, bottom row 3 cols). */
+function cellGeom(i) {
+  let idx = 0;
+  const rowH = H / 2;
+  for (let r = 0; r < ROW_COLS.length; r++) {
+    const cols = ROW_COLS[r];
+    const colW = W / cols;
+    for (let c = 0; c < cols; c++) {
+      if (idx === i) {
+        const x = Math.round(c * colW);
+        const y = Math.round(r * rowH);
+        const w = Math.round(colW);
+        const h = Math.round(rowH);
+        const pad = Math.round(Math.min(w, h) * 0.06);
+        return {
+          i, row: r, col: c, x, y, w, h,
+          cx: x + w / 2, cy: y + h / 2,
+          pad, bx: x + pad, by: y + pad,
+          bw: w - pad * 2, bh: h - pad * 2,
+        };
+      }
+      idx++;
+    }
+  }
+  throw new Error(`cell ${i} out of range`);
+}
+
 /* =============================================================================
-   Theme B — NEO GRID (selected; others share the same 5-col geometry)
+   B — NEO GRID
    ============================================================================= */
 const NEO = {
   id: 'b-neo',
@@ -90,17 +117,12 @@ const NEO = {
   palette: {
     accent: '#00ffd0',
     accent2: '#ff3be8',
-    surface: 'rgba(5,8,15,0.92)',
+    surface: 'rgba(5,8,15,0.9)',
     border: '#1d2b4a',
     ink: '#eafcf8',
     dim: '#6f7a9a',
   },
 };
-
-function neoBase() {
-  // Pure black fallback base (used when no bgImg provided)
-  return null;
-}
 
 function neoOverlay() {
   const p = NEO.palette;
@@ -110,57 +132,50 @@ function neoOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#020308" stop-opacity="0.34"/>
-        <stop offset="0.55" stop-color="#020308" stop-opacity="0.68"/>
+        <stop offset="0" stop-color="#020308" stop-opacity="0.36"/>
+        <stop offset="0.5" stop-color="#020308" stop-opacity="0.68"/>
         <stop offset="1" stop-color="#020308" stop-opacity="0.9"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
     ${gridLines.join('')}
 
-    <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">NEO_GRID · 4 CHANNELS</text>
-    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">B / NEO</text>
-
     ${CELLS.map((c, i) => cardNeo(c, i, p)).join('')}
 
-    <!-- bezel -->
     <rect x="10" y="10" width="${W - 20}" height="${H - 20}" rx="12" fill="none" stroke="${p.accent}" stroke-opacity="0.32" stroke-width="3"/>
-    <rect x="21" y="21" width="${W - 42}" height="${H - 42}" rx="8" fill="none" stroke="${p.accent2}" stroke-opacity="0.2" stroke-width="2"/>
+    <rect x="22" y="22" width="${W - 44}" height="${H - 44}" rx="8" fill="none" stroke="${p.accent2}" stroke-opacity="0.2" stroke-width="2"/>
     ${[
       ['6', '6', p.accent], ['6', H - 26, p.accent2], [W - 26, '6', p.accent2], [W - 26, H - 26, p.accent],
     ]
       .map(([lx, ly, col]) => `<rect x="${lx}" y="${ly}" width="20" height="20" rx="4" fill="${col}"/>`)
       .join('')}
-    <!-- off-black lift: guarantee no pure #000 pixels anywhere -->
-    <rect width="${W}" height="${H}" fill="#0d1018" opacity="0.10"/>
+    <rect width="${W}" height="${H}" fill="#0d1018" opacity="0.09"/>
   </svg>`;
 }
 
 function cardNeo(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
-  const bar = i % 2 === 0 ? p.accent : p.accent2;
+  const g = cellGeom(i);
+  const ic = i % 2 === 0 ? p.accent : p.accent2;
   const bars = [p.accent, p.accent2, p.accent, p.accent2, p.accent][i];
+  const t = 84;
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="6" rx="3" fill="${bars}"/>
-    <rect x="${x + pad + 28}" y="${cy0 + 30}" width="62" height="32" rx="6" fill="none" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 59}" y="${cy0 + 52}" text-anchor="middle" font-family="JM" font-size="18" fill="${bars}">${c.num}</text>
-    <rect x="${cx - 60}" y="${cy0 + 118}" width="120" height="120" rx="14" fill="#0a0f22" stroke="${bars}" stroke-opacity="0.55" stroke-width="2"/>
-    <g transform="translate(${cx - 52}, ${cy0 + 134}) scale(4.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <text x="${cx}" y="${cy0 + ch - 206}" text-anchor="middle" font-family="CP" font-size="48" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 148}" text-anchor="middle" font-family="JM" font-size="18" letter-spacing="4" fill="${bars}">// ${c.sub}</text>
-    <text x="${cx}" y="${cy0 + ch - 104}" text-anchor="middle" font-family="JM" font-size="14" letter-spacing="4" fill="${p.dim}">ACCESS 0${i + 1}</text>
-    <rect x="${x + pad}" y="${cy0 + ch - 24}" width="${cw}" height="5" rx="2" fill="${bars}"/>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="8" rx="4" fill="${bars}"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.1">${ICONS[c.key]}</g>
+    </g>
+    <rect x="${g.bx + 40}" y="${g.by + 36}" width="72" height="34" rx="6" fill="none" stroke="${p.border}" stroke-width="2"/>
+    <text x="${g.bx + 76}" y="${g.by + 60}" text-anchor="middle" font-family="JM" font-size="19" fill="${ic}">${c.num}</text>
+    <rect x="${g.cx - 70}" y="${g.by + 94}" width="140" height="140" rx="14" fill="#0a0f22" stroke="${ic}" stroke-opacity="0.55" stroke-width="2"/>
+    <g transform="translate(${g.cx - 61}, ${g.by + 112}) scale(5.05)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <text x="${g.cx}" y="${g.cy + 78}" text-anchor="middle" font-family="CP" font-size="${t}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.cy + 170}" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="6" fill="${ic}">// ${c.sub}</text>
+    <rect x="${g.bx}" y="${g.by + g.bh - 22}" width="${g.bw}" height="6" rx="3" fill="${ic}"/>
   `;
 }
 
 /* =============================================================================
-   A — STUDIO 03 : mirrors the web app (frontend/style.css), solid black
+   A — STUDIO 03
    ============================================================================= */
 const STUDIO = {
   id: 'a-studio',
@@ -198,38 +213,33 @@ function studioOverlay() {
   const p = STUDIO.palette;
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
-    <text x="36" y="56" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="86" font-family="JM" font-size="17" letter-spacing="3" fill="${p.faint}">COLLAGE STUDIO // MENU</text>
-    <text x="${W - 36}" y="56" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">A / 4</text>
-
     ${CELLS.map((c, i) => cardStudio(c, i, p)).join('')}
   </svg>`;
 }
 
 function cardStudio(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
+  const g = cellGeom(i);
   const isPrimary = i === 0;
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="20" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="28"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="28" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
     ${isPrimary
-      ? `<rect x="${x + pad}" y="${cy0}" width="${cw}" height="7" fill="${p.accent}"/>`
-      : `<rect x="${x + pad + 30}" y="${cy0}" width="52" height="7" rx="3" fill="${p.accent}"/>`}
-    <text x="${x + pad + 34}" y="${cy0 + 64}" font-family="JM" font-size="20" letter-spacing="3" fill="${p.faint}">${c.num}</text>
-    <text x="${cx}" y="${cy0 + 128}" text-anchor="middle" font-family="JM" font-size="20" letter-spacing="6" fill="${p.accent}">${c.sub}</text>
-    <g transform="translate(${cx - 43}, ${cy0 + 182}) scale(3.55)" fill="none" stroke="${p.accent}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 44}" y1="${cy0 + ch - 170}" x2="${x + pad + cw - 44}" y2="${cy0 + ch - 170}" stroke="${p.border}" stroke-width="3"/>
-    <text x="${cx}" y="${cy0 + ch - 96}" text-anchor="middle" font-family="CP" font-size="44" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 52}" text-anchor="middle" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">TAP</text>
+      ? `<rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="9" fill="${p.accent}"/>`
+      : `<rect x="${g.bx + 36}" y="${g.by}" width="64" height="9" rx="4" fill="${p.accent}"/>`}
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.09">${ICONS[c.key]}</g>
+    </g>
+    <text x="${g.bx + 46}" y="${g.by + 74}" font-family="JM" font-size="20" letter-spacing="3" fill="${p.faint}">${c.num}</text>
+    <text x="${g.cx}" y="${g.by + 170}" text-anchor="middle" font-family="JM" font-size="22" letter-spacing="10" fill="${p.accent}">${c.sub}</text>
+    <g transform="translate(${g.cx - 50}, ${g.by + 210}) scale(4.15)" fill="none" stroke="${p.accent}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${g.bx + 60}" y1="${g.cy + 30}" x2="${g.bx + g.bw - 60}" y2="${g.cy + 30}" stroke="${p.border}" stroke-width="3"/>
+    <text x="${g.cx}" y="${g.cy + 122}" text-anchor="middle" font-family="CP" font-size="${84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.bh - g.by + g.cy + 8}" text-anchor="middle" font-family="JM" font-size="16" letter-spacing="6" fill="${p.faint}">TAP</text>
   `;
 }
 
 /* =============================================================================
-   C — FIELD 01 : cinematic work-site art, documentary captions
+   C — FIELD 01
    ============================================================================= */
 const FIELD = {
   id: 'c-field',
@@ -251,42 +261,37 @@ function fieldOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#090604" stop-opacity="0.24"/>
-        <stop offset="0.6" stop-color="#090604" stop-opacity="0.6"/>
-        <stop offset="1" stop-color="#090604" stop-opacity="0.88"/>
+        <stop offset="0" stop-color="#090604" stop-opacity="0.26"/>
+        <stop offset="0.5" stop-color="#090604" stop-opacity="0.62"/>
+        <stop offset="1" stop-color="#090604" stop-opacity="0.9"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
-
-    <text x="36" y="58" font-family="CP" font-weight="700" font-size="24" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">FIELD_01 · SITE LOG</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">C / 4</text>
-
     ${CELLS.map((c, i) => cardField(c, i, p)).join('')}
-
-    <rect x="36" y="${H - 16}" width="60" height="6" rx="3" fill="${p.accent}"/>
+    <rect width="${W}" height="${H}" fill="#0f0c08" opacity="0.07"/>
+    <rect x="40" y="${H - 18}" width="70" height="7" rx="3" fill="${p.accent}"/>
   </svg>`;
 }
 
 function cardField(c, i, p) {
-  const x = i * COL;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 40;
+  const g = cellGeom(i);
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="18" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 38}" y="${cy0 + 128}" font-family="CPR" font-size="114" fill="${p.accent}" opacity="0.28">${c.num}</text>
-    <text x="${x + pad + 38}" y="${cy0 + 62}" font-family="JM" font-size="16" letter-spacing="2" fill="${p.dim}">REC ${c.num}</text>
-    <circle cx="${x + pad + cw - 76}" cy="${cy0 + 92}" r="44" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
-    <g transform="translate(${x + pad + cw - 76 - 40}, ${cy0 + 92 - 40}) scale(3.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 38}" y1="${cy0 + ch - 180}" x2="${x + pad + cw - 38}" y2="${cy0 + ch - 180}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 38}" y="${cy0 + ch - 102}" font-family="CP" font-size="40" fill="${p.ink}">${c.title}</text>
-    <text x="${x + pad + 38}" y="${cy0 + ch - 52}" font-family="JM" font-size="16" letter-spacing="3" fill="${p.accent}">${c.sub}</text>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="26"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="26" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.1">${ICONS[c.key]}</g>
+    </g>
+    <text x="${g.bx + 48}" y="${g.by + 140}" font-family="CPR" font-size="150" fill="${p.accent}" opacity="0.26">${c.num}</text>
+    <text x="${g.bx + 48}" y="${g.by + 64}" font-family="JM" font-size="18" letter-spacing="2" fill="${p.dim}">REC ${c.num}</text>
+    <circle cx="${g.bx + g.bw - 84}" cy="${g.by + 92}" r="52" fill="none" stroke="${p.accent}" stroke-opacity="0.7" stroke-width="3"/>
+    <g transform="translate(${g.bx + g.bw - 84 - 47}, ${g.by + 92 - 47}) scale(3.9)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${g.bx + 48}" y1="${g.cy - 8}" x2="${g.bx + g.bw - 48}" y2="${g.cy - 8}" stroke="${p.border}" stroke-width="2"/>
+    <text x="${g.bx + 48}" y="${g.cy + 92}" font-family="CP" font-size="${84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.bx + 48}" y="${g.cy + 168}" font-family="JM" font-size="21" letter-spacing="5" fill="${p.accent}">${c.sub}</text>
   `;
 }
 
 /* =============================================================================
-   D — EDITORIAL : dark poster, cream ink + orange, high contrast
+   D — EDITORIAL
    ============================================================================= */
 const EDITORIAL = {
   id: 'd-editorial',
@@ -311,7 +316,7 @@ function editorialBase() {
         <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.6" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
       </linearGradient>
       <radialGradient id="ease" cx="0.5" cy="0.06" r="0.9">
-        <stop offset="0" stop-color="${p.accent}" stop-opacity="0.06"/>
+        <stop offset="0" stop-color="${p.accent}" stop-opacity="0.07"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
     <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
@@ -324,38 +329,30 @@ function editorialOverlay() {
   const p = EDITORIAL.palette;
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
-
-    <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="3" fill="${p.dim}">EDIT_01 · WORK MENU</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.ink}">2026</text>
-    <text x="${W - 36}" y="90" text-anchor="end" font-family="JM" font-size="15" letter-spacing="4" fill="${p.dim}">D / 4</text>
-
     ${CELLS.map((c, i) => cardEditorial(c, i, p)).join('')}
-
     <rect x="0" y="${H - 7}" width="${W}" height="7" fill="${p.accent}"/>
   </svg>`;
 }
 
 function cardEditorial(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
+  const g = cellGeom(i);
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="10" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="9" fill="${p.accent}"/>
-    <text x="${x + pad + cw - 34}" y="${cy0 + 122}" text-anchor="end" font-family="CPR" font-size="112" fill="${p.accent}">${c.num}</text>
-    <g transform="translate(${cx - 43}, ${cy0 + 160}) scale(3.6)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 36}" y1="${cy0 + ch - 160}" x2="${x + pad + cw - 36}" y2="${cy0 + ch - 160}" stroke="${p.dim}" stroke-opacity="0.35" stroke-width="2"/>
-    <text x="${x + pad + 36}" y="${cy0 + ch - 88}" font-family="CP" font-weight="700" font-size="44" fill="${p.ink}">${c.title}</text>
-    <text x="${x + pad + 36}" y="${cy0 + ch - 42}" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">${c.sub}</text>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="16"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="10" fill="${p.accent}"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" opacity="0.1">${ICONS[c.key]}</g>
+    </g>
+    <text x="${g.bx + g.bw - 40}" y="${g.by + 130}" text-anchor="end" font-family="CPR" font-size="140" fill="${p.accent}">${c.num}</text>
+    <g transform="translate(${g.cx - 52}, ${g.by + 230}) scale(4.3)" fill="none" stroke="${p.ink}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${g.bx + 44}" y1="${g.cy - 12}" x2="${g.bx + g.bw - 44}" y2="${g.cy - 12}" stroke="${p.dim}" stroke-opacity="0.35" stroke-width="2"/>
+    <text x="${g.bx + 44}" y="${g.cy + 96}" font-family="CP" font-weight="700" font-size="${84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.bx + 44}" y="${g.cy + 168}" font-family="JM" font-size="21" letter-spacing="6" fill="${p.accent}">${c.sub}</text>
   `;
 }
 
 /* =============================================================================
-   E — MONO TYPE : pure black & white, typography-first
+   E — MONO TYPE
    ============================================================================= */
 const TYPO = {
   id: 'e-mono',
@@ -384,36 +381,31 @@ function typoBase() {
 
 function typoOverlay() {
   const p = TYPO.palette;
-  const hairs = [1, 2, 3, 4]
-    .map((i) => `<line x1="${i * COL}" y1="120" x2="${i * COL}" y2="${H - 24}" stroke="${p.hair}" stroke-width="2"/>`)
-    .join('');
+  const rulings = `
+    <line x1="${W / 2}" y1="${H * 0.08}" x2="${W / 2}" y2="${H / 2}" stroke="${p.hair}" stroke-width="2"/>
+    <line x1="${W / 3}" y1="${H / 2}" x2="${W / 3}" y2="${H - H * 0.08}" stroke="${p.hair}" stroke-width="2"/>
+    <line x1="${(W / 3) * 2}" y1="${H / 2}" x2="${(W / 3) * 2}" y2="${H - H * 0.08}" stroke="${p.hair}" stroke-width="2"/>
+    <line x1="${W * 0.03}" y1="${H / 2}" x2="${W * 0.97}" y2="${H / 2}" stroke="${p.hair}" stroke-width="2"/>`;
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
-    <text x="36" y="64" font-family="CP" font-weight="700" font-size="34" fill="${p.ink}">STACK<span fill="${p.ink}">//</span>FRAME</text>
-    <text x="36" y="100" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">WORK MENU — 4 CHANNELS</text>
-    <text x="${W - 36}" y="64" text-anchor="end" font-family="JM" font-size="20" letter-spacing="6" fill="${p.dim}">E / MONO</text>
-    <line x1="36" y1="114" x2="${W - 36}" y2="114" stroke="${p.hair}" stroke-width="2"/>
-    ${hairs}
+    ${rulings}
     ${CELLS.map((c, i) => cardTypo(c, i, p)).join('')}
   </svg>`;
 }
 
 function cardTypo(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
+  const g = cellGeom(i);
   return `
-    <text x="${cx}" y="382" text-anchor="middle" font-family="CPR" font-size="250" fill="${p.ink}" opacity="0.08">${c.num}</text>
-    <text x="${cx}" y="442" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="8" fill="${p.ink}">— ${c.sub} —</text>
-    <text x="${cx}" y="${H - 256}" text-anchor="middle" font-family="CP" font-weight="700" font-size="62" fill="${p.ink}">${c.title}</text>
-    <line x1="${x + pad}" y1="${H - 196}" x2="${x + pad + cw}" y2="${H - 196}" stroke="${p.hair}" stroke-width="2"/>
-    <text x="${cx}" y="${H - 150}" text-anchor="middle" font-family="JM" font-size="19" letter-spacing="6" fill="${p.dim}">OPEN →</text>
+    <text x="${g.cx}" y="${g.cy + 8}" text-anchor="middle" font-family="CPR" font-size="330" fill="${p.ink}" opacity="0.06">${c.num}</text>
+    <text x="${g.cx}" y="${g.by + 96}" text-anchor="middle" font-family="JM" font-size="24" letter-spacing="12" fill="${p.ink}">— ${c.sub} —</text>
+    <text x="${g.cx}" y="${g.cy - 110}" text-anchor="middle" font-family="CP" font-weight="700" font-size="96" fill="${p.ink}">${c.title}</text>
+    <line x1="${g.cx - 170}" y1="${g.cy + 150}" x2="${g.cx + 170}" y2="${g.cy + 150}" stroke="${p.faint}" stroke-width="2"/>
+    <text x="${g.cx}" y="${g.cy + 212}" text-anchor="middle" font-family="JM" font-size="22" letter-spacing="8" fill="${p.dim}">OPEN →</text>
   `;
 }
 
 /* =============================================================================
-   F — NOIR NIGHTS : crimson neon film-noir on black (AI city art)
+   F — NOIR NIGHTS
    ============================================================================= */
 const NOIR = {
   id: 'f-noir',
@@ -436,42 +428,37 @@ function noirOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#050103" stop-opacity="0.35"/>
-        <stop offset="0.55" stop-color="#050103" stop-opacity="0.66"/>
+        <stop offset="0" stop-color="#050103" stop-opacity="0.36"/>
+        <stop offset="0.5" stop-color="#050103" stop-opacity="0.66"/>
         <stop offset="1" stop-color="#050103" stop-opacity="0.9"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
-    <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">NOIR_NIGHT · REEL FOUR</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">F / NOIR</text>
-
     ${CELLS.map((c, i) => cardNoir(c, i, p)).join('')}
+    <rect width="${W}" height="${H}" fill="#0b0406" opacity="0.08"/>
   </svg>`;
 }
 
 function cardNoir(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
+  const g = cellGeom(i);
   const glow = i % 2 === 0 ? p.accent : p.accent2;
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="6" rx="3" fill="${glow}"/>
-    <text x="${x + pad + cw - 36}" y="${cy0 + 138}" text-anchor="end" font-family="CPR" font-size="168" fill="${glow}" opacity="0.14">${c.num}</text>
-    <text x="${x + pad + 38}" y="${cy0 + 66}" font-family="JM" font-size="16" letter-spacing="4" fill="${p.faint}">SCENE ${c.num}</text>
-    <rect x="${cx - 58}" y="${cy0 + 118}" width="116" height="116" rx="12" fill="#170509" stroke="${glow}" stroke-opacity="0.6" stroke-width="2"/>
-    <g transform="translate(${cx - 52}, ${cy0 + 134}) scale(4.3)" fill="none" stroke="${glow}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 40}" y1="${cy0 + ch - 176}" x2="${x + pad + cw - 40}" y2="${cy0 + ch - 176}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${cx}" y="${cy0 + ch - 104}" text-anchor="middle" font-family="CP" font-size="46" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 56}" text-anchor="middle" font-family="JM" font-size="17" letter-spacing="6" fill="${glow}">${c.sub}</text>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="8" rx="4" fill="${glow}"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${glow}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.12">${ICONS[c.key]}</g>
+    </g>
+    <text x="${g.bx + 42}" y="${g.by + 70}" font-family="JM" font-size="18" letter-spacing="5" fill="${p.faint}">SCENE ${c.num}</text>
+    <text x="${g.bx + g.bw - 42}" y="${g.by + 120}" text-anchor="end" font-family="CPR" font-size="130" fill="${glow}" opacity="0.16">${c.num}</text>
+    <rect x="${g.cx - 70}" y="${g.by + 90}" width="140" height="140" rx="12" fill="#170509" stroke="${glow}" stroke-opacity="0.6" stroke-width="2"/>
+    <g transform="translate(${g.cx - 61}, ${g.by + 108}) scale(5.05)" fill="none" stroke="${glow}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <text x="${g.cx}" y="${g.cy + 80}" text-anchor="middle" font-family="CP" font-size="${84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.cy + 172}" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="8" fill="${glow}">${c.sub}</text>
   `;
 }
 
 /* =============================================================================
-   G — SITE VOLT : industrial amber/yellow, hazard stripes (AI site art)
+   G — SITE VOLT
    ============================================================================= */
 const VOLT = {
   id: 'g-volt',
@@ -494,46 +481,44 @@ function voltOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#0a0602" stop-opacity="0.32"/>
-        <stop offset="0.6" stop-color="#0a0602" stop-opacity="0.62"/>
+        <stop offset="0" stop-color="#0a0602" stop-opacity="0.34"/>
+        <stop offset="0.55" stop-color="#0a0602" stop-opacity="0.64"/>
         <stop offset="1" stop-color="#0a0602" stop-opacity="0.9"/>
       </linearGradient>
-      <pattern id="hazard" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="13" height="26" fill="#0d0a02"/>
-        <rect x="13" width="13" height="26" fill="${p.accent}"/>
+      <pattern id="hazard" width="30" height="30" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="15" height="30" fill="#14100a"/>
+        <rect x="15" width="15" height="30" fill="${p.accent}"/>
       </pattern>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
-    <text x="36" y="58" font-family="CP" font-weight="700" font-size="26" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">SITE_VOLT · CREW 4</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">G / VOLT</text>
-
     ${CELLS.map((c, i) => cardVolt(c, i, p)).join('')}
+    <rect width="${W}" height="${H}" fill="#0f0c06" opacity="0.07"/>
   </svg>`;
 }
 
 function cardVolt(c, i, p) {
-  const x = i * COL;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
+  const g = cellGeom(i);
+  const isBottom = g.row === 1;
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="16" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="26" fill="url(#hazard)"/>
-    <rect x="${x + pad}" y="${cy0 + 26}" width="${cw}" height="6" fill="#0d0a02"/>
-    <circle cx="${x + pad + 56}" cy="${cy0 + 66}" r="34" fill="#0d0a02" stroke="${p.accent}" stroke-width="3"/>
-    <text x="${x + pad + 56}" y="${cy0 + 75}" text-anchor="middle" font-family="JM" font-size="17" fill="${p.accent}">${c.num}</text>
-    <text x="${x + pad + 110}" y="${cy0 + 64}" font-family="JM" font-size="16" letter-spacing="4" fill="${p.faint}">SITE-0${i + 1}</text>
-    <text x="${x + pad + 110}" y="${cy0 + 88}" font-family="JM" font-size="14" letter-spacing="3" fill="${p.dim}">ACTIVE · CREW</text>
-    <g transform="translate(${x + pad + cw - 56 - 40}, ${cy0 + 66 - 40}) scale(3.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 40}" y1="${cy0 + ch - 168}" x2="${x + pad + cw - 40}" y2="${cy0 + ch - 168}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${x + pad + 40}" y="${cy0 + ch - 98}" font-family="CP" font-size="46" fill="${p.ink}">${c.title}</text>
-    <text x="${x + pad + 40}" y="${cy0 + ch - 48}" font-family="JM" font-size="17" letter-spacing="5" fill="${p.accent}">// ${c.sub}</text>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="24" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="34" fill="url(#hazard)"/>
+    <rect x="${g.bx}" y="${g.by + 34}" width="${g.bw}" height="7" fill="#14100a"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.1">${ICONS[c.key]}</g>
+    </g>
+    <circle cx="${g.bx + 62}" cy="${g.by + 84}" r="40" fill="#14100a" stroke="${p.accent}" stroke-width="3"/>
+    <text x="${g.bx + 62}" y="${g.by + 95}" text-anchor="middle" font-family="JM" font-size="19" fill="${p.accent}">${c.num}</text>
+    <text x="${g.bx + 128}" y="${g.by + 82}" font-family="JM" font-size="18" letter-spacing="4" fill="${p.faint}">SITE-0${i + 1}</text>
+    <text x="${g.bx + 128}" y="${g.by + 112}" font-family="JM" font-size="16" letter-spacing="3" fill="${p.dim}">ACTIVE · CREW</text>
+    <g transform="translate(${g.bx + g.bw - 92 - 45}, ${g.by + 84 - 45}) scale(3.7)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${g.bx + 46}" y1="${g.cy - 10}" x2="${g.bx + g.bw - 46}" y2="${g.cy - 10}" stroke="${p.border}" stroke-width="2"/>
+    <text x="${g.bx + 46}" y="${g.cy + 94}" font-family="CP" font-size="${isBottom ? 76 : 84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.bx + 46}" y="${g.cy + 168}" font-family="JM" font-size="21" letter-spacing="6" fill="${p.accent}">// ${c.sub}</text>
   `;
 }
 
 /* =============================================================================
-   H — DATA CORE : navy/cyan terminal console (AI server art)
+   H — DATA CORE
    ============================================================================= */
 const CORE = {
   id: 'h-core',
@@ -556,7 +541,7 @@ function coreOverlay() {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs(`
       <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#01060c" stop-opacity="0.36"/>
+        <stop offset="0" stop-color="#01060c" stop-opacity="0.38"/>
         <stop offset="0.55" stop-color="#01060c" stop-opacity="0.68"/>
         <stop offset="1" stop-color="#01060c" stop-opacity="0.92"/>
       </linearGradient>
@@ -564,53 +549,48 @@ function coreOverlay() {
         <stop offset="0" stop-color="${p.accent}"/><stop offset="1" stop-color="${p.accent2}"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#scrim)"/>
-    <text x="36" y="58" font-family="JM" font-size="22" letter-spacing="4" fill="${p.dim}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="90" font-family="JM" font-size="17" letter-spacing="4" fill="${p.accent}">CORE_OS · 4 NODES</text>
-    <text x="${W - 36}" y="58" text-anchor="end" font-family="JM" font-size="17" letter-spacing="4" fill="${p.faint}">H / CORE</text>
-
     ${CELLS.map((c, i) => cardCore(c, i, p)).join('')}
+    <rect width="${W}" height="${H}" fill="#05090f" opacity="0.07"/>
   </svg>`;
 }
 
 function cardCore(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 108;
-  const ch = H - cy0 - 30;
+  const g = cellGeom(i);
   return `
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="14" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="6" fill="url(#topbar)"/>
-    <circle cx="${x + pad + 40}" cy="${cy0 + 38}" r="7" fill="${p.accent}" opacity="0.9"/>
-    <text x="${x + pad + 58}" y="${cy0 + 46}" font-family="JM" font-size="16" letter-spacing="3" fill="${p.dim}">NODE_0${i + 1} // READY</text>
-    <text x="${x + pad + 34}" y="${cy0 + 108}" font-family="JM" font-size="19" fill="${p.accent}">0${i + 1}</text>
-    <text x="${x + pad + 34}" y="${cy0 + 140}" font-family="JM" font-size="15" letter-spacing="2" fill="${p.faint}">> OPEN_CHANNEL</text>
-    <rect x="${cx - 58}" y="${cy0 + 170}" width="116" height="116" rx="12" fill="#041120" stroke="${p.accent}" stroke-opacity="0.5" stroke-width="2"/>
-    <g transform="translate(${cx - 52}, ${cy0 + 186}) scale(4.3)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
-    <line x1="${x + pad + 40}" y1="${cy0 + ch - 178}" x2="${x + pad + cw - 40}" y2="${cy0 + ch - 178}" stroke="${p.border}" stroke-width="2"/>
-    <text x="${cx}" y="${cy0 + ch - 108}" text-anchor="middle" font-family="CP" font-size="46" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + ch - 58}" text-anchor="middle" font-family="JM" font-size="17" letter-spacing="5" fill="${p.accent2}">${c.sub}</text>
-    <text x="${cx}" y="${cy0 + ch - 26}" text-anchor="middle" font-family="JM" font-size="14" letter-spacing="4" fill="${p.faint}">sys://mcky.space</text>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="22"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="22" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="8" fill="url(#topbar)"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 26}, ${g.cy - 12 * 26}) scale(26)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.11">${ICONS[c.key]}</g>
+    </g>
+    <circle cx="${g.bx + 42}" cy="${g.by + 46}" r="7" fill="${p.accent}" opacity="0.95"/>
+    <text x="${g.bx + 62}" y="${g.by + 54}" font-family="JM" font-size="17" letter-spacing="4" fill="${p.dim}">NODE_0${i + 1} // READY</text>
+    <text x="${g.bx + 40}" y="${g.by + 120}" font-family="JM" font-size="21" fill="${p.accent}">0${i + 1} &gt; OPEN_CHANNEL</text>
+    <rect x="${g.cx - 70}" y="${g.by + 86}" width="140" height="140" rx="12" fill="#041120" stroke="${p.accent}" stroke-opacity="0.5" stroke-width="2"/>
+    <g transform="translate(${g.cx - 61}, ${g.by + 104}) scale(5.05)" fill="none" stroke="${p.accent}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</g>
+    <line x1="${g.bx + 42}" y1="${g.cy - 10}" x2="${g.bx + g.bw - 42}" y2="${g.cy - 10}" stroke="${p.border}" stroke-width="2"/>
+    <text x="${g.cx}" y="${g.cy + 94}" text-anchor="middle" font-family="CP" font-size="${84}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.cy + 160}" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="7" fill="${p.accent2}">${c.sub}</text>
+    <text x="${g.cx}" y="${g.by + g.bh - 28}" text-anchor="middle" font-family="JM" font-size="17" letter-spacing="5" fill="${p.faint}">sys://mcky.space</text>
   `;
 }
 
 /* =============================================================================
-   I — ROYAL GOLD : luxury gold/cream on black (pure SVG)
+   I — ROYAL GOLD (bright gold, luxury)
    ============================================================================= */
 const GOLD = {
   id: 'i-gold',
   name: 'ROYAL GOLD',
-  tag: 'LUXURY / GOLD ON BLACK',
+  tag: 'BRIGHT GOLD / LUXURY',
   palette: {
-    bg: ['#0c0a05', '#0a0804', '#060502'],
-    accent: '#d4af37',
-    accent2: '#f0e6b0',
-    surface: 'rgba(20,17,9,0.94)',
-    border: '#3d3518',
-    ink: '#f7f1dc',
-    dim: '#c9bc8f',
-    faint: '#8a7c50',
+    bg: ['#110d06', '#0d0a05', '#080604'],
+    accent: '#ffce3a',
+    accent2: '#fff3b0',
+    surface: 'rgba(28,22,9,0.92)',
+    border: '#8a6d1f',
+    ink: '#fffdf4',
+    dim: '#e8d9a4',
+    faint: '#a9935d',
   },
 };
 
@@ -621,8 +601,8 @@ function goldBase() {
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${p.bg[0]}"/><stop offset="0.55" stop-color="${p.bg[1]}"/><stop offset="1" stop-color="${p.bg[2]}"/>
       </linearGradient>
-      <radialGradient id="ease" cx="0.5" cy="0.05" r="0.95">
-        <stop offset="0" stop-color="${p.accent}" stop-opacity="0.07"/>
+      <radialGradient id="ease" cx="0.5" cy="0.08" r="0.95">
+        <stop offset="0" stop-color="${p.accent}" stop-opacity="0.09"/>
         <stop offset="1" stop-color="${p.bg[0]}" stop-opacity="0"/>
       </radialGradient>`)}
     <rect width="${W}" height="${H}" fill="${p.bg[0]}"/>
@@ -633,40 +613,27 @@ function goldBase() {
 
 function goldOverlay() {
   const p = GOLD.palette;
-  const hairs = [1, 2, 3, 4]
-    .map((i) => `<line x1="${i * COL}" y1="120" x2="${i * COL}" y2="${H - 24}" stroke="${p.accent}" stroke-opacity="0.14" stroke-width="2"/>`)
-    .join('');
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     ${defs()}
-    <text x="36" y="62" font-family="CP" font-weight="700" font-size="30" fill="${p.ink}">STACK<span fill="${p.accent}">//</span>FRAME</text>
-    <text x="36" y="98" font-family="JM" font-size="18" letter-spacing="6" fill="${p.dim}">EST 2026 · PREMIUM ACCESS</text>
-    <text x="${W - 36}" y="62" text-anchor="end" font-family="JM" font-size="18" letter-spacing="6" fill="${p.dim}">I / GOLD</text>
-    <line x1="36" y1="112" x2="${W - 36}" y2="112" stroke="${p.accent}" stroke-opacity="0.35" stroke-width="2"/>
-    ${hairs}
     ${CELLS.map((c, i) => cardGold(c, i, p)).join('')}
   </svg>`;
 }
 
 function cardGold(c, i, p) {
-  const x = i * COL;
-  const cx = x + COL / 2;
-  const pad = 26;
-  const cw = COL - pad * 2;
-  const cy0 = 116;
-  const ch = H - cy0 - 30;
-  const midY = cy0 + ch / 2;
+  const g = cellGeom(i);
+  const t = g.row === 0 ? 84 : 78;
   return `
-    <defs><clipPath id="ic${i}"><rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="6"/></clipPath></defs>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="${ch}" rx="6" fill="${p.surface}" stroke="${p.border}" stroke-width="2"/>
-    <rect x="${x + pad}" y="${cy0}" width="${cw}" height="4" fill="${p.accent}"/>
-    <g clip-path="url(#ic${i})">
-      <g transform="translate(${cx - 300}, ${midY - 300}) scale(25)" fill="none" stroke="${p.accent}" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">${ICONS[c.key]}</g>
+    <clipPath id="clip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="30"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="30" fill="${p.surface}" stroke="${p.border}" stroke-width="3"/>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="7" fill="${p.accent}"/>
+    <g clip-path="url(#clip${i})">
+      <g transform="translate(${g.cx - 12 * 28}, ${g.cy - 12 * 28}) scale(28)" fill="none" stroke="${p.accent}" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.16">${ICONS[c.key]}</g>
     </g>
-    <text x="${x + pad + 34}" y="${cy0 + 48}" font-family="JM" font-size="15" letter-spacing="5" fill="${p.faint}">NO · ${c.num}</text>
-    <text x="${cx}" y="${cy0 + 300}" text-anchor="middle" font-family="CP" font-weight="700" font-size="70" fill="${p.ink}">${c.title}</text>
-    <text x="${cx}" y="${cy0 + 366}" text-anchor="middle" font-family="JM" font-size="19" letter-spacing="7" fill="${p.accent}">${c.sub}</text>
-    <line x1="${cx - 120}" y1="${cy0 + ch - 120}" x2="${cx + 120}" y2="${cy0 + ch - 120}" stroke="${p.accent}" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="${cx}" y="${cy0 + ch - 62}" text-anchor="middle" font-family="JM" font-size="16" letter-spacing="6" fill="${p.faint}">OPEN →</text>
+    <text x="${g.bx + 44}" y="${g.by + 74}" font-family="JM" font-size="19" letter-spacing="5" fill="${p.faint}">NO · ${c.num}</text>
+    <text x="${g.cx}" y="${g.cy - 8}" text-anchor="middle" font-family="CP" font-weight="700" font-size="${t}" fill="${p.ink}">${c.title}</text>
+    <text x="${g.cx}" y="${g.cy + 74}" text-anchor="middle" font-family="JM" font-size="22" letter-spacing="10" fill="${p.accent}">${c.sub}</text>
+    <line x1="${g.cx - 160}" y1="${g.by + g.bh - 76}" x2="${g.cx + 160}" y2="${g.by + g.bh - 76}" stroke="${p.accent}" stroke-opacity="0.4" stroke-width="2"/>
+    <text x="${g.cx}" y="${g.by + g.bh - 26}" text-anchor="middle" font-family="JM" font-size="18" letter-spacing="9" fill="${p.faint}">OPEN →</text>
   `;
 }
 
@@ -709,8 +676,8 @@ async function renderVariant(v, outDir) {
 async function contactSheet(results, outDir) {
   const labelH = 84;
   const tileW = 1100;
-  const tileImgH = Math.round((tileW / W) * H); // 371
-  const tileH = tileImgH + labelH; // 455
+  const tileImgH = Math.round((tileW / W) * H); // ~742
+  const tileH = tileImgH + labelH;
   const gap = 40;
   const pad = 28;
   const cols = 2;
@@ -750,7 +717,7 @@ function accentOf(def) {
 }
 
 /* =============================================================================
-   LINE deploy (5 equal tap areas, full height)
+   LINE deploy (5 tap areas, 2 rows: 2 top + 3 bottom)
    ============================================================================= */
 async function deploy(v) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
@@ -758,10 +725,10 @@ async function deploy(v) {
   }
   const client = new Client({ channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN });
 
-  const areas = CELLS.map((c, i) => ({
-    bounds: { x: Math.round(i * COL), y: 0, width: Math.round(COL), height: H },
-    action: { type: 'uri', uri: c.uri },
-  }));
+  const areas = CELLS.map((c, i) => {
+    const g = cellGeom(i);
+    return { bounds: { x: g.x, y: g.y, width: g.w, height: g.h }, action: { type: 'uri', uri: c.uri } };
+  });
 
   const richMenu = {
     size: { width: W, height: H },
@@ -805,9 +772,8 @@ async function main() {
   const outDir = argPair('-o') || 'frontend/previews/richmenu';
 
   if (deployId) {
-    const id = deployId;
-    const v = VARIANTS.find((x) => x.def.id === id || x.def.name.toLowerCase() === id);
-    if (!v) throw new Error(`Unknown design: ${id}. Available: ${VARIANTS.map((x) => x.def.id).join(', ')}`);
+    const v = VARIANTS.find((x) => x.def.id === deployId || x.def.name.toLowerCase() === deployId);
+    if (!v) throw new Error(`Unknown design: ${deployId}. Available: ${VARIANTS.map((x) => x.def.id).join(', ')}`);
     await deploy(v);
     return;
   }
@@ -828,7 +794,7 @@ async function main() {
     `<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rich menu redesign · ${results.length} concepts</title>
 <style>
-  :root{--bg:#0d0d10;--ink:#f4f4f0;--dim:#a1a1a8;--line:#2a2a32;--acc:#c7f464}
+  :root{--bg:#0d0d10;--ink:#f4f4f0;--dim:#a1a1a8;--line:#2a2a32;--acc:#ffce3a}
   *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
   header{padding:36px 44px 20px;border-bottom:1px solid var(--line)}header h1{margin:0;font-size:26px;letter-spacing:.5px}
   header p{margin:6px 0 0;color:var(--dim)}
@@ -842,7 +808,7 @@ async function main() {
   footer code{background:#1e2129;padding:2px 6px;border-radius:6px}
 </style></head><body>
 <header><h1>Rich menu redesign · STACK<span style="color:var(--acc)">//</span>FRAME</h1>
-<p>${results.length} concepts, 2500×843, black backgrounds. Tap areas identical in all: 4 ปุ่มเรียงแถวเดียว (ส่งรูปงาน LIFF · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิดสมาชิก me.mcky.space)</p></header>
+<p>${results.length} concepts, 2500×1686, dark backgrounds, 2 rows (top 2 / bottom 3) · ส่งรูปงาน LIFF · ไรเดอร์ rider.ezzytransporter.com · บันทึกงาน truck · เปิดหน้าลูกค้า data · เปิดสมาชิก me.mcky.space</p></header>
 <div class="grid">
 ${results
   .map(
@@ -852,7 +818,7 @@ ${results
   )
   .join('')}
 </div>
-<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy e-mono</code></footer>
+<footer>Render: <code>NODE_PATH=backend/node_modules:frontend/node_modules node scripts/richmenu-designs.cjs</code> · Deploy a pick: <code>--deploy i-gold</code></footer>
 </body></html>`,
   );
   console.log(`Gallery -> ${gallery}`);
