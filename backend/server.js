@@ -35,6 +35,7 @@ const MAX_TOTAL_UPLOAD_SIZE = positiveInt(process.env.MAX_TOTAL_UPLOAD_SIZE, 80 
 const MAX_CONCURRENT_RENDERS = positiveInt(process.env.MAX_CONCURRENT_RENDERS, 1);
 const RATE_LIMIT_MAX = positiveInt(process.env.COLLAGE_RATE_LIMIT_MAX, 10);
 const RATE_LIMIT_WINDOW_MS = positiveInt(process.env.COLLAGE_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000);
+const PUBLIC_API_BASE_URL = (process.env.PUBLIC_API_BASE_URL || 'https://collage-7cgv.onrender.com').replace(/\/+$/, '');
 const ALLOWED_ORIGINS = new Set(
   (process.env.ALLOWED_ORIGINS || 'https://report.mcky.space,https://collage-flax.vercel.app')
     .split(',')
@@ -239,7 +240,8 @@ app.post('/api/collage', enforceRequestSize, rateLimitCollage, concurrencyGate, 
 
     const buffer = await createCollage(files, name, date, preset, theme);
     const filename = `collage-${randomUUID()}.jpg`;
-    const imageUrl = await uploadCollage(buffer, filename);
+    await uploadCollage(buffer, filename);
+    const imageUrl = `${PUBLIC_API_BASE_URL}/api/image/${filename}`;
     res.json({ success: true, imageUrl });
   } catch (error) {
     const mapped = mapError(error);

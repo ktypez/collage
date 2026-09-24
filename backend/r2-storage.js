@@ -45,8 +45,7 @@ export async function uploadCollage(buffer, filename) {
     CacheControl: 'public, max-age=86400, immutable',
   }));
 
-  const base = requiredEnv('R2_PUBLIC_URL').replace(/\/+$/, '');
-  return `${base}/${filename}`;
+  return filename;
 }
 
 export async function cleanupOldCollages(maxAgeDays = 30, s3 = getClient()) {
