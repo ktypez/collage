@@ -1,8 +1,8 @@
 /* =============================================================================
    core/sharp-renderer.js — production renderer (sharp)
    -----------------------------------------------------------------------------
-   Reads the SAME theme manifest as the client canvas-renderer and produces a
-   collage with sharp (SVG composites + modulate). Used by backend collage.js.
+   Reads the theme manifests and produces a collage with sharp
+   (SVG composites + modulate). Used by backend collage.js.
 
    Theme canvas pipeline (mirrored here):
      backdrop  = bg + header + cell chip backgrounds      → SVG → PNG
@@ -15,13 +15,12 @@ import opentype from 'opentype.js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { DAY_PRESETS, DAY_NAMES } from '../engine/layout.js';
+import { DAY_PRESETS } from '../engine/layout.js';
 import { getThaiShaper, shapeThai } from './hb-shape.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let monoFont = null;
-let displayFont = null;
 let thaiFont = null;
 let chakraFont = null;
 let serifFont = null;
@@ -41,9 +40,6 @@ let thaiSerifShaper = null;
 let thaiShaper = null;
 try {
   monoFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/JetBrainsMono-Regular.ttf')));
-} catch {}
-try {
-  displayFont = opentype.parse(readFileSync(resolve(__dirname, '../fonts/VT323-Regular.ttf')));
 } catch {}
 try {
   // Thai-capable font (backend root — for user name/date). Mono fonts have no Thai glyphs.
@@ -89,20 +85,12 @@ try {
   thaiSerifShaper = null;
 }
 
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const DAY_SHORT = { sun: 'SUN', mon: 'MON', tue: 'TUE', wed: 'WED', thu: 'THU', fri: 'FRI', sat: 'SAT' };
+
 /* =============================================================================
    helpers
    ============================================================================= */
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function pickFont(manifest) {
-  const header = manifest.canvas.header || {};
-  if (header.font === 'display' && displayFont) return displayFont;
-  if (header.font === 'serif' && chakraFont) return chakraFont; // serif-ish fallback
-  return monoFont;
-}
-
 /** Split text into runs: Thai chars → thaiFont, everything else → base font */
 function splitTextRuns(text, isThai) {
   const runs = [];
@@ -175,7 +163,7 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
   else if (font === serifFont) shaper = serifShaper;
   else if (font === thaiSerifFont) shaper = thaiSerifShaper;
   else if (font === thaiFont) shaper = thaiShaper;
-  // Fallback Thai font: mono / display fonts (JetBrainsMono, VT323) have no
+  // Fallback Thai font: the mono font has no
   // Thai glyphs and silently emit empty boxes for Thai characters. When the
   // active font lacks a Thai shaper, fall through to thaiFont (Noto Sans Thai)
   // for Thai runs so the name/date still renders correctly.
@@ -231,13 +219,28 @@ function isLightBg(c) {
   if (!first) return false;
   const n = parseInt(String(first).replace('#', ''), 16);
   if (Number.isNaN(n)) return false;
-  return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 450; // avg > 150
+  return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 450;
+}
+
+function contrastTextOn(hex) {
+  const value = String(hex).replace('#', '');
+  const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n)) return '#ffffff';
+  const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const srgb = v / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : Math.pow((srgb + 0.055) / 1.055, 2.4);
+  });
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  const blackContrast = (luminance + 0.05) / 0.05;
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  return blackContrast >= whiteContrast ? '#111111' : '#ffffff';
 }
 
 /* =============================================================================
    BACKGROUND (bg gradient/flat + header text)
    ============================================================================= */
-export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
+export function renderBackdrop(manifest, { W, H, headerH, name, date, cards, preset }) {
   const c = manifest.canvas;
   const svg = [];
 
@@ -256,22 +259,15 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     svg.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   }
 
-  // --- background image (texture/pattern overlay) ---
-  if (c.bgImage) {
-    try {
-      const imgPath = resolve(__dirname, '../../..', c.bgImage);
-      const imgBuf = readFileSync(imgPath);
-      const ext = imgPath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-      const b64 = imgBuf.toString('base64');
-      const opacity = c.bgImageOpacity ?? 0.14;
-      svg.push(`<image href="data:${ext};base64,${b64}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" opacity="${opacity}"/>`);
-    } catch (e) {
-      console.error('[sharp-renderer] bgImage load failed:', e.message);
-    }
-  }
-
-  const ch = c.chrome;
   const hd = c.header || {};
+  const presetStops = preset ? DAY_PRESETS[preset] : null;
+  const presetHeaderColor = hd.presetHeader && presetStops
+    ? presetStops[hd.presetHeaderStop ?? 1]
+    : null;
+
+  if (presetHeaderColor) {
+    svg.push(`<rect width="${W}" height="${headerH}" fill="${presetHeaderColor}"/>`);
+  }
 
   // --- header stripe (themed accent bar at top edge) ---
   if (hd.stripe) {
@@ -291,7 +287,9 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   const nameFont = useSerif
     ? (serifFont || thaiSerifFont || thaiFont || monoFont)
     : (chakraFont || thaiFont || monoFont);
-  const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
+  const textColor = presetHeaderColor
+    ? contrastTextOn(presetHeaderColor)
+    : (isLightBg(c) ? '#16161a' : '#ffffff');
   const ink = hd.ink || textColor;
   const align = hd.align === 'left' || hd.align === 'right' ? hd.align : 'center';
   const margin = Math.max(72, hd.margin || 96);
@@ -317,30 +315,6 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
         x: textX, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align, color: hexToRgba(ink, 0.8),
       }));
     }
-  }
-
-  // --- chrome: side rails (rack) — behind photos ---
-  if (ch && ch.rails) {
-    const r = ch.rails;
-    const rw = Math.max(10, Math.round(W * r.widthRatio));
-    const screwR = Math.max(2, Math.round(W * 0.006));
-    const screwColor = r.screw || '#5a5a63';
-    const screwOpacity = r.screwOpacity ?? 0.55;
-    const nScrews = 8;
-    svg.push(`<defs><linearGradient id="rail" x1="0" y1="0" x2="1" y2="0">` +
-      `<stop offset="0%" stop-color="${r.dark}"/>` +
-      `<stop offset="50%" stop-color="${r.mid}"/>` +
-      `<stop offset="100%" stop-color="${r.dark}"/>` +
-      `</linearGradient></defs>`);
-    svg.push(`<rect x="0" y="0" width="${rw}" height="${H}" fill="url(#rail)"/>`);
-    svg.push(`<rect x="${W - rw}" y="0" width="${rw}" height="${H}" fill="url(#rail)"/>`);
-    for (let i = 0; i < nScrews; i++) {
-      const sy = Math.round((i / (nScrews - 1)) * H);
-      svg.push(`<circle cx="${Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${screwColor}" fill-opacity="${screwOpacity}"/>`);
-      svg.push(`<circle cx="${W - Math.round(rw / 2)}" cy="${sy}" r="${screwR}" fill="${screwColor}" fill-opacity="${screwOpacity}"/>`);
-    }
-    svg.push(`<line x1="${rw}" y1="0" x2="${rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
-    svg.push(`<line x1="${W - rw}" y1="0" x2="${W - rw}" y2="${H}" stroke="${r.highlight}" stroke-width="1"/>`);
   }
 
   // --- cell chip backgrounds (behind photos) — supports hex or linear-gradient ---
@@ -389,6 +363,33 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
   const cell = c.cell || {};
   const parts = [];
 
+  if (c.dayStrip && preset && DAY_PRESETS[preset]) {
+    const strip = c.dayStrip;
+    const height = strip.height || 30;
+    const activeHeight = strip.activeHeight || Math.round(height * 1.7);
+    const gap = strip.gap ?? 4;
+    const segmentW = W / DAY_KEYS.length;
+    parts.push(`<rect x="0" y="0" width="${W}" height="${activeHeight}" fill="${strip.background || '#111111'}"/>`);
+    DAY_KEYS.forEach((key, i) => {
+      const colors = DAY_PRESETS[key];
+      const active = key === preset;
+      const blockH = active ? activeHeight : height;
+      const blockW = segmentW - gap;
+      const x = i * segmentW + gap / 2;
+      const opacity = active ? 1 : (strip.inactiveOpacity ?? 0.62);
+      parts.push(`<rect x="${x}" y="0" width="${blockW}" height="${blockH}" fill="${colors[1]}" fill-opacity="${opacity}"/>`);
+      if (active && strip.label !== false && monoFont) {
+        const size = strip.labelSize || 18;
+        parts.push(textPathSVG(DAY_SHORT[key], monoFont, size, {
+          x: x + blockW / 2,
+          y: Math.round(activeHeight / 2 + size * 0.35),
+          align: 'center',
+          color: contrastTextOn(colors[1]),
+        }));
+      }
+    });
+  }
+
   // --- cell borders ---
   if (cell.border && cell.width) {
     for (const card of cards) {
@@ -420,28 +421,7 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
-  // --- unit heads (rack): '// UNIT 01' per card — like /status, no LEDs ---
-  if (cell.unit && cell.unitTitle) {
-    const font = monoFont;
-    if (font) {
-      const ls = cell.unitTitleSize || 24;
-      const lh = cell.unitHeadH || 40;
-      const ledColor = cell.unitTitleColor || 'rgba(255,176,0,0.85)';
-      cards.forEach((card, i) => {
-        const text = '// ' + String(cell.unitTitle).replace('{n}', String(i + 1).padStart(2, '0'));
-        const tx = card.x + 14;
-        const ty = card.y + lh - 7;
-        parts.push(textPathSVG(text, font, ls, { x: tx, y: ty, color: ledColor }));
-        // bottom-left index tag
-        const tag = String(i + 1).padStart(2, '0');
-        const tagSize = 22;
-        const tw = font.getAdvanceWidth(tag, tagSize) + 20;
-        const tagY = card.y + card.h - 40;
-        parts.push(`<rect x="${card.x + 10}" y="${tagY}" width="${tw}" height="30" rx="4" fill="rgba(10,10,12,0.85)"/>`);
-        parts.push(textPathSVG(tag, font, tagSize, { x: card.x + 20, y: tagY + 22, color: '#8a8a93' }));
-      });
-    }
-  } else if (cell.label) {
+  if (cell.label) {
     const font = monoFont;
     if (font) {
       const ls = cell.labelSize || 26;
@@ -486,7 +466,7 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
-  // --- chrome: bezel/corner LEDs (crt) — on top ---
+  // --- optional frame and film-edge chrome ---
   const ch = c.chrome;
   if (ch) {
     if (ch.frame) {
@@ -507,105 +487,6 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
       for (let y = Math.round(p.start ?? 72); y < H - holeH; y += gap) {
         parts.push(`<rect x="${pad}" y="${y}" width="${holeW}" height="${holeH}" rx="${p.rounded ?? 4}" fill="${color}" fill-opacity="${opacity}"/>`);
         parts.push(`<rect x="${W - pad - holeW}" y="${y}" width="${holeW}" height="${holeH}" rx="${p.rounded ?? 4}" fill="${color}" fill-opacity="${opacity}"/>`);
-      }
-    }
-    // CRT bezel frame
-    if (ch.bezel) {
-      const b = ch.bezel;
-      const bw = Math.max(16, Math.round(W * b.widthRatio));
-      parts.push(`<rect x="0" y="0" width="${W}" height="${bw}" fill="${b.color}"/>`);
-      parts.push(`<rect x="0" y="${H - bw}" width="${W}" height="${bw}" fill="${b.color}"/>`);
-      parts.push(`<rect x="0" y="0" width="${bw}" height="${H}" fill="${b.color}"/>`);
-      parts.push(`<rect x="${W - bw}" y="0" width="${bw}" height="${H}" fill="${b.color}"/>`);
-      const gb = Math.round(bw * 0.6);
-      parts.push(`<rect x="${gb}" y="${gb}" width="${W - gb * 2}" height="${H - gb * 2}" fill="none" stroke="${b.glow}" stroke-width="${Math.max(1, Math.round(W * 0.004))}"/>`);
-    }
-    // CRT corner LEDs (power/activity)
-    if (ch.cornerLeds) {
-      ch.cornerLeds.forEach((led) => {
-        const r = Math.max(3, Math.round(W * led.sizeRatio));
-        const pad = Math.round(W * led.padRatio);
-        let x = led.x === 'left' ? pad : W - pad;
-        let y = led.y === 'bottom' ? H - pad : pad;
-        if (led.dxRatio) x += Math.round(W * led.dxRatio);
-        parts.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${led.color}"/>`);
-      });
-    }
-  }
-
-  // --- overlays ---
-  const ov = c.overlay;
-  const ovList = Array.isArray(ov) ? ov : ov ? [ov] : ['none'];
-  const ovOpts = c.overlayOpts || {};
-  ovList.forEach((name) => {
-    const o = ovOpts[name] || {};
-    if (name === 'scanline') {
-      const spacing = o.spacing ?? 4;
-      const alpha = o.alpha ?? 0.18;
-      let lines = '';
-      for (let y = 0; y < H; y += spacing) {
-        lines += `<rect y="${y}" width="${W}" height="1" fill="rgba(0,0,0,${alpha})"/>`;
-      }
-      parts.push(lines);
-    } else if (name === 'vignette') {
-      const intensity = o.intensity ?? 0.55;
-      const r = Math.round(Math.max(W, H) * 0.75);
-      parts.push(`<defs><radialGradient id="vig" cx="50%" cy="50%" r="70%">
-        <stop offset="55%" stop-color="rgba(0,0,0,0)"/>
-        <stop offset="100%" stop-color="rgba(0,0,0,${intensity})"/>
-      </radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vig)"/>`);
-    } else if (name === 'grid') {
-      const spacing = o.spacing ?? 60;
-      const color = o.color ?? 'rgba(0,212,255,0.05)';
-      let grid = '';
-      for (let x = 0; x <= W; x += spacing) grid += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${color}" stroke-width="1"/>`;
-      for (let y = 0; y <= H; y += spacing) grid += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${color}" stroke-width="1"/>`;
-      parts.push(grid);
-    } else if (name === 'connectors') {
-      const color = o.color ?? 'rgba(0,212,255,0.30)';
-      const width = o.width ?? 2;
-      if (cards.length) {
-        const cx = W / 2, cy = Math.round(H * 0.55);
-        let conn = '';
-        for (const card of cards) {
-          const mx = card.x + card.w / 2;
-          const my = card.y + card.h / 2;
-          conn += `<line x1="${mx}" y1="${my}" x2="${cx + (mx - cx) * 0.25}" y2="${cy + (my - cy) * 0.25}" stroke="${color}" stroke-width="${width}"/>`;
-        }
-        conn += `<circle cx="${cx}" cy="${cy}" r="10" fill="${color}"/>`;
-        // data-center hub: glowing cyan core + node dots on each link
-        if (o.hubColor) {
-          conn += `<circle cx="${cx}" cy="${cy}" r="22" fill="${o.hubColor}" fill-opacity="0.15"/>`;
-          conn += `<circle cx="${cx}" cy="${cy}" r="6" fill="${o.hubColor}"/>`;
-        }
-        if (o.nodeColor) {
-          for (const card of cards) {
-            const mx = card.x + card.w / 2;
-            const my = card.y + card.h / 2;
-            const nx = cx + (mx - cx) * 0.25;
-            const ny = cy + (my - cy) * 0.25;
-            conn += `<circle cx="${nx}" cy="${ny}" r="4" fill="${o.nodeColor}"/>`;
-          }
-        }
-        parts.push(conn);
-      }
-    }
-  });
-
-  // --- accent strip (min theme / presetAccent) ---
-  if (c.presetAccent && preset) {
-    const stopsArr = DAY_PRESETS[preset];
-    if (stopsArr) {
-      const stripH = Math.max(14, Math.round(H * 0.02));
-      const stops = stopsArr.map((s, i) =>
-        `<stop offset="${(i / (stopsArr.length - 1)) * 100}%" stop-color="${s}"/>`).join('');
-      parts.push(`<defs><linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient></defs>`);
-      parts.push(`<rect y="${H - stripH}" width="${W}" height="${stripH}" fill="url(#acc)"/>`);
-      if (monoFont) {
-        const label = `// ${DAY_NAMES[preset] || preset}`;
-        parts.push(textPathSVG(label, monoFont, 24, {
-          x: W - 20, y: H - stripH / 2 + 8, align: 'right', color: 'rgba(0,0,0,0.55)',
-        }));
       }
     }
   }

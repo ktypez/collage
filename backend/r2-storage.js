@@ -1,15 +1,27 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from '@aws-sdk/client-s3';
 
 let client = null;
+
+function requiredEnv(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not configured`);
+  return value;
+}
 
 function getClient() {
   if (!client) {
     client = new S3Client({
       region: 'auto',
-      endpoint: process.env.R2_ENDPOINT,
+      endpoint: requiredEnv('R2_ENDPOINT'),
       credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        accessKeyId: requiredEnv('R2_ACCESS_KEY_ID'),
+        secretAccessKey: requiredEnv('R2_SECRET_ACCESS_KEY'),
       },
     });
   }
@@ -18,7 +30,7 @@ function getClient() {
 
 export async function getCollageStream(filename) {
   const response = await getClient().send(new GetObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME,
+    Bucket: requiredEnv('R2_BUCKET_NAME'),
     Key: filename,
   }));
   return response.Body;
@@ -26,41 +38,65 @@ export async function getCollageStream(filename) {
 
 export async function uploadCollage(buffer, filename) {
   await getClient().send(new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME,
+    Bucket: requiredEnv('R2_BUCKET_NAME'),
     Key: filename,
     Body: buffer,
     ContentType: 'image/jpeg',
+    CacheControl: 'public, max-age=86400, immutable',
   }));
 
-  const base = process.env.R2_PUBLIC_URL.replace(/\/+$/, '');
+  const base = requiredEnv('R2_PUBLIC_URL').replace(/\/+$/, '');
   return `${base}/${filename}`;
 }
 
-export async function cleanupOldCollages(maxAgeDays = 30) {
-  const list = await getClient().send(new ListObjectsV2Command({
-    Bucket: process.env.R2_BUCKET_NAME,
-    Prefix: 'collage-',
-  }));
-
-  const objects = list.Contents || [];
+export async function cleanupOldCollages(maxAgeDays = 30, s3 = getClient()) {
+  const bucket = requiredEnv('R2_BUCKET_NAME');
   const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
-  const old = objects.filter(o => o.LastModified < cutoff);
+  const old = [];
+  let continuationToken;
+  let scanned = 0;
+
+  do {
+    const page = await s3.send(new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: 'collage-',
+      ContinuationToken: continuationToken,
+    }));
+    for (const object of page.Contents || []) {
+      scanned += 1;
+      if (object.LastModified && object.LastModified < cutoff) old.push(object);
+    }
+    if (page.IsTruncated && !page.NextContinuationToken) {
+      throw new Error('R2 returned a truncated list without a continuation token');
+    }
+    continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (continuationToken);
 
   if (old.length === 0) {
-    console.log(`Cleanup: no collages older than ${maxAgeDays} days`);
-    return { deleted: 0 };
+    console.log(`Cleanup: scanned ${scanned}, found no collages older than ${maxAgeDays} days`);
+    return { scanned, deleted: 0 };
   }
 
   let deleted = 0;
+  const deleteErrors = [];
   for (let i = 0; i < old.length; i += 1000) {
-    const batch = old.slice(i, i + 1000).map(o => ({ Key: o.Key }));
-    await getClient().send(new DeleteObjectsCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
+    const batch = old.slice(i, i + 1000).map((object) => ({ Key: object.Key }));
+    const result = await s3.send(new DeleteObjectsCommand({
+      Bucket: bucket,
       Delete: { Objects: batch },
     }));
-    deleted += batch.length;
+    deleted += batch.length - (result.Errors?.length || 0);
+    if (result.Errors?.length) {
+      deleteErrors.push(...result.Errors.map((error) => `${error.Key}: ${error.Code || 'delete failed'}`));
+    }
   }
 
-  console.log(`Cleanup: deleted ${deleted} collages older than ${maxAgeDays} days`);
-  return { deleted };
+  if (deleteErrors.length) {
+    const error = new Error(`R2 cleanup failed for ${deleteErrors.length} objects`);
+    error.details = deleteErrors.slice(0, 10);
+    throw error;
+  }
+
+  console.log(`Cleanup: scanned ${scanned}, deleted ${deleted} collages older than ${maxAgeDays} days`);
+  return { scanned, deleted };
 }

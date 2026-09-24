@@ -4,6 +4,7 @@ uploads/
 dist/
 .vercel
 .env*
+!.env.example
 .mimocode/
 .opencode/
 .kilo/

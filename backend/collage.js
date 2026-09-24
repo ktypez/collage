@@ -20,7 +20,11 @@ const IR = 36;
 const SY = 16;
 const SB = 48;
 const SA = 0.12;
-const JPG_Q = 95;
+const MAX_SOURCE_PIXELS = 50_000_000;
+const MAX_TOTAL_SOURCE_PIXELS = 180_000_000;
+const MAX_ASPECT_RATIO = 4;
+const MAX_OUTPUT_HEIGHT = 10_000;
+const SHADOW_CACHE_LIMIT = 64;
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -39,16 +43,6 @@ const THEMES = {
   sat: { g: ['#7C3AED','#8B5CF6','#A78BFA'], d: '#DDD6FE', tc: '#fff', bg: '#F5F3FF' },
 };
 
-const THEME_NAMES = {
-  sun: 'อาทิตย์',
-  mon: 'จันทร์',
-  tue: 'อังคาร',
-  wed: 'พุธ',
-  thu: 'พฤหัสบดี',
-  fri: 'ศุกร์',
-  sat: 'เสาร์',
-};
-
 function defaultPreset() {
   return DAYS[new Date().getDay()];
 }
@@ -59,16 +53,70 @@ function cols(n) {
   return 3;
 }
 
-function isScreenshot(meta) {
-  const ratio = meta.height / meta.width;
-  const screenshotRatio = 2760 / 1256; // ~2.2
-  return Math.abs(ratio - screenshotRatio) < 0.1;
+function inputError(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
 }
 
-function fmtDate(s) {
-  let d = s && s.trim() ? new Date(s + 'T00:00:00') : new Date();
-  if (Number.isNaN(d.getTime())) d = new Date(); // invalid input -> today
-  return `วันที่ ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+export async function readImageMetadata(files) {
+  if (!Array.isArray(files) || files.length === 0) {
+    throw inputError('NO_IMAGES', 'No images uploaded');
+  }
+
+  let totalPixels = 0;
+  const metas = await Promise.all(files.map(async (file) => {
+    let meta;
+    try {
+      meta = await sharp(file.path, {
+        limitInputPixels: MAX_SOURCE_PIXELS,
+        sequentialRead: true,
+        failOn: 'error',
+      }).metadata();
+    } catch (error) {
+      if (/pixel limit/i.test(String(error?.message || ''))) {
+        throw inputError('IMAGE_TOO_LARGE', `Each image must be at most ${MAX_SOURCE_PIXELS / 1_000_000} megapixels`);
+      }
+      throw inputError('INVALID_IMAGE', 'One or more uploaded files are not valid images');
+    }
+
+    const width = meta?.width || 0;
+    const height = meta?.height || 0;
+    const pixels = width * height;
+    if (!['jpeg', 'png', 'webp'].includes(meta?.format)) {
+      throw inputError('INVALID_IMAGE_TYPE', 'Only JPEG, PNG, and WEBP images are supported');
+    }
+    if (pixels <= 0 || pixels > MAX_SOURCE_PIXELS) {
+      throw inputError('IMAGE_TOO_LARGE', `Each image must be at most ${MAX_SOURCE_PIXELS / 1_000_000} megapixels`);
+    }
+    if (Math.max(width, height) / Math.min(width, height) > MAX_ASPECT_RATIO) {
+      throw inputError('IMAGE_ASPECT_RATIO', `Image aspect ratio must not exceed ${MAX_ASPECT_RATIO}:1`);
+    }
+    totalPixels += pixels;
+    return meta;
+  }));
+
+  if (totalPixels > MAX_TOTAL_SOURCE_PIXELS) {
+    throw inputError('TOTAL_IMAGE_PIXELS', `Combined image resolution must not exceed ${MAX_TOTAL_SOURCE_PIXELS / 1_000_000} megapixels`);
+  }
+  return metas;
+}
+
+function assertOutputHeight(height) {
+  if (!Number.isFinite(height) || height <= 0 || height > MAX_OUTPUT_HEIGHT) {
+    throw inputError('OUTPUT_TOO_LARGE', `Collage height must not exceed ${MAX_OUTPUT_HEIGHT}px`);
+  }
+}
+
+function fmtDate(value) {
+  if (value != null && typeof value !== 'string') {
+    throw inputError('INVALID_DATE', 'Date must be a string');
+  }
+  const text = value?.trim() || '';
+  if (text.length > 32) throw inputError('INVALID_DATE', 'Date is too long');
+  let date = text ? new Date(text + 'T00:00:00') : new Date();
+  if (Number.isNaN(date.getTime())) date = new Date();
+  return `วันที่ ${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear() + 543}`;
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -107,6 +155,9 @@ async function getShadow(w, h) {
   if (!shadowCache.has(key)) {
     const pad = SB * 2;
     const svg = `<svg width="${w + pad}" height="${h + pad}" xmlns="http://www.w3.org/2000/svg"><rect x="${pad / 2}" y="${pad / 2}" width="${w}" height="${h}" fill="rgba(0,0,0,${SA})"/></svg>`;
+    if (shadowCache.size >= SHADOW_CACHE_LIMIT) {
+      shadowCache.delete(shadowCache.keys().next().value);
+    }
     shadowCache.set(key, await sharp(Buffer.from(svg)).blur(SB).png().toBuffer());
   }
   return shadowCache.get(key);
@@ -126,14 +177,18 @@ export async function roundImage(buf, w, h, contentW) {
   const upscaleCap = 3;
   const targetW = w < contentW ? Math.min(contentW, Math.round(w * upscaleCap)) : contentW;
   const targetH = Math.round(targetW * h / w);
-  const resized = await sharp(buf)
+  const resized = await sharp(buf, {
+    limitInputPixels: MAX_SOURCE_PIXELS,
+    sequentialRead: true,
+    failOn: 'error',
+  })
     .resize(targetW, targetH, {
       fit: 'fill',
       kernel: 'lanczos3',
     })
     .png()
     .toBuffer();
-  const rmeta = await sharp(resized).metadata();
+  const rmeta = await sharp(resized, { limitInputPixels: MAX_SOURCE_PIXELS }).metadata();
   // Center the (possibly smaller than card) image inside the card area.
   const padX = Math.max(0, Math.round((contentW - rmeta.width) / 2));
   const padY = Math.max(0, Math.round((targetH - rmeta.height) / 2));
@@ -151,20 +206,25 @@ export async function roundImage(buf, w, h, contentW) {
 }
 
 export async function createCollage(files, name, date, preset, theme) {
+  if (name != null && typeof name !== 'string') {
+    throw inputError('INVALID_NAME', 'Name must be a string');
+  }
+  name = name?.trim() || '';
+  if (name.length > 80) throw inputError('INVALID_NAME', 'Name must not exceed 80 characters');
+
   date = fmtDate(date);
   if (!preset || !THEMES[preset]) preset = defaultPreset();
+  const metas = await readImageMetadata(files);
 
   // Theme manifests use the shared image pipeline. 7 DAYS/default keeps the legacy renderer.
   const themeId = String(theme || '').toLowerCase();
   const themedManifest = THEME_MANIFESTS[themeId];
   if (themedManifest) {
-    return createThemedCollage(files, name, date, preset, themedManifest);
+    return createThemedCollage(files, name, date, preset, themedManifest, metas);
   }
 
   const t = THEMES[preset];
   const count = files.length;
-
-  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
 
   const c = cols(count);
 
@@ -204,6 +264,7 @@ export async function createCollage(files, name, date, preset, theme) {
   const contentH = Math.max(...colHeights) - G;
   const rest = contentH + DH + PT + PB;
   const totalH = HEADER_H + rest;
+  assertOutputHeight(totalH);
 
   const composites = [];
 
@@ -248,8 +309,7 @@ export async function createCollage(files, name, date, preset, theme) {
    A manifest can change only the chrome around the photos, never their order,
    aspect ratio, or scale. 7 DAYS/default keeps the original day-gradient path.
    ============================================================================= */
-export async function createThemedCollage(files, name, date, preset, manifest) {
-  const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
+export async function createThemedCollage(files, name, date, preset, manifest, metas) {
   const count = files.length;
   const c = cols(count);
   const usable = W - PS * 2;
@@ -283,12 +343,13 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
   const dateBaseY = Math.round(HEADER_H * ((name && date) ? 0.78 : 0.55));
   const contentY = dateBaseY + 44;
   const totalH = contentY + contentH + PB;
+  assertOutputHeight(totalH);
 
   // pixel-space card rects (for sharp-renderer)
   const cards = placements.map(p => ({ x: p.x, y: contentY + p.y, w: cardW, h: p.ch }));
 
   // 1. backdrop: bg gradient/flat + header + cell chips
-  const backdropSVG = renderBackdrop(manifest, { W, H: totalH, headerH: HEADER_H, name, date, cards });
+  const backdropSVG = renderBackdrop(manifest, { W, H: totalH, headerH: HEADER_H, name, date, cards, preset });
   const backdrop = await sharp(backdropSVG).png().toBuffer();
 
   // 2. photos (rounded + optional photoFx)
@@ -308,7 +369,8 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
   //     an RGBA overlay over an RGBA base in sharp mangles transparent-black
   //     pixels and erases the photos underneath. Must flatten in a SEPARATE step,
   //     not a chain, otherwise sharp still produces dark output.)
-  const fgSVG = renderForeground(manifest, { W, H: totalH, cards, preset: manifest.canvas.presetAccent ? preset : null });
+  const usesPreset = Boolean(manifest.canvas.dayStrip);
+  const fgSVG = renderForeground(manifest, { W, H: totalH, cards, preset: usesPreset ? preset : null });
 
   // 4. compose — step 1: base + photos, flatten to RGB
   let baseBuf = await sharp(backdrop)
@@ -331,11 +393,13 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
    ============================================================================= */
 const THEME_MANIFESTS = {};
 try {
-  for (const id of ['claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
+  for (const id of ['calendar', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
     const { manifest } = await import(`./design-system/themes/${id}/manifest.js`);
     if (manifest) THEME_MANIFESTS[id] = manifest;
   }
 } catch (e) {
   console.error('[collage] theme manifest load failed:', e.message);
 }
+export const SUPPORTED_THEME_IDS = Object.freeze(['min', ...Object.keys(THEME_MANIFESTS)]);
+export const SUPPORTED_PRESET_IDS = Object.freeze(Object.keys(THEMES));
 const { renderBackdrop, renderForeground, getPhotoFx } = await import('./design-system/core/sharp-renderer.js');

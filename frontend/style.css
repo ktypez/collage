@@ -7,7 +7,7 @@
 
 :root {
   --bg: #0a0a0c; --bg-2: #111114; --surface: #17171b; --surface-2: #1e1e24;
-  --border: #2a2a32; --ink: #f4f4f0; --ink-dim: #a1a1a8; --ink-faint: #6b6b74;
+  --border: #646470; --ink: #f4f4f0; --ink-dim: #a1a1a8; --ink-faint: #85858e;
   --accent: #c7f464; --accent-ink: #0a0a0c; --line-accent: #4ade80; --danger: #ff5c5c;
   --radius: 16px; --radius-sm: 10px;
   --font-display: 'Space Grotesk', system-ui, sans-serif;
@@ -103,11 +103,26 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   background: rgba(0, 0, 0, .65); color: #fff; padding: 2px 7px; border-radius: 6px;
 }
 .preview-remove {
-  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 8px;
-  background: rgba(0, 0, 0, .65); color: #fff; font-size: 16px; line-height: 1;
+  position: absolute; z-index: 3; top: 4px; right: 4px; width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(0, 0, 0, .78); color: #fff; font-size: 22px; line-height: 1;
   display: grid; place-items: center; opacity: 0; transition: opacity .15s ease;
 }
-.preview-item:hover .preview-remove, .preview-item:focus-within .preview-remove { opacity: 1; }
+.preview-move {
+  position: absolute; z-index: 3; bottom: 4px; width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(0, 0, 0, .78); color: #fff; font-size: 20px; line-height: 1;
+  display: grid; place-items: center; opacity: 0; transition: opacity .15s ease;
+}
+.preview-move-prev { left: 4px; }
+.preview-move-next { right: 4px; }
+.preview-move:disabled { opacity: .25; cursor: default; }
+.preview-item:hover .preview-remove,
+.preview-item:focus-within .preview-remove,
+.preview-item:hover .preview-move,
+.preview-item:focus-within .preview-move { opacity: 1; }
+@media (hover: none) {
+  .preview-remove, .preview-move { opacity: 1; }
+  .preview-move:disabled { opacity: .25; }
+}
 
 /* ---------- fields ---------- */
 .field { margin-bottom: 20px; }
@@ -118,37 +133,39 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   font-size: 16px; font-family: inherit; transition: border-color .18s ease;
 }
 .input::placeholder { color: var(--ink-faint); }
-.input:focus { outline: none; border-color: var(--accent); }
+.input[readonly] { cursor: pointer; }
+.input:focus-visible { border-color: var(--accent); }
 
 .date-wrap { position: relative; }
 .date-toggle {
   position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
-  width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-dim);
+  width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-dim);
 }
 .date-toggle:hover { color: var(--accent); background: var(--surface-2); }
 .date-popup {
-  position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; right: 0;
+  position: absolute; z-index: 30; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: min(320px, calc(100vw - 24px)); overflow-x: auto;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
 }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .cal-title { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
-.cal-nav { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-dim); font-size: 18px; }
+.cal-nav { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-dim); font-size: 18px; }
 .cal-nav:hover { color: var(--accent); background: var(--bg-2); }
 .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
 .cal-dow span { text-align: center; font-size: 11px; color: var(--ink-faint); font-weight: 600; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 44px); justify-content: center; gap: 2px; }
 .cal-day { aspect-ratio: 1; border-radius: 10px; font-size: 13.5px; font-weight: 500; display: grid; place-items: center; color: var(--ink); }
 .cal-day:hover { background: var(--bg-2); }
 .cal-day.is-out { color: var(--ink-faint); opacity: .5; }
 .cal-day.is-today { color: var(--accent); font-weight: 700; }
 .cal-day.is-selected { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
-.cal-today { margin-top: 12px; width: 100%; height: 40px; border-radius: 10px; border: 1px solid var(--border); font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--accent); }
+.cal-today { margin-top: 12px; width: 100%; height: 44px; border-radius: 10px; border: 1px solid var(--border); font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--accent); }
 .cal-today:hover { background: var(--bg-2); }
 
 /* theme chips */
 .theme-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .ochip {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 48px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
   border: 1px solid var(--border); border-radius: 12px; background: var(--bg-2);
   padding: 9px 13px; font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--ink);
   transition: border-color .16s ease, background .16s ease;
@@ -168,8 +185,9 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 
 .theme-preview { margin-top: 16px; }
 .theme-preview-head {
-  display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+  width: 100%; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 11px 14px;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  color: var(--ink); text-align: left;
   font-family: var(--font-display); font-weight: 600; font-size: 13px;
 }
 .theme-preview-head .cap { color: var(--accent); }
@@ -217,7 +235,9 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 }
 .footer .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin: 0 10px; }
 
-@media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
 
 /* ---------- LIFF-only ---------- */
 .liff-banner {

@@ -29,6 +29,7 @@ import { join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { renderBackdrop } = await import('../design-system/core/sharp-renderer.js');
+const { DAY_PRESETS } = await import('../design-system/engine/layout.js');
 const { createCollage } = await import('../collage.js');
 
 // Themed headers share these canvas dims (see collage.js).
@@ -39,7 +40,8 @@ const HEADER_H = 440;
 const NAME = 'Rennie แรนนี่';
 const DATE = 'วันที่ 11 สิงหาคม 2569';
 
-const THEME_IDS = ['claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'];
+const THEME_IDS = ['calendar', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'];
+const TEST_PRESET = 'fri';
 
 /*
    Detect text ink as PIXELS THAT CONTRAST against the theme background gradient
@@ -68,19 +70,18 @@ function bgAt(bg, x, y, fullW, fullH) {
 /*
    Rasterize a buffer, then measure the [minX, maxX] of ink in a Y-band.
    `fullH` is the image height the bg gradient was drawn over (needed for correct
-   interpolation); `margins` = [left, right] pixels to ignore (rack chrome rails).
+   interpolation). All pixels are inspected.
 */
-async function inkRange(imageBuf, band, bg, fullH, margins = [0, 0]) {
+async function inkRange(imageBuf, band, bg, fullH) {
   const { data, info } = await sharp(imageBuf)
     .extract({ left: 0, top: band.y0, width: W, height: band.y1 - band.y0 })
     .raw()
     .toBuffer({ resolveWithObject: true });
   const { width, channels } = info;
-  const [mLeft, mRight] = margins;
   let minX = Infinity;
   let maxX = -Infinity;
   for (let y = 0; y < band.y1 - band.y0; y++) {
-    for (let x = mLeft; x < width - mRight; x++) {
+    for (let x = 0; x < width; x++) {
       const i = (y * width + x) * channels;
       const [br, bgc, bb] = bgAt(bg, x, band.y0 + y, W, fullH);
       const d = Math.abs(data[i] - br) + Math.abs(data[i + 1] - bgc) + Math.abs(data[i + 2] - bb);
@@ -93,19 +94,22 @@ async function inkRange(imageBuf, band, bg, fullH, margins = [0, 0]) {
   return [minX, maxX];
 }
 
+function headerBackground(canvas, preset) {
+  if (!canvas.header?.presetHeader) return canvas.bg;
+  return DAY_PRESETS[preset][canvas.header.presetHeaderStop ?? 1];
+}
+
 /* Run a theme's header and return { svg, ink } for name + date bands. */
-async function headerInk(manifest, fullH) {
+async function headerInk(manifest, fullH, preset = TEST_PRESET) {
   const c = manifest.canvas;
-  const svg = renderBackdrop(manifest, { W, H: fullH, headerH: HEADER_H, name: NAME, date: DATE, cards: [] });
+  const effectiveBg = headerBackground(c, preset);
+  const svg = renderBackdrop(manifest, { W, H: fullH, headerH: HEADER_H, name: NAME, date: DATE, cards: [], preset });
   const band = (base, size) => ({
     y0: Math.max(0, base - Math.round(size * 1.0)),
     y1: base + Math.round(size * 0.5),
   });
-  // rails (rack) are full-height bars at the edges — exclude them from ink search
-  const rail = c.chrome && c.chrome.rails ? Math.round(W * c.chrome.rails.widthRatio) + 8 : 0;
-  const margins = [rail, rail];
-  const name = await inkRange(svg, band(Math.round(HEADER_H * 0.47), Math.round(HEADER_H * 0.30)), c.bg, fullH, margins);
-  const date = await inkRange(svg, band(Math.round(HEADER_H * 0.78), Math.round(HEADER_H * 0.13)), c.bg, fullH, margins);
+  const name = await inkRange(svg, band(Math.round(HEADER_H * 0.47), Math.round(HEADER_H * 0.30)), effectiveBg, fullH);
+  const date = await inkRange(svg, band(Math.round(HEADER_H * 0.78), Math.round(HEADER_H * 0.13)), effectiveBg, fullH);
   return { svg, name, date, align: c.header?.align || 'center' };
 }
 
@@ -171,14 +175,12 @@ test('createCollage — full pipeline renders complete header for every theme', 
         themedHeights.push(height);
         const { manifest } = await import(`../design-system/themes/${theme}/manifest.js`);
         const c = manifest.canvas;
-        const rail = c.chrome && c.chrome.rails ? Math.round(W * c.chrome.rails.widthRatio) + 8 : 0;
         const band = Math.round(HEADER_H * 0.78);
         const date = await inkRange(
           out,
           { y0: Math.max(0, band - Math.round(HEADER_H * 0.13)), y1: band + Math.round(HEADER_H * 0.13 * 0.5) },
-          c.bg,
-          height,
-          [rail, rail]
+          headerBackground(c, 'tue'),
+          height
         );
         assertFullInk(date, 'date', theme, c.header?.align || 'center');
       }

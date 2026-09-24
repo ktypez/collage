@@ -7,76 +7,105 @@ const config = {
 
 const LIFF_ID = process.env.LIFF_ID;
 const CLIENTDATA_URL = 'https://data.mcky.space';
+const MAX_BODY_BYTES = 256 * 1024;
+const MAX_EVENTS = 50;
 const client = new Client(config);
 
 export const config_vercel = {
   api: { bodyParser: false },
 };
 
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => data += chunk);
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
+export async function getRawBody(req, maxBytes = MAX_BODY_BYTES) {
+  const declaredLength = Number.parseInt(req.headers['content-length'] || '0', 10);
+  if (declaredLength > maxBytes) {
+    const error = new Error('Request body is too large');
+    error.code = 'BODY_TOO_LARGE';
+    throw error;
+  }
+
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > maxBytes) {
+      const error = new Error('Request body is too large');
+      error.code = 'BODY_TOO_LARGE';
+      throw error;
+    }
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+function assertConfig() {
+  const missing = [
+    ['LINE_CHANNEL_ACCESS_TOKEN', config.channelAccessToken],
+    ['LINE_CHANNEL_SECRET', config.channelSecret],
+    ['LIFF_ID', LIFF_ID],
+  ].filter(([, value]) => !value).map(([name]) => name);
+  if (missing.length) {
+    const error = new Error(`Missing webhook configuration: ${missing.join(', ')}`);
+    error.code = 'CONFIG_MISSING';
+    throw error;
+  }
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
-
-  const rawBody = await getRawBody(req);
-  const signature = req.headers['x-line-signature'];
-
-  if (!validateSignature(rawBody, config.channelSecret, signature)) {
-    return res.status(401).end('Invalid signature');
+  if (req.method !== 'POST') {
+    res.set('Allow', 'POST');
+    res.status(405).end('Method Not Allowed');
+    return;
   }
 
-  const body = JSON.parse(rawBody);
-
   try {
-    await Promise.all(body.events.map(handleEvent));
+    assertConfig();
+    const rawBody = await getRawBody(req);
+    const signature = req.headers['x-line-signature'];
+    if (!validateSignature(rawBody, config.channelSecret, signature)) {
+      res.status(401).end('Invalid signature');
+      return;
+    }
+
+    const body = JSON.parse(rawBody);
+    if (!body || !Array.isArray(body.events) || body.events.length > MAX_EVENTS) {
+      res.status(400).end('Invalid event payload');
+      return;
+    }
+
+    const results = await Promise.allSettled(body.events.map(handleEvent));
+    for (const result of results) {
+      if (result.status === 'rejected') console.error('LINE event error:', result.reason);
+    }
     res.status(200).end();
-  } catch (err) {
-    console.error(err);
-    res.status(200).end();
+  } catch (error) {
+    if (error.code === 'BODY_TOO_LARGE') {
+      res.status(413).end('Request body is too large');
+      return;
+    }
+    if (error instanceof SyntaxError) {
+      res.status(400).end('Invalid JSON');
+      return;
+    }
+    console.error('Webhook error:', error);
+    res.status(500).end('Webhook unavailable');
   }
 }
 
 async function handleEvent(event) {
-  // User added the bot as a friend (or unblocked) → greet with the same flex
-  // menu as *เมนู. Follow events carry a replyToken, so this uses the Reply
-  // API which does NOT count toward the monthly message quota.
   if (event.type === 'follow') {
     return client.replyMessage(event.replyToken, mainMenu());
   }
 
   if (event.type !== 'message' || event.message.type !== 'text') return;
-
   const text = event.message.text.trim();
+  const command = text.replace(/^[!*]\s*/, '').trim();
 
-  const match = text.match(/^([!*])(.+)/);
-  if (!match) return;
-
-  const [, prefix, cmd] = match;
-
-  if (cmd === 'ส่งรูป' || cmd === 'รูป') {
+  if (command === 'ส่งรูป' || command === 'รูป') {
     return client.replyMessage(event.replyToken, collageMenu());
   }
-
-  if (cmd === 'เมนู') {
+  if (command === 'เมนู') {
     return client.replyMessage(event.replyToken, mainMenu());
-  }
-
-  if (cmd.startsWith('ลูกค้า')) {
-    const q = cmd.slice('ลูกค้า'.length).trim();
-    if (!q) {
-      return client.replyMessage(event.replyToken, {
-        type: 'text',
-        text: `⚠️ ระบุชื่อหรือร้านที่ต้องการค้นหา เช่น\n${prefix}ลูกค้า เจ๊ฟ้า`,
-      });
-    }
-    return handleSearchClient(event.replyToken, q);
   }
 }
 
@@ -145,88 +174,6 @@ function mainMenu() {
             type: 'button',
             style: 'secondary',
             action: { type: 'uri', label: '🥊 เปิดหน้าลูกค้า', uri: CLIENTDATA_URL },
-          },
-        ],
-      },
-    },
-  };
-}
-
-async function handleSearchClient(replyToken, query) {
-  try {
-    const res = await fetch(`${CLIENTDATA_URL}/api/clients/search?${new URLSearchParams({ q: query })}`);
-    if (!res.ok) throw new Error(`API error ${res.status}`);
-    const clients = await res.json();
-
-    if (clients.length === 0) {
-      return client.replyMessage(replyToken, {
-        type: 'text',
-        text: `❌ ไม่พบ "${query}"`,
-      });
-    }
-
-    return client.replyMessage(replyToken, buildClientFlex(clients, query));
-  } catch (err) {
-    console.error('Search error:', err);
-    return client.replyMessage(replyToken, {
-      type: 'text',
-      text: '⚠️ เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่',
-    });
-  }
-}
-
-function buildClientFlex(clients, query) {
-  const isSingle = clients.length === 1;
-  const c = clients[0];
-
-  const bodyContents = [];
-
-  if (isSingle) {
-    bodyContents.push(
-      { type: 'text', text: `👤 : ${c.name}`, weight: 'bold', size: 'lg' },
-      { type: 'text', text: `🛒 : ${c.shopName}`, size: 'sm', color: '#666666', wrap: true },
-      { type: 'text', text: `📌 : ${c.address}`, size: 'sm', color: '#666666', wrap: true },
-    );
-
-  } else {
-    bodyContents.push(
-      { type: 'text', text: `พบ ${clients.length} รายการ`, weight: 'bold', size: 'md' },
-    );
-    clients.forEach((cl, i) => {
-      bodyContents.push({
-        type: 'text',
-        text: `${i + 1}. 👤${cl.name} — 🛒${cl.shopName}`,
-        size: 'sm',
-        color: '#666666',
-        wrap: true,
-      });
-    });
-  }
-
-  return {
-    type: 'flex',
-    altText: `ค้นพบ ${clients.length} รายการ`,
-    contents: {
-      type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: bodyContents,
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'button',
-            style: 'primary',
-            color: '#0B3C87',
-            action: {
-              type: 'uri',
-              label: 'เปิดใน browser',
-              uri: isSingle ? `${CLIENTDATA_URL}/c/${c.id}` : `${CLIENTDATA_URL}?${new URLSearchParams({ q: query })}`,
-            },
           },
         ],
       },

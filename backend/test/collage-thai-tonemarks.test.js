@@ -21,6 +21,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 const { renderBackdrop } = await import('../design-system/core/sharp-renderer.js');
 
@@ -138,6 +141,7 @@ test('serif header uses HarfBuzz shaping (scale flip), not opentype', async () =
   const svg = renderBackdrop(serifManifest, { W, H: HEADER_H, headerH: HEADER_H, name: 'วันที่ 11', date: 'สิงหาคม 2569', cards: [] });
   assert.ok(!svg.includes('NaN'), 'header SVG contains NaN — text will be cut off');
   assert.ok(svg.includes('scale(1 -1)'), 'expected HarfBuzz-shaped Thai path (scale flip)');
+});
 
 /* =============================================================================
    STUDIO theme (web edition) — same lock-in: dark surfaces + lime accent,
@@ -168,14 +172,14 @@ test('STUDIO theme — createCollage full pipeline renders the header', async ()
   const studioManifest = (await import('../design-system/themes/studio/manifest.js')).manifest;
   // Lazy import createCollage to avoid pulling in heavy pipeline unless needed.
   const { createCollage } = await import('../collage.js');
-  // Generate two solid-color JPEGs to feed the pipeline.
-  const tmp = [];
+  // Generate solid-color JPEGs to feed the pipeline.
+  const dir = mkdtempSync(join(tmpdir(), 'collage-studio-'));
+  const files = [];
   for (let i = 0; i < 3; i++) {
-    const p = `/tmp/opencode/studio-fixture-${i}.jpg`;
-    await sharp({ create: { width: 800, height: 600, channels: 3, background: { r: 30 + i*60, g: 80, b: 140 - i*30 } } }).jpeg().toFile(p);
-    tmp.push(p);
+    const path = join(dir, `fixture-${i}.jpg`);
+    await sharp({ create: { width: 800, height: 600, channels: 3, background: { r: 30 + i*60, g: 80, b: 140 - i*30 } } }).jpeg().toFile(path);
+    files.push({ path });
   }
-  const files = tmp.map(p => ({ path: p }));
   try {
     const buf = await createCollage(files, 'สตูดิโอ', '15 ส.ค. 2026', 'mon', 'studio');
     assert.ok(buf && buf.length > 1000, `STUDIO collage buffer empty (got ${buf ? buf.length : 0} bytes)`);
@@ -189,8 +193,6 @@ test('STUDIO theme — createCollage full pipeline renders the header', async ()
     }
     assert.ok(ink > 100, `STUDIO header band has no ink (${ink} bright pixels)`);
   } finally {
-    for (const p of tmp) try { require('fs').rmSync(p); } catch {}
+    rmSync(dir, { recursive: true, force: true });
   }
-});
-
 });

@@ -30,7 +30,6 @@ export const manifest = {
     },
     overlay: 'none',
     photoFx: 'none',
-    presetAccent: false,
     chrome: {
       filmPerforations: {
         width: 28, height: 44, pad: 24, gap: 150, start: 76,

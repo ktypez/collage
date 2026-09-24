@@ -16,8 +16,12 @@ const CONFIG = {
   API_BASE: 'https://collage-7cgv.onrender.com',
   LIFF_ID: '2010606328-7UnH1Yre',
   MAX_FILES: 20,
-  THEME_IDS: { '7days': 'min', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
-  THEME_LABELS: { '7days': '7 DAYS', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
+  MAX_FILE_SIZE: 20 * 1024 * 1024,
+  MAX_TOTAL_SIZE: 80 * 1024 * 1024,
+  ALLOWED_FILE_TYPES: new Set(['image/jpeg', 'image/png', 'image/webp']),
+  FETCH_TIMEOUT_MS: 120000,
+  THEME_IDS: { '7days': 'min', calendar: 'calendar', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
+  THEME_LABELS: { '7days': '7 DAYS', calendar: 'CALENDAR', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
   TH_MONTHS: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
   MONTHS: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
   DAYS: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
@@ -87,16 +91,20 @@ function openDatePopup() {
   const pop = $('datePopup');
   if (!pop) return;
   pop.hidden = false;
-  const tg = $('dateToggle');
-  if (tg) tg.setAttribute('aria-expanded', 'true');
+  for (const id of ['dateToggle', 'dateInput']) {
+    const control = $(id);
+    if (control) control.setAttribute('aria-expanded', 'true');
+  }
   renderCalendar();
 }
 function closeDatePopup() {
   const pop = $('datePopup');
   if (!pop) return;
   pop.hidden = true;
-  const tg = $('dateToggle');
-  if (tg) tg.setAttribute('aria-expanded', 'false');
+  for (const id of ['dateToggle', 'dateInput']) {
+    const control = $(id);
+    if (control) control.setAttribute('aria-expanded', 'false');
+  }
 }
 function isDatePopupOpen() { return $('datePopup') && !$('datePopup').hidden; }
 
@@ -104,6 +112,11 @@ function isDatePopupOpen() { return $('datePopup') && !$('datePopup').hidden; }
   const dateInput = $('dateInput');
   if (!dateInput) return;
   dateInput.addEventListener('click', () => isDatePopupOpen() ? closeDatePopup() : openDatePopup());
+  dateInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    isDatePopupOpen() ? closeDatePopup() : openDatePopup();
+  });
   const tg = $('dateToggle');
   if (tg) tg.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -143,14 +156,16 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
   const themePreviewHead = $('themePreviewHead');
   if (themePreviewHead) themePreviewHead.addEventListener('click', () => {
     const el = themePreviewHead.closest('.theme-preview');
-    if (el) el.classList.toggle('open');
+    if (!el) return;
+    const open = el.classList.toggle('open');
+    themePreviewHead.setAttribute('aria-expanded', String(open));
   });
 
   function applyOutputMode() {
     document.querySelectorAll('.ochip').forEach((c) =>
       c.classList.toggle('active', c.dataset.mode === outputMode));
     const daySection = $('dayPresetSection');
-    if (daySection) daySection.style.display = outputMode === '7days' ? 'block' : 'none';
+    if (daySection) daySection.style.display = (outputMode === '7days' || outputMode === 'calendar') ? 'block' : 'none';
     if (themePreviewImg) themePreviewImg.src = 'previews/pv-' + (CONFIG.THEME_IDS[outputMode] || 'min') + '.jpg';
     if (themePreviewCap) themePreviewCap.textContent = CONFIG.THEME_LABELS[outputMode] || outputMode;
   }
@@ -170,10 +185,16 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
   const todayLabel = $('todayLabel');
   if (todayLabel) todayLabel.innerHTML = 'today: <strong>' + CONFIG.DAY_LABELS[new Date().getDay()] + '</strong>';
   document.querySelectorAll('.theme-btn[data-preset]').forEach((btn) => {
-    if (btn.dataset.preset === selectedPreset) btn.classList.add('active');
+    const active = btn.dataset.preset === selectedPreset;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.theme-btn[data-preset]').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.theme-btn[data-preset]').forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       selectedPreset = btn.dataset.preset;
     });
   });
@@ -181,12 +202,31 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
 
 /* ---------- file management + preview ---------- */
 function addFiles(newFiles) {
+  const errors = [];
+  let totalBytes = imageFiles.reduce((sum, file) => sum + file.size, 0);
   for (const file of newFiles) {
-    if (imageFiles.length >= CONFIG.MAX_FILES) break;
+    if (imageFiles.length >= CONFIG.MAX_FILES) {
+      errors.push(`เลือกได้ไม่เกิน ${CONFIG.MAX_FILES} รูป`);
+      break;
+    }
+    if (!CONFIG.ALLOWED_FILE_TYPES.has(file.type)) {
+      errors.push(`${file.name}: รองรับเฉพาะ JPEG, PNG และ WEBP`);
+      continue;
+    }
+    if (file.size > CONFIG.MAX_FILE_SIZE) {
+      errors.push(`${file.name}: ไฟล์ใหญ่เกิน 20MB`);
+      continue;
+    }
+    if (totalBytes + file.size > CONFIG.MAX_TOTAL_SIZE) {
+      errors.push('ขนาดรูปรวมต้องไม่เกิน 80MB');
+      break;
+    }
     imageFiles.push(file);
     imageUrls.push(URL.createObjectURL(file));
+    totalBytes += file.size;
   }
   renderPreview();
+  if (errors.length) setStatus($('status'), errors[0], 'error');
 }
 function removeFile(idx) {
   URL.revokeObjectURL(imageUrls[idx]);
@@ -222,9 +262,27 @@ function renderPreview() {
     removeBtn.setAttribute('aria-label', 'ลบรูปที่ ' + (i + 1));
     removeBtn.onclick = (e) => { e.stopPropagation(); removeFile(i); };
 
+    const movePrev = document.createElement('button');
+    movePrev.className = 'preview-move preview-move-prev';
+    movePrev.type = 'button';
+    movePrev.textContent = '←';
+    movePrev.setAttribute('aria-label', 'ย้ายรูปที่ ' + (i + 1) + ' ไปก่อนหน้า');
+    movePrev.disabled = i === 0;
+    movePrev.onclick = (e) => { e.stopPropagation(); moveFile(i, i - 1); };
+
+    const moveNext = document.createElement('button');
+    moveNext.className = 'preview-move preview-move-next';
+    moveNext.type = 'button';
+    moveNext.textContent = '→';
+    moveNext.setAttribute('aria-label', 'ย้ายรูปที่ ' + (i + 1) + ' ไปถัดไป');
+    moveNext.disabled = i === imageFiles.length - 1;
+    moveNext.onclick = (e) => { e.stopPropagation(); moveFile(i, i + 1); };
+
     item.appendChild(img);
     item.appendChild(num);
     item.appendChild(removeBtn);
+    item.appendChild(movePrev);
+    item.appendChild(moveNext);
     grid.appendChild(item);
 
     item.addEventListener('dragstart', (e) => {
@@ -242,28 +300,11 @@ function renderPreview() {
     item.addEventListener('drop', (e) => {
       e.preventDefault();
       item.classList.remove('dragover-item');
-      const from = parseInt(e.dataTransfer.getData('text/plain'));
-      const to = parseInt(item.dataset.idx);
-      if (from !== to) moveFile(from, to);
+      const from = Number.parseInt(e.dataTransfer.getData('text/plain'), 10);
+      const to = Number.parseInt(item.dataset.idx, 10);
+      if (Number.isInteger(from) && Number.isInteger(to) && from !== to) moveFile(from, to);
     });
 
-    let longTimer = null;
-    let touchDragging = null;
-    item.addEventListener('touchstart', (e) => {
-      longTimer = setTimeout(() => { touchDragging = i; item.classList.add('dragging'); }, 400);
-    }, { passive: true });
-    item.addEventListener('touchend', () => {
-      clearTimeout(longTimer);
-      if (touchDragging !== null) { item.classList.remove('dragging'); touchDragging = null; }
-    });
-    item.addEventListener('touchmove', () => clearTimeout(longTimer), { passive: true });
-    item.addEventListener('click', () => {
-      if (touchDragging !== null && touchDragging !== i) {
-        moveFile(touchDragging, i);
-        touchDragging = null;
-        item.classList.remove('dragging');
-      }
-    });
   });
 }
 
@@ -313,9 +354,24 @@ async function generateCollage() {
     fd.append('theme', CONFIG.THEME_IDS[outputMode] || 'min');
     for (const f of imageFiles) fd.append('images', f);
 
-    const res = await fetch(CONFIG.API_BASE.replace(/\/+$/, '') + '/api/collage', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT_MS);
+    let res;
+    let data;
+    try {
+      res = await fetch(CONFIG.API_BASE.replace(/\/+$/, '') + '/api/collage', {
+        method: 'POST',
+        body: fd,
+        signal: controller.signal,
+      });
+      const contentType = res.headers.get('content-type') || '';
+      data = contentType.includes('application/json')
+        ? await res.json()
+        : { success: false, error: `เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ (${res.status})` };
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!res.ok || !data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
 
     // Let the page decide what happens next (send to LINE / download).
     if (typeof window.onCollageReady === 'function') {
@@ -326,7 +382,10 @@ async function generateCollage() {
       throw new Error('missing onCollageReady handler');
     }
   } catch (err) {
-    setStatus(status, err.message, 'error');
+    const message = err.name === 'AbortError'
+      ? 'สร้างภาพนานเกินกำหนด กรุณาลองใหม่หรือลดจำนวนรูป'
+      : err.message;
+    setStatus(status, message, 'error');
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.classList.remove('loading');
@@ -353,7 +412,7 @@ function renderResult(data) {
 
   const header = document.createElement('div');
   header.className = 'result-title';
-  header.textContent = 'พร้อมแบบรูปเรียบร้อย ✦';
+  header.textContent = 'พร้อมแบบรูปเรียบร้อย';
 
   const preview = document.createElement('img');
   preview.className = 'result-img';

@@ -31,7 +31,6 @@ export const manifest = {
     },
     overlay: 'none',
     photoFx: 'none',
-    presetAccent: false,
   },
 
   hooks: { preDraw: null, postDraw: null },

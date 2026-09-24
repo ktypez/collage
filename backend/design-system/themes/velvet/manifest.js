@@ -30,7 +30,6 @@ export const manifest = {
     },
     overlay: 'none',
     photoFx: 'none',
-    presetAccent: false,
     chrome: {
       frame: { inset: 24, width: 2, color: '#f2a6a2', opacity: 0.5, rounded: 52 },
     },

@@ -40,7 +40,6 @@ export const manifest = {
     },
     overlay: 'none',
     photoFx: 'saturate(1.1) brightness(1.02)',
-    presetAccent: false,
   },
 
   hooks: {

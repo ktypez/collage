@@ -82,7 +82,6 @@ export const manifest = {
     },
     overlay: 'none',
     photoFx: 'none',
-    presetAccent: false,
   },
 
   hooks: {

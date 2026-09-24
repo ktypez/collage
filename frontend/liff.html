@@ -18,10 +18,11 @@
   <meta name="twitter:description" content="สร้างคอลลาจและส่งเข้ากลุ่ม LINE">
   <meta name="twitter:image" content="https://report.mcky.space/previews/og.jpg">
   <title>Collage Studio — ส่งเข้ากลุ่ม LINE</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?t=20260925-2">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
@@ -49,7 +50,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
             <div class="upload-text">ลากหรือกดเพื่อเลือกรูป</div>
-            <div class="upload-hint">JPG · PNG · WEBP — ไม่เกิน 20 รูป</div>
+            <div class="upload-hint">JPG · PNG · WEBP — ไม่เกิน 20 รูป · รวมไม่เกิน 80MB</div>
           </div>
           <div class="preview-grid" id="previewGrid"></div>
         </section>
@@ -66,7 +67,7 @@
           <div class="field">
             <label for="dateInput">วันที่</label>
             <div class="date-wrap">
-              <input class="input" type="text" id="dateInput" readonly placeholder="วัน/เดือน/ปี" autocomplete="off" aria-haspopup="dialog">
+              <input class="input" type="text" id="dateInput" readonly placeholder="วัน/เดือน/ปี" autocomplete="off" aria-haspopup="dialog" aria-expanded="false">
               <button type="button" class="date-toggle" id="dateToggle" aria-label="เลือกวันที่" aria-expanded="false">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </button>
@@ -87,6 +88,7 @@
             <label>สไตล์</label>
             <div class="theme-chip-row">
               <button class="ochip active" data-mode="7days">7 DAYS<span class="osub">สีตามวัน</span></button>
+              <button class="ochip" data-mode="calendar">CALENDAR<span class="osub">สัปดาห์</span></button>
               <button class="ochip" data-mode="claude">CLAUDE<span class="osub">paper</span></button>
               <button class="ochip" data-mode="lumen">LUMEN<span class="osub">gallery</span></button>
               <button class="ochip" data-mode="post">POST<span class="osub">postcard</span></button>
@@ -96,23 +98,23 @@
             </div>
             <div class="theme-block" id="dayPresetSection">
               <div class="theme-grid" id="presetPicker">
-                <button type="button" class="theme-btn" data-preset="sun" style="background:linear-gradient(135deg,#DC2626,#F87171)" title="อาทิตย์"></button>
-                <button type="button" class="theme-btn" data-preset="mon" style="background:linear-gradient(135deg,#854D0E,#FACC15)" title="จันทร์"></button>
-                <button type="button" class="theme-btn" data-preset="tue" style="background:linear-gradient(135deg,#BE185D,#F472B6)" title="อังคาร"></button>
-                <button type="button" class="theme-btn" data-preset="wed" style="background:linear-gradient(135deg,#047857,#34D399)" title="พุธ"></button>
-                <button type="button" class="theme-btn" data-preset="thu" style="background:linear-gradient(135deg,#C2410C,#FB923C)" title="พฤหัสบดี"></button>
-                <button type="button" class="theme-btn" data-preset="fri" style="background:linear-gradient(135deg,#1D4ED8,#60A5FA)" title="ศุกร์"></button>
-                <button type="button" class="theme-btn" data-preset="sat" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)" title="เสาร์"></button>
+                <button type="button" class="theme-btn" data-preset="sun" style="background:linear-gradient(135deg,#DC2626,#F87171)" title="อาทิตย์" aria-label="สีประจำวันอาทิตย์" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="mon" style="background:linear-gradient(135deg,#854D0E,#FACC15)" title="จันทร์" aria-label="สีประจำวันจันทร์" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="tue" style="background:linear-gradient(135deg,#BE185D,#F472B6)" title="อังคาร" aria-label="สีประจำวันอังคาร" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="wed" style="background:linear-gradient(135deg,#047857,#34D399)" title="พุธ" aria-label="สีประจำวันพุธ" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="thu" style="background:linear-gradient(135deg,#C2410C,#FB923C)" title="พฤหัสบดี" aria-label="สีประจำวันพฤหัสบดี" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="fri" style="background:linear-gradient(135deg,#1D4ED8,#60A5FA)" title="ศุกร์" aria-label="สีประจำวันศุกร์" aria-pressed="false"></button>
+                <button type="button" class="theme-btn" data-preset="sat" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)" title="เสาร์" aria-label="สีประจำวันเสาร์" aria-pressed="false"></button>
               </div>
               <div class="theme-label" id="todayLabel">today: —</div>
             </div>
             <div class="theme-preview" id="themePreview">
-              <div class="theme-preview-head" id="themePreviewHead">
+              <button type="button" class="theme-preview-head" id="themePreviewHead" aria-expanded="false" aria-controls="themePreviewBody">
                 <span>ตัวอย่าง output</span>
                 <span class="cap" id="themePreviewCap">7 DAYS</span>
                 <span class="chev" aria-hidden="true">▼</span>
-              </div>
-              <div class="theme-preview-body"><img id="themePreviewImg" src="previews/pv-min.jpg" alt="ตัวอย่าง output"></div>
+              </button>
+              <div class="theme-preview-body" id="themePreviewBody"><img id="themePreviewImg" src="previews/pv-min.jpg" alt="ตัวอย่าง output" loading="lazy"></div>
             </div>
           </div>
 
@@ -134,7 +136,7 @@
     </footer>
   </div>
 
-  <script src="shared.js?t=20260924-1"></script>
+  <script src="shared.js?t=20260925-4"></script>
   <script>
     /* ==========================================================================
        LIFF wrapper — the ONLY page-specific logic here. Everything else
@@ -252,7 +254,13 @@
           liffStatus('ยังไม่ได้ให้สิทธิ์ส่งข้อความ กรุณากด "สร้างและส่งเข้ากลุ่ม" อีกครั้ง', 'error');
           return;
         }
-        setDateValue(new Date().toISOString().split('T')[0]);
+        const now = new Date();
+        const today = [
+          now.getFullYear(),
+          String(now.getMonth() + 1).padStart(2, '0'),
+          String(now.getDate()).padStart(2, '0'),
+        ].join('-');
+        setDateValue(today);
       })
       .catch(err => {
         console.error('LIFF init error:', err);
