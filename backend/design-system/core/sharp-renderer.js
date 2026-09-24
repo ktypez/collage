@@ -285,15 +285,19 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
   }
 
   // --- header (name + date, centered, big & clear) ---
-  // serif themes (claude) use Source Serif 4 for Latin + Noto Serif Thai for Thai;
-  // others use Chakra Petch / Noto Sans Thai
+  // Serif themes use Source Serif 4 for Latin + Noto Serif Thai for Thai.
+  // Other themes use Chakra Petch + Noto Sans Thai for reliable Thai shaping.
   const useSerif = hd.font === 'serif';
   const nameFont = useSerif
     ? (serifFont || thaiSerifFont || thaiFont || monoFont)
     : (chakraFont || thaiFont || monoFont);
   const textColor = isLightBg(c) ? '#16161a' : '#ffffff';
+  const ink = hd.ink || textColor;
+  const align = hd.align === 'left' || hd.align === 'right' ? hd.align : 'center';
+  const margin = Math.max(72, hd.margin || 96);
+  const textX = align === 'left' ? margin : align === 'right' ? W - margin : W / 2;
   const glowBlur = hd.glow && hd.color ? 8 : null;
-  const glitchColors = hd.glitch; // e.g. ['#33ff66', '#ffff00'] — RGB split layers
+  const glitchColors = hd.glitch;
   const drawText = useSerif
     ? (txt, f, sz, o) => textPathSVGMulti(txt, f, thaiSerifFont || null, sz, o)
     : textPathSVG;
@@ -302,15 +306,15 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
     if (name) {
       const nameSize = Math.round(headerH * (hasBoth ? 0.30 : 0.34));
       svg.push(drawText(name, nameFont, nameSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align: 'center',
-        color: hd.glitch ? (hd.color || '#ff3366') : hexToRgba(textColor, 0.9),
+        x: textX, y: Math.round(headerH * (hasBoth ? 0.47 : 0.55)), align,
+        color: hd.glitch ? (hd.color || '#ff3366') : hexToRgba(ink, 0.9),
         glow: glowBlur, glitch: glitchColors,
       }));
     }
     if (date) {
       const dateSize = Math.round(headerH * 0.13);
       svg.push(drawText(date, nameFont, dateSize, {
-        x: W / 2, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align: 'center', color: hexToRgba(textColor, 0.8),
+        x: textX, y: Math.round(headerH * (hasBoth ? 0.78 : 0.55)), align, color: hexToRgba(ink, 0.8),
       }));
     }
   }
@@ -341,6 +345,16 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards }) {
 
   // --- cell chip backgrounds (behind photos) — supports hex or linear-gradient ---
   const cell = c.cell || {};
+  if (cell.backplate) {
+    const plate = cell.backplate;
+    const dx = plate.dx || 0;
+    const dy = plate.dy || 0;
+    const radius = plate.rounded ?? cell.rounded ?? 0;
+    const rx = radius ? `rx="${radius}"` : '';
+    for (const card of cards) {
+      svg.push(`<rect x="${card.x + dx}" y="${card.y + dy}" width="${card.w}" height="${card.h}" ${rx} fill="${plate.fill}"/>`);
+    }
+  }
   if (cell.bg) {
     const rounded = cell.rounded ? `rx="${cell.rounded}"` : '';
     const shadow = cell.shadow ? `filter="drop-shadow(0 8px 16px rgba(0,0,0,${cell.shadow}))"` : '';
@@ -384,6 +398,28 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     }
   }
 
+  // --- registration marks: make each frame read like a prepared print plate ---
+  if (cell.cropMarks) {
+    const marks = typeof cell.cropMarks === 'object' ? cell.cropMarks : {};
+    const color = marks.color || cell.border || '#111111';
+    const size = marks.size || 30;
+    const width = marks.width || 3;
+    const inset = marks.inset ?? 10;
+    for (const card of cards) {
+      const left = card.x + inset;
+      const right = card.x + card.w - inset;
+      const top = card.y + inset;
+      const bottom = card.y + card.h - inset;
+      const d = [
+        `M ${left} ${top + size} L ${left} ${top} L ${left + size} ${top}`,
+        `M ${right - size} ${top} L ${right} ${top} L ${right} ${top + size}`,
+        `M ${left} ${bottom - size} L ${left} ${bottom} L ${left + size} ${bottom}`,
+        `M ${right - size} ${bottom} L ${right} ${bottom} L ${right} ${bottom - size}`,
+      ].join(' ');
+      parts.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="square"/>`);
+    }
+  }
+
   // --- unit heads (rack): '// UNIT 01' per card — like /status, no LEDs ---
   if (cell.unit && cell.unitTitle) {
     const font = monoFont;
@@ -409,21 +445,43 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
     const font = monoFont;
     if (font) {
       const ls = cell.labelSize || 26;
-      const pad = 12;
-      const lh = cell.labelHeight || 34;
+      const pad = cell.labelPad || 12;
+      const baseH = cell.labelHeight || 34;
+      const inset = cell.labelInset ?? 12;
+      const align = cell.labelAlign || 'right';
+      const position = cell.labelPosition || (align === 'left' ? 'bottom-left' : 'bottom-right');
       cards.forEach((card, i) => {
         const text = cell.label === true
           ? String(i + 1).padStart(2, '0')
           : String(cell.label).replace('{n}', String(i + 1).padStart(2, '0'));
         const labelBg = cell.labelBg ?? 'rgba(0,0,0,0.55)';
         const labelColor = cell.labelColor ?? '#fff';
-        const align = cell.labelAlign || 'right';
-        const w = font.getAdvanceWidth(text, ls) + pad * 2;
-        const x = align === 'left' ? card.x : card.x + card.w - w;
-        const y = card.y + card.h - lh;
-        const rounded = cell.rounded ? `rx="${Math.min(14, cell.rounded / 2)}"` : '';
-        parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${lh}" rx="${Math.min(14, cell.rounded ? cell.rounded / 2 : 0)}" fill="${labelBg}"/>`);
-        parts.push(textPathSVG(text, font, ls, { x: x + pad, y: y + lh - Math.round(ls * 0.3), color: labelColor }));
+        const textW = font.getAdvanceWidth(text, ls);
+        const boxW = textW + pad * 2;
+        const isCircle = cell.labelShape === 'circle';
+        const boxH = isCircle ? Math.max(baseH, boxW) : baseH;
+        let x = align === 'left' ? card.x : card.x + card.w - boxW;
+        let y = card.y + card.h - boxH;
+        if (position.includes('top')) y = card.y + inset;
+        if (position.includes('left')) x = card.x + inset;
+        if (position.includes('right')) x = card.x + card.w - boxW - inset;
+        if (position.includes('center')) x = card.x + (card.w - boxW) / 2;
+
+        if (isCircle) {
+          const cx = x + boxW / 2;
+          const cy = y + boxH / 2;
+          parts.push(`<circle cx="${cx}" cy="${cy}" r="${boxH / 2}" fill="${labelBg}"/>`);
+          parts.push(textPathSVG(text, font, ls, {
+            x: cx - textW / 2, y: cy + Math.round(ls * 0.35), color: labelColor,
+          }));
+        } else {
+          const radius = cell.labelRounded ?? (cell.rounded ? Math.min(14, cell.rounded / 2) : 0);
+          const rounded = radius ? `rx="${radius}"` : '';
+          parts.push(`<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" ${rounded} fill="${labelBg}"/>`);
+          parts.push(textPathSVG(text, font, ls, {
+            x: x + pad, y: y + boxH - Math.round(ls * 0.3), color: labelColor,
+          }));
+        }
       });
     }
   }
@@ -431,6 +489,26 @@ export function renderForeground(manifest, { W, H, cards, preset }) {
   // --- chrome: bezel/corner LEDs (crt) — on top ---
   const ch = c.chrome;
   if (ch) {
+    if (ch.frame) {
+      const f = ch.frame;
+      const inset = f.inset ?? 24;
+      const radius = f.rounded ?? 0;
+      const rounded = radius ? `rx="${radius}"` : '';
+      parts.push(`<rect x="${inset}" y="${inset}" width="${W - inset * 2}" height="${H - inset * 2}" ${rounded} fill="none" stroke="${f.color}" stroke-width="${f.width || 2}" stroke-opacity="${f.opacity ?? 1}"/>`);
+    }
+    if (ch.filmPerforations) {
+      const p = ch.filmPerforations;
+      const holeW = p.width || 30;
+      const holeH = p.height || 48;
+      const pad = p.pad ?? 24;
+      const gap = p.gap || 150;
+      const color = p.color || '#f2ead8';
+      const opacity = p.opacity ?? 0.72;
+      for (let y = Math.round(p.start ?? 72); y < H - holeH; y += gap) {
+        parts.push(`<rect x="${pad}" y="${y}" width="${holeW}" height="${holeH}" rx="${p.rounded ?? 4}" fill="${color}" fill-opacity="${opacity}"/>`);
+        parts.push(`<rect x="${W - pad - holeW}" y="${y}" width="${holeW}" height="${holeH}" rx="${p.rounded ?? 4}" fill="${color}" fill-opacity="${opacity}"/>`);
+      }
+    }
     // CRT bezel frame
     if (ch.bezel) {
       const b = ch.bezel;

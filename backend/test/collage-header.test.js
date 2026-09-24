@@ -39,7 +39,7 @@ const HEADER_H = 440;
 const NAME = 'Rennie แรนนี่';
 const DATE = 'วันที่ 11 สิงหาคม 2569';
 
-const THEME_IDS = ['rack', 'noc', 'claude', 'neo'];
+const THEME_IDS = ['claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'];
 
 /*
    Detect text ink as PIXELS THAT CONTRAST against the theme background gradient
@@ -106,37 +106,41 @@ async function headerInk(manifest, fullH) {
   const margins = [rail, rail];
   const name = await inkRange(svg, band(Math.round(HEADER_H * 0.47), Math.round(HEADER_H * 0.30)), c.bg, fullH, margins);
   const date = await inkRange(svg, band(Math.round(HEADER_H * 0.78), Math.round(HEADER_H * 0.13)), c.bg, fullH, margins);
-  return { svg, name, date };
+  return { svg, name, date, align: c.header?.align || 'center' };
 }
 
 /* Loose both-ends sanity bounds — way past the ~half-string cut a broken render
    produces, and generous vs. font/layout drift. */
-function assertFullInk(ink, label, themeId) {
+function assertFullInk(ink, label, themeId, align = 'center') {
   const [minX, maxX] = ink;
   assert.ok(Number.isFinite(minX) && Number.isFinite(maxX), `no ${label} ink detected (theme ${themeId})`);
-  const edge = label === 'name' ? { right: 1400, left: 750 } : { right: 1300, left: 850 };
+  const edge = align === 'left'
+    ? (label === 'name' ? { right: 800, left: 150 } : { right: 600, left: 150 })
+    : align === 'right'
+      ? (label === 'name' ? { right: 2000, left: 1450 } : { right: 2000, left: 1550 })
+      : (label === 'name' ? { right: 1400, left: 750 } : { right: 1300, left: 850 });
   assert.ok(
     maxX >= edge.right,
-    `${label} right edge missing (maxX=${maxX}, expect ≥ ${edge.right}) — text truncated (theme ${themeId})`
+    `${label} right edge missing (maxX=${maxX}, expect ≥ ${edge.right}) - text truncated (theme ${themeId})`
   );
   assert.ok(
     minX <= edge.left,
-    `${label} left edge missing (minX=${minX}, expect ≤ ${edge.left}) — text truncated (theme ${themeId})`
+    `${label} left edge missing (minX=${minX}, expect ≤ ${edge.left}) - text truncated (theme ${themeId})`
   );
 }
 
 for (const id of THEME_IDS) {
   test(`theme "${id}" — header date/name renders fully (no NaN / no cut-off)`, async () => {
     const { manifest } = await import(`../design-system/themes/${id}/manifest.js`);
-    const { svg, name, date } = await headerInk(manifest, HEADER_H);
+    const { svg, name, date, align } = await headerInk(manifest, HEADER_H);
 
     // 1) Root cause guard: a NaN anywhere in the path data makes librsvg drop
     //    everything from that point — text comes out half-missing.
     assert.ok(!svg.includes('NaN'), `header SVG contains NaN → text will be cut off (theme ${id})`);
 
     // 2) Rasterizer guard: both ends of the date AND the name must render.
-    assertFullInk(name, 'name', id);
-    assertFullInk(date, 'date', id);
+    assertFullInk(name, 'name', id, align);
+    assertFullInk(date, 'date', id, align);
   });
 }
 
@@ -154,6 +158,7 @@ test('createCollage — full pipeline renders complete header for every theme', 
       files.push({ path: p });
     }
 
+    const themedHeights = [];
     for (const theme of [...THEME_IDS, 'min']) {
       const out = await createCollage(files, NAME, '2026-08-11', 'tue', theme);
       const { format, width, height } = await sharp(out).metadata();
@@ -163,6 +168,7 @@ test('createCollage — full pipeline renders complete header for every theme', 
       // Themed themes: verify the rendered date isn't truncated in the real image.
       // (backdrop gradient is drawn over the full collage height, so pass it)
       if (theme !== 'min') {
+        themedHeights.push(height);
         const { manifest } = await import(`../design-system/themes/${theme}/manifest.js`);
         const c = manifest.canvas;
         const rail = c.chrome && c.chrome.rails ? Math.round(W * c.chrome.rails.widthRatio) + 8 : 0;
@@ -174,9 +180,14 @@ test('createCollage — full pipeline renders complete header for every theme', 
           height,
           [rail, rail]
         );
-        assertFullInk(date, 'date', theme);
+        assertFullInk(date, 'date', theme, c.header?.align || 'center');
       }
     }
+    assert.equal(
+      new Set(themedHeights).size,
+      1,
+      `visual themes changed collage arrangement: ${THEME_IDS.map((id, i) => `${id}=${themedHeights[i]}`).join(', ')}`,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

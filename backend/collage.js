@@ -120,7 +120,7 @@ function maskSVG(w, h) {
   return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" rx="${IR}" fill="#fff"/></svg>`;
 }
 
-async function roundImage(buf, w, h, contentW) {
+export async function roundImage(buf, w, h, contentW) {
   // Allow upscale up to 3x the original size to fill the card.
   // Capping prevents pixelation from extremely small sources (e.g. 50px LINE thumbnails).
   const upscaleCap = 3;
@@ -154,7 +154,7 @@ export async function createCollage(files, name, date, preset, theme) {
   date = fmtDate(date);
   if (!preset || !THEMES[preset]) preset = defaultPreset();
 
-  // Themed rendering (rack/crt/noc) — min/default keeps the original renderer
+  // Theme manifests use the shared image pipeline. 7 DAYS/default keeps the legacy renderer.
   const themeId = String(theme || '').toLowerCase();
   const themedManifest = THEME_MANIFESTS[themeId];
   if (themedManifest) {
@@ -242,12 +242,11 @@ export async function createCollage(files, name, date, preset, theme) {
 }
 
 /* =============================================================================
-   THEMED RENDERING (rack / crt / noc)
+   THEMED RENDERING
    -----------------------------------------------------------------------------
-   Same masonry layout + image pipeline as above, but the visual chrome
-   (background, header, cell frames, overlays, photo fx) comes from the
-   theme MANIFEST via sharp-renderer.js — the same manifest the client canvas
-   uses. min / default keeps the original day-gradient renderer above.
+   Same masonry layout and proportional image pipeline for every visual theme.
+   A manifest can change only the chrome around the photos, never their order,
+   aspect ratio, or scale. 7 DAYS/default keeps the original day-gradient path.
    ============================================================================= */
 export async function createThemedCollage(files, name, date, preset, manifest) {
   const metas = await Promise.all(files.map(f => sharp(f.path).metadata()));
@@ -332,7 +331,7 @@ export async function createThemedCollage(files, name, date, preset, manifest) {
    ============================================================================= */
 const THEME_MANIFESTS = {};
 try {
-  for (const id of ['rack', 'noc', 'claude', 'studio', 'neo']) {
+  for (const id of ['claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
     const { manifest } = await import(`./design-system/themes/${id}/manifest.js`);
     if (manifest) THEME_MANIFESTS[id] = manifest;
   }
