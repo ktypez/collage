@@ -9,17 +9,17 @@ sharp.concurrency(1);
 const W = 2160;
 
 const HEADER_H = 440;
-const DH = 16;
+const DH = 14;
 const PT = 80;
 const PS = 96;
 const PB = 96;
 const G = 48;
 const CP = 24;
-const CR = 48;
-const IR = 36;
-const SY = 16;
-const SB = 48;
-const SA = 0.12;
+const CR = 36;
+const IR = 28;
+const SY = 14;
+const SB = 36;
+const SA = 0.10;
 const MAX_SOURCE_PIXELS = 50_000_000;
 const MAX_TOTAL_SOURCE_PIXELS = 180_000_000;
 const MAX_ASPECT_RATIO = 4;
@@ -34,17 +34,30 @@ const MONTHS = [
 const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
 const THEMES = {
-  sun: { g: ['#DC2626','#EF4444','#F87171'], d: '#FBBF24', tc: '#fff', bg: '#FEF2F2' },
-  mon: { g: ['#854D0E','#CA8A04','#FACC15'], d: '#A16207', tc: '#fff', bg: '#FEFCE8' },
-  tue: { g: ['#BE185D','#EC4899','#F472B6'], d: '#FDE68A', tc: '#fff', bg: '#FDF2F8' },
-  wed: { g: ['#047857','#059669','#34D399'], d: '#FCD34D', tc: '#fff', bg: '#ECFDF5' },
-  thu: { g: ['#C2410C','#EA580C','#FB923C'], d: '#FED7AA', tc: '#fff', bg: '#FFF7ED' },
-  fri: { g: ['#1D4ED8','#3B82F6','#60A5FA'], d: '#BFDBFE', tc: '#fff', bg: '#EFF6FF' },
-  sat: { g: ['#7C3AED','#8B5CF6','#A78BFA'], d: '#DDD6FE', tc: '#fff', bg: '#F5F3FF' },
+  sun: { g: ['#B91C1C', '#DC2626', '#F87171'], tc: '#fff', bg: '#F8E9E6', label: 'SUNDAY', code: 'SUN / 01' },
+  mon: { g: ['#854D0E', '#CA8A04', '#FACC15'], tc: '#fff', bg: '#F6F0D9', label: 'MONDAY', code: 'MON / 02' },
+  tue: { g: ['#9D174D', '#DB2777', '#F472B6'], tc: '#fff', bg: '#F6E7EE', label: 'TUESDAY', code: 'TUE / 03' },
+  wed: { g: ['#047857', '#059669', '#34D399'], tc: '#fff', bg: '#E7F1EB', label: 'WEDNESDAY', code: 'WED / 04' },
+  thu: { g: ['#C2410C', '#EA580C', '#FB923C'], tc: '#fff', bg: '#F7E9DE', label: 'THURSDAY', code: 'THU / 05' },
+  fri: { g: ['#1D4ED8', '#3B82F6', '#60A5FA'], tc: '#fff', bg: '#E8EFF7', label: 'FRIDAY', code: 'FRI / 06' },
+  sat: { g: ['#6D28D9', '#7C3AED', '#A78BFA'], tc: '#fff', bg: '#EEEAF7', label: 'SATURDAY', code: 'SAT / 07' },
 };
 
 function defaultPreset() {
   return DAYS[new Date().getDay()];
+}
+
+function contrastTextOn(hex) {
+  const value = String(hex).replace('#', '');
+  const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n)) return '#ffffff';
+  const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const srgb = v / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : Math.pow((srgb + 0.055) / 1.055, 2.4);
+  });
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? '#111111' : '#ffffff';
 }
 
 function cols(n) {
@@ -129,17 +142,27 @@ function headerSVG(name, date, hh, t) {
 <stop offset="50%" stop-color="${t.g[1]}"/>
 <stop offset="100%" stop-color="${t.g[2]}"/>
 </linearGradient></defs>
-<rect width="100%" height="100%" fill="url(#h)"/>`;
+<rect width="100%" height="100%" fill="url(#h)"/>
+<rect y="100" width="100%" height="270" fill="#0b1020" fill-opacity=".25"/>
+<rect y="${hh - 10}" width="100%" height="10" fill="${t.g[1]}"/>`;
+
+  const metaSize = 28;
+  const leftMeta = '7 DAYS';
+  const rightMeta = `${t.code}  /  ${t.label}`;
+  const rightWidth = font.getAdvanceWidth(rightMeta, metaSize);
+  svg += `<g fill="rgba(255,255,255,.78)">${font.getPath(leftMeta, 96, 74, metaSize).toSVG(2)}</g>`;
+  svg += `<g fill="rgba(255,255,255,.78)">${font.getPath(rightMeta, W - 96 - rightWidth, 74, metaSize).toSVG(2)}</g>`;
+  svg += `<line x1="96" y1="98" x2="${W - 96}" y2="98" stroke="rgba(255,255,255,.28)" stroke-width="2"/>`;
 
   const ty = Math.round(hh * 0.55);
   if (name) {
-    const pw = font.getAdvanceWidth(name, 128);
-    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 128).toSVG(2)}</g>`;
+    const pw = font.getAdvanceWidth(name, 124);
+    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 124).toSVG(2)}</g>`;
   }
   if (date) {
-    const dy = name ? ty + 114 : Math.round(hh * 0.55) + 20;
-    const pw = font.getAdvanceWidth(date, 68);
-    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 68).toSVG(2)}</g>`;
+    const dy = name ? ty + 110 : Math.round(hh * 0.55) + 20;
+    const pw = font.getAdvanceWidth(date, 64);
+    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 64).toSVG(2)}</g>`;
   }
   return svg + '</svg>';
 }
@@ -163,8 +186,23 @@ async function getShadow(w, h) {
   return shadowCache.get(key);
 }
 
-function cardBgSVG(w, h) {
-  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" rx="${CR}" fill="#fff"/></svg>`;
+function cardBgSVG(w, h, accent) {
+  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="${CR}" fill="#fff" stroke="${accent}" stroke-opacity=".22" stroke-width="2"/></svg>`;
+}
+
+function cardMarkSVG(w, h, accent, index) {
+  const label = String(index).padStart(2, '0');
+  const x = 20;
+  const y = 1;
+  const tagW = 52;
+  const tagH = 22;
+  const ink = contrastTextOn(accent);
+  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="${x}" y="${y}" width="${tagW}" height="${tagH}" rx="6" fill="${accent}"/>
+    <rect x="${x}" y="${y}" width="5" height="${tagH}" rx="2.5" fill="${ink}" fill-opacity=".34"/>
+    <g fill="${ink}">${font.getPath(label, x + 14, y + 17, 16).toSVG(2)}</g>
+    <line x1="${x + tagW + 10}" y1="${y + tagH / 2}" x2="${x + tagW + 48}" y2="${y + tagH / 2}" stroke="${accent}" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
 }
 
 function maskSVG(w, h) {
@@ -269,7 +307,7 @@ export async function createCollage(files, name, date, preset, theme) {
   const composites = [];
 
   composites.push({ input: Buffer.from(headerSVG(name, date, HEADER_H, t)), top: 0, left: 0 });
-  composites.push({ input: Buffer.from(dividerSVG(t.d)), top: HEADER_H, left: 0 });
+  composites.push({ input: Buffer.from(dividerSVG(t.g[2])), top: HEADER_H, left: 0 });
 
   const contentY = HEADER_H + DH + PT;
 
@@ -287,11 +325,12 @@ export async function createCollage(files, name, date, preset, theme) {
 
     const shadow = await getShadow(cardW, ch);
     composites.push({ input: shadow, top: actualY + SY - pad / 2, left: x - pad / 2 });
-    composites.push({ input: Buffer.from(cardBgSVG(cardW, ch)), top: actualY, left: x });
+    composites.push({ input: Buffer.from(cardBgSVG(cardW, ch, t.g[1])), top: actualY, left: x });
     // Center the (possibly smaller) image inside the card's content area.
     const cx = x + CP + Math.max(0, Math.round((dims[i].iw - imgs[i].w) / 2));
     const cy = actualY + CP + Math.max(0, Math.round((dims[i].ih - imgs[i].h) / 2));
     composites.push({ input: imgs[i].buf, top: cy, left: cx });
+    composites.push({ input: Buffer.from(cardMarkSVG(cardW, ch, t.g[1], i + 1)), top: actualY, left: x });
   }
 
   const bgc = parseInt(t.bg.slice(1), 16);

@@ -3,7 +3,8 @@
    -----------------------------------------------------------------------------
    Unofficial Obsidian theme inspired by Claude/Anthropic visual language.
    แกะ DNA จาก https://github.com/law-of-cycles/claude-paper-obsidian
-   - clay accent + paper surfaces + unified bilingual serif
+   - clay accent + layered paper surfaces + unified bilingual serif
+   - folio-style offset plates, compact sequence markers, and a quiet outer rule
    - dual mode: warm light + purpose-built dark (ธีมแรกในคลังที่มี light/dark)
    - SF Mono → ui-monospace fallback (ไม่ฝังไฟล์ฟอนต์)
    ============================================================================= */
@@ -68,20 +69,29 @@ export const manifest = {
     fontMono:    "ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace",
   },
 
-  /* Canvas manifest — สำหรับ collage output (paper grid, serif header) */
+  /* Canvas manifest — สำหรับ collage output (paper folio, serif header) */
   canvas: {
-    bg: { gradient: ['#faf9f5', '#f5f4ed', '#faf9f5'], vertical: true },
+    bg: { gradient: ['#f4efe5', '#e9e1d4', '#f8f3eb'], vertical: true },
     cell: {
-      border: '#d97757', width: 2, rounded: 8,
-      bg: '#ffffff',
+      backplate: { dx: 10, dy: 12, rounded: 12, fill: '#d5c7b4' },
+      border: '#c76b4a', width: 2, rounded: 12,
+      bg: '#fffdf8',
+      label: '{n}', labelColor: '#fffaf4', labelBg: '#a65336',
+      labelSize: 16, labelHeight: 22, labelPad: 10,
+      labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
     },
     header: {
+      kicker: 'FIELD NOTES / 01', kickerFont: 'sans', kickerColor: '#a65336', kickerSize: 22,
       text: 'CLAUDE PAPER · NOTES',
-      color: '#d97757', font: 'serif', size: 36, pad: 48, glow: false,
-      stripe: '#c05f3a', stripeHeight: 8, stripePos: 'top',
+      color: '#2a241e', font: 'serif', size: 40, pad: 48, glow: false,
+      align: 'left', margin: 120, ink: '#2a241e',
+      stripe: '#c76b4a', stripeHeight: 10, stripePos: 'top',
     },
     overlay: 'none',
-    photoFx: 'none',
+    photoFx: 'saturate(0.94) brightness(1.01)',
+    chrome: {
+      frame: { inset: 26, color: '#c76b4a', width: 2, opacity: 0.28, rounded: 0 },
+    },
   },
 
   hooks: {

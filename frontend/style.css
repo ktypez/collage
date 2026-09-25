@@ -95,7 +95,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 
 .preview-grid { margin-top: 16px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
 .preview-item { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); cursor: grab; }
-.preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.preview-item img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; background: var(--surface-2); }
 .preview-item.dragging { opacity: .4; }
 .preview-item.dragover-item { outline: 3px solid var(--accent); outline-offset: -3px; }
 .preview-num {

@@ -20,6 +20,7 @@ const CONFIG = {
   MAX_TOTAL_SIZE: 80 * 1024 * 1024,
   ALLOWED_FILE_TYPES: new Set(['image/jpeg', 'image/png', 'image/webp']),
   FETCH_TIMEOUT_MS: 120000,
+  PREVIEW_VERSION: '20260925-1',
   THEME_IDS: { '7days': 'min', calendar: 'calendar', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
   THEME_LABELS: { '7days': '7 DAYS', calendar: 'CALENDAR', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
   TH_MONTHS: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
@@ -166,7 +167,7 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
       c.classList.toggle('active', c.dataset.mode === outputMode));
     const daySection = $('dayPresetSection');
     if (daySection) daySection.style.display = (outputMode === '7days' || outputMode === 'calendar') ? 'block' : 'none';
-    if (themePreviewImg) themePreviewImg.src = 'previews/pv-' + (CONFIG.THEME_IDS[outputMode] || 'min') + '.jpg';
+    if (themePreviewImg) themePreviewImg.src = 'previews/pv-' + (CONFIG.THEME_IDS[outputMode] || 'min') + '.jpg?v=' + CONFIG.PREVIEW_VERSION;
     if (themePreviewCap) themePreviewCap.textContent = CONFIG.THEME_LABELS[outputMode] || outputMode;
   }
 

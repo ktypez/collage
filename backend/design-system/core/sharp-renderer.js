@@ -294,6 +294,24 @@ export function renderBackdrop(manifest, { W, H, headerH, name, date, cards, pre
   const align = hd.align === 'left' || hd.align === 'right' ? hd.align : 'center';
   const margin = Math.max(72, hd.margin || 96);
   const textX = align === 'left' ? margin : align === 'right' ? W - margin : W / 2;
+
+  if (hd.kicker) {
+    const kickerFont = hd.kickerFont === 'serif'
+      ? (thaiFont || serifFont || thaiSerifFont || monoFont)
+      : hd.kickerFont === 'display'
+        ? (chakraFont || thaiFont || monoFont)
+        : (thaiFont || monoFont);
+    if (kickerFont) {
+      const kickerSize = hd.kickerSize || 18;
+      const kickerY = hd.kickerY || Math.round(headerH * 0.18);
+      const kickerColor = hd.kickerColor || hd.color || '#ffffff';
+      const kickerFill = String(kickerColor).startsWith('#') ? hexToRgba(kickerColor, 0.78) : kickerColor;
+      svg.push(textPathSVG(String(hd.kicker), kickerFont, kickerSize, {
+        x: textX, y: kickerY, align, color: kickerFill,
+      }));
+    }
+  }
+
   const glowBlur = hd.glow && hd.color ? 8 : null;
   const glitchColors = hd.glitch;
   const drawText = useSerif

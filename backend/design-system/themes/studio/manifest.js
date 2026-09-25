@@ -2,10 +2,10 @@
    themes/studio/manifest.js - COLLAGE STUDIO (web design language)
    -----------------------------------------------------------------------------
    Mirrors the look/feel of the Collage Studio web app (frontend/style.css):
-   - dark surfaces (#17171b / #0a0a0c) with lime accent (#c7f464)
-   - thin borders (#2a2a32), rounded cards, uppercase mono section labels
-   - accent tick on each card like the chip-row accent; "01 / 02 / 03" mark
-   - clean - no chrome, no overlays, no decorative LED rails
+   - dark surfaces (#111318 / #0b0c0f) with lime accent (#c7f464)
+   - offset card plates, quiet borders, and compact sequence markers
+   - left-aligned output header with a small studio kicker
+   - clean structure with no decorative chrome
    ============================================================================= */
 export const manifest = {
   id: 'studio',
@@ -27,19 +27,24 @@ export const manifest = {
   },
 
   canvas: {
-    bg: { gradient: ['#17171b', '#0f0f13', '#0a0a0c'], vertical: true },
+    bg: { gradient: ['#111318', '#181b21', '#0b0c0f'], vertical: true },
     cell: {
-      border: '#2a2a32', width: 2, rounded: 14,
-      label: '{n}', labelColor: '#c7f464', labelBg: 'rgba(10,10,12,0.85)',
-      bg: 'linear-gradient(180deg,#18181d,#0f0f13)',
+      backplate: { dx: 10, dy: 12, rounded: 18, fill: '#08090b' },
+      border: '#454852', width: 2, rounded: 18,
+      bg: '#1b1d22',
+      label: '{n}', labelColor: '#0a0a0c', labelBg: '#c7f464',
+      labelSize: 16, labelHeight: 22, labelPad: 10,
+      labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
     },
     header: {
-      text: '',
-      color: '#c7f464', font: 'mono', size: 40, pad: 60, glow: false,
-      stripe: '#c7f464', stripeHeight: 8, stripePos: 'top',
+      kicker: 'STUDIO / 01', kickerFont: 'display', kickerColor: '#c7f464', kickerSize: 26,
+      text: 'COLLAGE STUDIO',
+      color: '#c7f464', font: 'display', size: 40, pad: 60, glow: false,
+      align: 'left', margin: 120, ink: '#f4f4f0',
+      stripe: '#c7f464', stripeHeight: 10, stripePos: 'top',
     },
     overlay: 'none',
-    photoFx: 'saturate(1.1) brightness(1.02)',
+    photoFx: 'saturate(1.08) brightness(1.02)',
   },
 
   hooks: {
