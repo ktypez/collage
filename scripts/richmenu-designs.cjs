@@ -1,7 +1,7 @@
 /**
  * Rich menu design showcase + deploy.
  *
- * Renders 9 distinct 2500x1686 rich menu designs for the collage LINE bot and
+ * Renders 11 distinct 2500x1686 rich menu designs for the collage LINE bot and
  * composites them into preview images. Layout: two rows of tappable buttons
  * (top 2, bottom 3) — see ROW_COLS.
  *
@@ -14,6 +14,8 @@
  *   G. SITE VOLT   — industrial amber/yellow, hazard stripes (AI site art)
  *   H. DATA CORE   — navy/cyan terminal console (AI server art)
  *   I. ROYAL GOLD  — bright gold/cream on black, luxury (pure SVG)
+ *   J. BRIGHT BLOCKS - vivid full-bleed color blocks
+ *   K. WEB MATCH   - exact web palette, lime primary action, dark cards
  *
  * All designs use near-black (never pure #000) backgrounds.
  *
@@ -33,7 +35,7 @@
 const sharp = require('sharp');
 const { Client } = require('@line/bot-sdk');
 const { join, resolve } = require('path');
-const { readFileSync, writeFileSync, mkdirSync, rmSync } = require('fs');
+const { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } = require('fs');
 
 const LIFF_ID = process.env.LIFF_ID || '2010606328-7UnH1Yre';
 const TRUCK_URL = 'https://truck.mcky.space';
@@ -46,7 +48,7 @@ const H = 1686;
 const ROW_COLS = [2, 3]; // top row 2 buttons, bottom row 3 buttons
 
 const FONT_CP = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-SemiBold.ttf');
-const FONT_CP_R = resolve(__dirname, '../backend/design-system/fonts/ChakraPetch-Regular.ttf');
+const FONT_CP_R = FONT_CP;
 const FONT_MONO = resolve(__dirname, '../backend/design-system/fonts/JetBrainsMono-Regular.ttf');
 
 const CELLS = [
@@ -687,6 +689,75 @@ function cardBright(c, i, p) {
 }
 
 /* =============================================================================
+   K - WEB MATCH: exact STACK//FRAME web palette and action hierarchy
+   ============================================================================= */
+const WEB = {
+  id: 'k-web',
+  name: 'WEB MATCH',
+  tag: 'STACK//FRAME / LIME ACTION GRID',
+  palette: {
+    bg: '#0a0a0c',
+    surface: '#17171b',
+    surface2: '#1e1e24',
+    border: '#646470',
+    ink: '#f4f4f0',
+    dim: '#a1a1a8',
+    faint: '#85858e',
+    accent: '#c7f464',
+    accentInk: '#0a0a0c',
+  },
+};
+
+function webBase() {
+  const p = WEB.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <linearGradient id="webbg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${p.bg}"/>
+        <stop offset="1" stop-color="#111114"/>
+      </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="url(#webbg)"/>
+  </svg>`;
+}
+
+function webOverlay() {
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs()}
+    ${CELLS.map((cell, i) => cardWeb(cell, i, WEB.palette)).join('')}
+  </svg>`;
+}
+
+function cardWeb(cell, i, p) {
+  const g = cellGeom(i);
+  const primary = i === 0;
+  const fill = primary ? p.accent : p.surface;
+  const ink = primary ? p.accentInk : p.ink;
+  const sub = primary ? '#1d2a0b' : p.accent;
+  const titleSize = g.row === 0 ? 92 : 78;
+  const titleY = g.by + Math.round(g.bh * 0.63);
+  const subY = titleY + 62;
+  const ruleY = g.by + g.bh - 116;
+  const openY = g.by + g.bh - 42;
+  return `
+    <clipPath id="webclip${i}"><rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="36"/></clipPath>
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="36" fill="${fill}" stroke="${primary ? p.accent : p.border}" stroke-width="4"/>
+    ${primary
+      ? `<rect x="${g.bx + 42}" y="${g.by}" width="${g.bw - 84}" height="12" rx="6" fill="${p.accentInk}" opacity="0.32"/>`
+      : `<rect x="${g.bx + 42}" y="${g.by}" width="78" height="9" rx="4" fill="${p.accent}"/>`}
+    <g clip-path="url(#webclip${i})">
+      <g transform="translate(${g.cx - 12 * 30}, ${g.cy - 12 * 30}) scale(30)" fill="none" stroke="${ink}" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" opacity="0.07">${ICONS[cell.key]}</g>
+    </g>
+    <text x="${g.bx + 44}" y="${g.by + 66}" font-family="JM" font-size="20" letter-spacing="5" fill="${primary ? p.accentInk : p.faint}">${cell.num}</text>
+    <rect x="${g.cx - 68}" y="${g.by + 126}" width="136" height="136" rx="22" fill="${primary ? p.accentInk : p.surface2}" fill-opacity="${primary ? 0.12 : 1}" stroke="${primary ? p.accentInk : p.accent}" stroke-opacity="${primary ? 0.28 : 0.7}" stroke-width="3"/>
+    <g transform="translate(${g.cx - 58}, ${g.by + 136}) scale(4.83)" fill="none" stroke="${primary ? p.accentInk : p.accent}" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${ICONS[cell.key]}</g>
+    <text x="${g.cx}" y="${titleY}" text-anchor="middle" font-family="CP" font-weight="700" font-size="${titleSize}" fill="${ink}">${cell.title}</text>
+    <text x="${g.cx}" y="${subY}" text-anchor="middle" font-family="JM" font-size="21" letter-spacing="8" fill="${sub}">// ${cell.sub}</text>
+    <line x1="${g.bx + 54}" y1="${ruleY}" x2="${g.bx + g.bw - 54}" y2="${ruleY}" stroke="${primary ? p.accentInk : p.border}" stroke-opacity="${primary ? 0.28 : 0.7}" stroke-width="2"/>
+    <text x="${g.bx + g.bw - 46}" y="${openY}" text-anchor="end" font-family="JM" font-size="17" letter-spacing="7" fill="${primary ? p.accentInk : p.faint}">OPEN ↗</text>
+  `;
+}
+
+/* =============================================================================
    Render pipeline
    ============================================================================= */
 const VARIANTS = [
@@ -700,13 +771,33 @@ const VARIANTS = [
   { def: CORE, base: null, overlay: coreOverlay },
   { def: GOLD, base: goldBase, overlay: goldOverlay },
   { def: BRIGHT, base: brightBase, overlay: brightOverlay },
+  { def: WEB, base: webBase, overlay: webOverlay },
 ];
 
+function fallbackBase(def) {
+  const p = def.palette || {};
+  const colors = Array.isArray(p.bg) ? p.bg : [p.bg, p.surface2 || p.surface, p.surface];
+  const top = colors[0] || '#0d0d10';
+  const middle = colors[1] || top;
+  const bottom = colors[2] || middle;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="fallback" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${top}"/>
+        <stop offset="0.55" stop-color="${middle}"/>
+        <stop offset="1" stop-color="${bottom}"/>
+      </linearGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="url(#fallback)"/>
+  </svg>`;
+}
+
 async function renderBase(v) {
-  if (v.def.bgImg) {
+  if (v.def.bgImg && existsSync(v.def.bgImg)) {
     return sharp(v.def.bgImg).resize(W, H, { fit: 'cover' }).png().toBuffer();
   }
-  return sharp(Buffer.from(v.base())).png().toBuffer();
+  const svg = v.base ? v.base() : fallbackBase(v.def);
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
 async function renderVariant(v, outDir) {
