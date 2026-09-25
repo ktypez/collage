@@ -77,8 +77,8 @@ const defs = (extra = '') => `
       @font-face { font-family:'CP'; src:url('file://${FONT_CP}'); font-weight:700; }
       @font-face { font-family:'CPR'; src:url('file://${FONT_CP_R}'); }
       @font-face { font-family:'JM'; src:url('file://${FONT_MONO}'); }
-      ${extra}
     </style>
+    ${extra}
   </defs>`;
 
 /** Cell geometry for render + tap areas (top row 2 cols, bottom row 3 cols). */
@@ -696,15 +696,16 @@ const WEB = {
   name: 'WEB MATCH',
   tag: 'STACK//FRAME / LIME ACTION GRID',
   palette: {
-    bg: '#0a0a0c',
-    surface: '#17171b',
-    surface2: '#1e1e24',
-    border: '#646470',
+    bg: '#34343a',
+    bgEnd: '#414148',
+    surface: '#24242a',
+    surface2: '#303038',
+    border: '#858591',
     ink: '#f4f4f0',
-    dim: '#a1a1a8',
-    faint: '#85858e',
+    dim: '#c5c5cc',
+    faint: '#b0b0b8',
     accent: '#c7f464',
-    accentInk: '#0a0a0c',
+    accentInk: '#202027',
   },
 };
 
@@ -714,7 +715,7 @@ function webBase() {
     ${defs(`
       <linearGradient id="webbg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${p.bg}"/>
-        <stop offset="1" stop-color="#111114"/>
+        <stop offset="1" stop-color="${p.bgEnd}"/>
       </linearGradient>`)}
     <rect width="${W}" height="${H}" fill="url(#webbg)"/>
   </svg>`;
@@ -800,14 +801,28 @@ async function renderBase(v) {
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
-async function renderVariant(v, outDir) {
-  mkdirSync(outDir, { recursive: true });
+function opaqueBackground(def) {
+  const color = def.palette?.bg;
+  if (typeof color === 'string' && !color.startsWith('rgba')) return color;
+  if (Array.isArray(color) && typeof color[0] === 'string' && !color[0].startsWith('rgba')) return color[0];
+  return '#0d0d10';
+}
+
+async function renderComposite(v) {
   const baseBuf = await renderBase(v);
   const overlayBuf = await sharp(Buffer.from(v.overlay())).png().toBuffer();
+  return sharp(baseBuf)
+    .composite([{ input: overlayBuf, top: 0, left: 0 }])
+    .flatten({ background: opaqueBackground(v.def) })
+    .png()
+    .toBuffer();
+}
 
+async function renderVariant(v, outDir) {
+  mkdirSync(outDir, { recursive: true });
   const full = join(outDir, `${v.def.id}.png`);
   const small = join(outDir, `${v.def.id}-web.jpg`);
-  const png = await sharp(baseBuf).composite([{ input: overlayBuf, top: 0, left: 0 }]).png().toBuffer();
+  const png = await renderComposite(v);
   writeFileSync(full, png);
   await sharp(png).resize(1100, null, { fit: 'inside' }).jpeg({ quality: 88 }).toFile(small);
   console.log(`  ${v.def.id}  (${v.def.name})  -> ${full} / ${small}`);
@@ -880,9 +895,7 @@ async function deploy(v) {
   };
 
   const tmpPng = join('/tmp', `${v.def.id}-deploy.png`);
-  const baseBuf = await renderBase(v);
-  const overlayBuf = await sharp(Buffer.from(v.overlay())).png().toBuffer();
-  await sharp(baseBuf).composite([{ input: overlayBuf, top: 0, left: 0 }]).png().toFile(tmpPng);
+  await sharp(await renderComposite(v)).toFile(tmpPng);
 
   // sanity log — verify what we're about to upload actually looks like the variant
   {
