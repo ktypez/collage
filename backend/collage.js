@@ -34,13 +34,13 @@ const MONTHS = [
 const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
 const THEMES = {
-  sun: { g: ['#B91C1C', '#DC2626', '#F87171'], tc: '#fff', bg: '#F8E9E6', label: 'SUNDAY', code: 'SUN / 01' },
-  mon: { g: ['#854D0E', '#CA8A04', '#FACC15'], tc: '#fff', bg: '#F6F0D9', label: 'MONDAY', code: 'MON / 02' },
-  tue: { g: ['#9D174D', '#DB2777', '#F472B6'], tc: '#fff', bg: '#F6E7EE', label: 'TUESDAY', code: 'TUE / 03' },
-  wed: { g: ['#047857', '#059669', '#34D399'], tc: '#fff', bg: '#E7F1EB', label: 'WEDNESDAY', code: 'WED / 04' },
-  thu: { g: ['#C2410C', '#EA580C', '#FB923C'], tc: '#fff', bg: '#F7E9DE', label: 'THURSDAY', code: 'THU / 05' },
-  fri: { g: ['#1D4ED8', '#3B82F6', '#60A5FA'], tc: '#fff', bg: '#E8EFF7', label: 'FRIDAY', code: 'FRI / 06' },
-  sat: { g: ['#6D28D9', '#7C3AED', '#A78BFA'], tc: '#fff', bg: '#EEEAF7', label: 'SATURDAY', code: 'SAT / 07' },
+  sun: { g: ['#B91C1C', '#DC2626', '#F87171'], tc: '#fff', bg: '#F8E9E6', label: 'SUNDAY' },
+  mon: { g: ['#854D0E', '#CA8A04', '#FACC15'], tc: '#fff', bg: '#F6F0D9', label: 'MONDAY' },
+  tue: { g: ['#9D174D', '#DB2777', '#F472B6'], tc: '#fff', bg: '#F6E7EE', label: 'TUESDAY' },
+  wed: { g: ['#047857', '#059669', '#34D399'], tc: '#fff', bg: '#E7F1EB', label: 'WEDNESDAY' },
+  thu: { g: ['#C2410C', '#EA580C', '#FB923C'], tc: '#fff', bg: '#F7E9DE', label: 'THURSDAY' },
+  fri: { g: ['#1D4ED8', '#3B82F6', '#60A5FA'], tc: '#fff', bg: '#E8EFF7', label: 'FRIDAY' },
+  sat: { g: ['#6D28D9', '#7C3AED', '#A78BFA'], tc: '#fff', bg: '#EEEAF7', label: 'SATURDAY' },
 };
 
 function defaultPreset() {
@@ -147,10 +147,8 @@ function headerSVG(name, date, hh, t) {
 <rect y="${hh - 10}" width="100%" height="10" fill="${t.g[1]}"/>`;
 
   const metaSize = 28;
-  const leftMeta = '7 DAYS';
-  const rightMeta = `${t.code}  /  ${t.label}`;
+  const rightMeta = t.label;
   const rightWidth = font.getAdvanceWidth(rightMeta, metaSize);
-  svg += `<g fill="rgba(255,255,255,.78)">${font.getPath(leftMeta, 96, 74, metaSize).toSVG(2)}</g>`;
   svg += `<g fill="rgba(255,255,255,.78)">${font.getPath(rightMeta, W - 96 - rightWidth, 74, metaSize).toSVG(2)}</g>`;
   svg += `<line x1="96" y1="98" x2="${W - 96}" y2="98" stroke="rgba(255,255,255,.28)" stroke-width="2"/>`;
 
