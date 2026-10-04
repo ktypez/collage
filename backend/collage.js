@@ -149,18 +149,16 @@ function headerSVG(name, date, hh, t) {
   const metaSize = 28;
   const rightMeta = t.label;
   const rightWidth = font.getAdvanceWidth(rightMeta, metaSize);
-  svg += `<g fill="rgba(255,255,255,.78)">${font.getPath(rightMeta, W - 96 - rightWidth, 74, metaSize).toSVG(2)}</g>`;
+  svg += `<g fill="rgba(255,255,255,.78)">${textPathSVG(rightMeta, font, metaSize, { x: W - 96, y: 74, align: 'right', color: 'rgba(255,255,255,.78)' })}</g>`;
   svg += `<line x1="96" y1="98" x2="${W - 96}" y2="98" stroke="rgba(255,255,255,.28)" stroke-width="2"/>`;
 
   const ty = Math.round(hh * 0.55);
   if (name) {
-    const pw = font.getAdvanceWidth(name, 124);
-    svg += `<g fill="${t.tc}">${font.getPath(name, Math.max(0, (W - pw) / 2), ty, 124).toSVG(2)}</g>`;
+    svg += `<g fill="${t.tc}">${textPathSVG(name, font, 124, { x: W / 2, y: ty, align: 'center', color: t.tc })}</g>`;
   }
   if (date) {
     const dy = name ? ty + 110 : Math.round(hh * 0.55) + 20;
-    const pw = font.getAdvanceWidth(date, 64);
-    svg += `<g fill="rgba(255,255,255,.9)">${font.getPath(date, Math.max(0, (W - pw) / 2), dy, 64).toSVG(2)}</g>`;
+    svg += `<g fill="rgba(255,255,255,.9)">${textPathSVG(date, font, 64, { x: W / 2, y: dy, align: 'center', color: 'rgba(255,255,255,.9)' })}</g>`;
   }
   return svg + '</svg>';
 }
@@ -439,4 +437,4 @@ try {
 }
 export const SUPPORTED_THEME_IDS = Object.freeze(['min', ...Object.keys(THEME_MANIFESTS)]);
 export const SUPPORTED_PRESET_IDS = Object.freeze(Object.keys(THEMES));
-const { renderBackdrop, renderForeground, getPhotoFx } = await import('./design-system/core/sharp-renderer.js');
+const { renderBackdrop, renderForeground, getPhotoFx, textPathSVG } = await import('./design-system/core/sharp-renderer.js');

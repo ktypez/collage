@@ -205,6 +205,8 @@ function textPathSVG(text, font, size, { x, y, align = 'left', color = '#fff', g
   return extra + layers;
 }
 
+export { textPathSVG };
+
 function hexToRgba(hex, alpha = 1) {
   const h = hex.replace('#', '');
   const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
