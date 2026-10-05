@@ -3,8 +3,9 @@ import opentype from 'opentype.js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
-sharp.concurrency(1);
+sharp.concurrency(Math.min(2, os.cpus().length));
 
 const W = 2160;
 
@@ -218,7 +219,7 @@ export async function roundImage(buf, w, h, contentW) {
   })
     .resize(targetW, targetH, {
       fit: 'fill',
-      kernel: 'lanczos3',
+      kernel: 'mitchell',
     })
     .png()
     .toBuffer();

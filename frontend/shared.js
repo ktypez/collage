@@ -19,7 +19,7 @@ const CONFIG = {
   MAX_FILE_SIZE: 20 * 1024 * 1024,
   MAX_TOTAL_SIZE: 80 * 1024 * 1024,
   ALLOWED_FILE_TYPES: new Set(['image/jpeg', 'image/png', 'image/webp']),
-  FETCH_TIMEOUT_MS: 120000,
+  FETCH_TIMEOUT_MS: 240000,
   PREVIEW_VERSION: '20260925-2',
   THEME_IDS: { '7days': 'min', calendar: 'calendar', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
   THEME_LABELS: { '7days': '7 DAYS', calendar: 'CALENDAR', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
