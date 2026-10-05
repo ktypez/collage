@@ -40,7 +40,7 @@ const HEADER_H = 440;
 const NAME = 'Rennie แรนนี่';
 const DATE = 'วันที่ 11 สิงหาคม 2569';
 
-const THEME_IDS = ['calendar', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'];
+const THEME_IDS = ['claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'];
 const TEST_PRESET = 'fri';
 
 /*
@@ -163,7 +163,6 @@ test('createCollage — full pipeline renders complete header for every theme', 
     }
 
     const themedHeights = [];
-    const customLayoutThemes = ['7days', 'calendar']; // These use custom layouts, not masonry
     for (const theme of [...THEME_IDS, 'min']) {
       const out = await createCollage(files, NAME, '2026-08-11', 'tue', theme);
       const { format, width, height } = await sharp(out).metadata();
@@ -172,7 +171,7 @@ test('createCollage — full pipeline renders complete header for every theme', 
 
       // Themed themes: verify the rendered date isn't truncated in the real image.
       // (backdrop gradient is drawn over the full collage height, so pass it)
-      if (theme !== 'min' && !customLayoutThemes.includes(theme)) {
+      if (theme !== 'min') {
         themedHeights.push(height);
         const { manifest } = await import(`../design-system/themes/${theme}/manifest.js`);
         const c = manifest.canvas;

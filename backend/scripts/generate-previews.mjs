@@ -12,7 +12,6 @@ const sourceFiles = [...sourceNames, ...sourceNames].map((name) => resolve(sourc
 
 const themes = [
   { id: '7days', output: 'pv-7days.jpg', imageCount: 4 },
-  { id: 'calendar', output: 'pv-calendar.jpg', imageCount: 7 },
   { id: 'min', output: 'pv-min.jpg' },
   { id: 'claude', output: 'pv-claude.jpg' },
   { id: 'studio', output: 'pv-studio.jpg' },

@@ -433,7 +433,7 @@ export async function createThemedCollage(files, name, date, preset, manifest, m
    ============================================================================= */
 const THEME_MANIFESTS = {};
 try {
-  for (const id of ['calendar', '7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
+  for (const id of ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
     const { manifest } = await import(`./design-system/themes/${id}/manifest.js`);
     if (manifest) THEME_MANIFESTS[id] = manifest;
   }

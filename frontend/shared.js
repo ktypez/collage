@@ -20,9 +20,9 @@ const CONFIG = {
   MAX_TOTAL_SIZE: 80 * 1024 * 1024,
   ALLOWED_FILE_TYPES: new Set(['image/jpeg', 'image/png', 'image/webp']),
   FETCH_TIMEOUT_MS: 240000,
-  PREVIEW_VERSION: '20261005-1',
-  THEME_IDS: { '7days': '7days', calendar: 'calendar', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
-  THEME_LABELS: { '7days': '7 DAYS', calendar: 'CALENDAR', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
+  PREVIEW_VERSION: '20261005-2',
+  THEME_IDS: { '7days': '7days', claude: 'claude', lumen: 'lumen', post: 'post', studio: 'studio', cinema: 'cinema', velvet: 'velvet' },
+  THEME_LABELS: { '7days': '7 DAYS', claude: 'CLAUDE', lumen: 'LUMEN', post: 'POST', studio: 'STUDIO', cinema: 'CINEMA', velvet: 'VELVET' },
   TH_MONTHS: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
   MONTHS: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
   DAYS: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
@@ -169,7 +169,7 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
       c.setAttribute('aria-pressed', String(isActive));
     });
     const daySection = $('dayPresetSection');
-    if (daySection) daySection.style.display = (outputMode === '7days' || outputMode === 'calendar') ? 'block' : 'none';
+    if (daySection) daySection.style.display = outputMode === '7days' ? 'block' : 'none';
     if (themePreviewImg) themePreviewImg.src = 'previews/pv-' + (CONFIG.THEME_IDS[outputMode] || 'min') + '.jpg?v=' + CONFIG.PREVIEW_VERSION;
     if (themePreviewCap) themePreviewCap.textContent = CONFIG.THEME_LABELS[outputMode] || outputMode;
   }
