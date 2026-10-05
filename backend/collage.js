@@ -251,30 +251,13 @@ export async function createCollage(files, name, date, preset, theme) {
   if (!preset || !THEMES[preset]) preset = defaultPreset();
   const metas = await readImageMetadata(files);
 
-  // Theme manifests use the shared image pipeline. 7 DAYS/default keeps the legacy renderer.
+  // Theme manifests use the shared image pipeline, which is also what colours
+  // them: `preset` (the chosen weekday) drives the header and week strip, so
+  // every themed style renders in one day's palette. `min` has no manifest and
+  // falls through to the legacy masonry below.
   const themeId = String(theme || '').toLowerCase();
   const themedManifest = THEME_MANIFESTS[themeId];
-  
-  // Specialized renderers for custom layouts
-  if (themeId === '7days') {
-    const thaiBuffer = readFileSync(resolve(__dirname, 'NotoSansThai.ttf'));
-    const thaiFont = opentype.parse(thaiBuffer);
-    const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
-    const thaiShaper = await getThaiShaper(thaiBuffer);
-    const filesWithMeta = files.map((f, i) => ({ path: f.path, meta: metas[i] }));
-    const result = await render7DaysCollage(filesWithMeta, name, date, preset, thaiFont, thaiShaper);
-    return result.buffer || result; // Handle both { buffer, width, height } and Buffer
-  }
-  
-  if (themeId === 'calendar') {
-    const thaiBuffer = readFileSync(resolve(__dirname, 'NotoSansThai.ttf'));
-    const thaiFont = opentype.parse(thaiBuffer);
-    const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
-    const thaiShaper = await getThaiShaper(thaiBuffer);
-    const result = await renderCalendarCollage(files, name, date, thaiFont, thaiShaper);
-    return result.buffer || result; // Handle both { buffer, width, height } and Buffer
-  }
-  
+
   if (themedManifest) {
     return createThemedCollage(files, name, date, preset, themedManifest, metas);
   }
@@ -460,6 +443,4 @@ try {
 export const SUPPORTED_THEME_IDS = Object.freeze(['min', ...Object.keys(THEME_MANIFESTS)]);
 export const SUPPORTED_PRESET_IDS = Object.freeze(Object.keys(THEMES));
 
-// Import specialized renderers
-const { render7DaysCollage, renderCalendarCollage } = await import('./design-system/themes/renderers.js');
 const { renderBackdrop, renderForeground, getPhotoFx, textPathSVG } = await import('./design-system/core/sharp-renderer.js');
