@@ -759,6 +759,182 @@ function cardWeb(cell, i, p) {
 }
 
 /* =============================================================================
+   L — STACK LIGHT (warm parchment / terracotta)
+   ============================================================================= */
+const STACK_LIGHT = {
+  id: 'l-stack-light',
+  name: 'STACK LIGHT',
+  tag: 'WARM PARCHMENT / TERRACOTTA',
+  palette: {
+    bg: '#F6F4F0',
+    surface: '#FFFFFF',
+    surfaceAlt: '#FAF9F6',
+    border: '#E4DFD7',
+    borderStrong: '#D9D3C9',
+    ink: '#1F1B16',
+    muted: '#6B645C',
+    faint: '#9E968A',
+    accent: '#B8502F',
+    accentLight: '#D4704A',
+    accentInk: '#FFFFFF',
+    badgeBg: '#F3EEEB',
+    badgeBorder: '#E4DFD7',
+  },
+};
+
+function stackLightBase() {
+  const p = STACK_LIGHT.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <linearGradient id="slbg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${p.bg}"/>
+        <stop offset="1" stop-color="#EDE9E3"/>
+      </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="url(#slbg)"/>
+  </svg>`;
+}
+
+function stackLightOverlay() {
+  const p = STACK_LIGHT.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <filter id="slshadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="24"/>
+        <feOffset dx="0" dy="8"/>
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="0.06"/>
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>`)}
+    ${CELLS.map((cell, i) => cardStackLight(cell, i, p)).join('')}
+  </svg>`;
+}
+
+function cardStackLight(cell, i, p) {
+  const g = cellGeom(i);
+  const isPrimary = i === 0;
+  const iconStroke = isPrimary ? p.accent : p.muted;
+  const titleSize = g.row === 0 ? 88 : 76;
+  const titleY = g.by + Math.round(g.bh * 0.62);
+  const subY = titleY + 58;
+  const badgeY = g.by + 58;
+  return `
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="28" 
+      fill="${p.surface}" stroke="${p.border}" stroke-width="2" filter="url(#slshadow)"/>
+    <rect x="${g.bx + 48}" y="${g.by}" width="8" height="28" rx="4" fill="${iconStroke}" opacity="${isPrimary ? 1 : 0.5}"/>
+    <rect x="${g.bx + 48}" y="${badgeY}" width="72" height="32" rx="16" 
+      fill="${p.badgeBg}" stroke="${p.badgeBorder}" stroke-width="1.5"/>
+    <text x="${g.bx + 84}" y="${badgeY + 22}" text-anchor="middle" 
+      font-family="JM" font-size="17" fill="${p.accent}">${cell.num}</text>
+    <rect x="${g.cx - 62}" y="${g.by + 110}" width="124" height="124" rx="20" 
+      fill="${p.badgeBg}" stroke="${p.badgeBorder}" stroke-width="2"/>
+    <g transform="translate(${g.cx - 52}, ${g.by + 120}) scale(4.35)" 
+      fill="none" stroke="${iconStroke}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">
+      ${ICONS[cell.key]}
+    </g>
+    <text x="${g.cx}" y="${titleY}" text-anchor="middle" 
+      font-family="CP" font-weight="700" font-size="${titleSize}" fill="${p.ink}">${cell.title}</text>
+    <text x="${g.cx}" y="${subY}" text-anchor="middle" 
+      font-family="JM" font-size="20" letter-spacing="6" fill="${p.muted}">${cell.sub}</text>
+    <line x1="${g.bx + 50}" y1="${g.by + g.bh - 56}" x2="${g.bx + g.bw - 50}" y2="${g.by + g.bh - 56}" 
+      stroke="${p.borderStrong}" stroke-width="2"/>
+    <text x="${g.bx + g.bw - 44}" y="${g.by + g.bh - 24}" text-anchor="end" 
+      font-family="JM" font-size="16" letter-spacing="6" fill="${p.faint}">OPEN →</text>
+  `;
+}
+
+/* =============================================================================
+   M — STACK DARK (ink surface / coral accent)
+   ============================================================================= */
+const STACK_DARK = {
+  id: 'm-stack-dark',
+  name: 'STACK DARK',
+  tag: 'INK SURFACE / CORAL ACCENT',
+  palette: {
+    bg: '#151311',
+    surface: '#201D19',
+    surfaceAlt: '#28241F',
+    border: '#322E28',
+    borderStrong: '#3D3832',
+    ink: '#F3EFE9',
+    muted: '#A39B90',
+    faint: '#7A7369',
+    accent: '#E8845F',
+    accentLight: '#F09A7A',
+    accentInk: '#1F1B16',
+    badgeBg: '#2A2620',
+    badgeBorder: '#322E28',
+  },
+};
+
+function stackDarkBase() {
+  const p = STACK_DARK.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <linearGradient id="sdbg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${p.bg}"/>
+        <stop offset="1" stop-color="#1A1816"/>
+      </linearGradient>`)}
+    <rect width="${W}" height="${H}" fill="url(#sdbg)"/>
+  </svg>`;
+}
+
+function stackDarkOverlay() {
+  const p = STACK_DARK.palette;
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${defs(`
+      <filter id="sdshadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="32"/>
+        <feOffset dx="0" dy="12"/>
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="0.4"/>
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>`)}
+    ${CELLS.map((cell, i) => cardStackDark(cell, i, p)).join('')}
+  </svg>`;
+}
+
+function cardStackDark(cell, i, p) {
+  const g = cellGeom(i);
+  const isPrimary = i === 0;
+  const iconStroke = isPrimary ? p.accent : p.muted;
+  const titleSize = g.row === 0 ? 88 : 76;
+  const titleY = g.by + Math.round(g.bh * 0.62);
+  const subY = titleY + 58;
+  const badgeY = g.by + 58;
+  return `
+    <rect x="${g.bx}" y="${g.by}" width="${g.bw}" height="${g.bh}" rx="28" 
+      fill="${p.surface}" stroke="${p.border}" stroke-width="2" filter="url(#sdshadow)"/>
+    <rect x="${g.bx + 48}" y="${g.by}" width="8" height="28" rx="4" fill="${iconStroke}" opacity="${isPrimary ? 1 : 0.6}"/>
+    <rect x="${g.bx + 48}" y="${badgeY}" width="72" height="32" rx="16" 
+      fill="${p.badgeBg}" stroke="${p.badgeBorder}" stroke-width="1.5"/>
+    <text x="${g.bx + 84}" y="${badgeY + 22}" text-anchor="middle" 
+      font-family="JM" font-size="17" fill="${p.accent}">${cell.num}</text>
+    <rect x="${g.cx - 62}" y="${g.by + 110}" width="124" height="124" rx="20" 
+      fill="${p.badgeBg}" stroke="${p.badgeBorder}" stroke-width="2"/>
+    <g transform="translate(${g.cx - 52}, ${g.by + 120}) scale(4.35)" 
+      fill="none" stroke="${iconStroke}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">
+      ${ICONS[cell.key]}
+    </g>
+    <text x="${g.cx}" y="${titleY}" text-anchor="middle" 
+      font-family="CP" font-weight="700" font-size="${titleSize}" fill="${p.ink}">${cell.title}</text>
+    <text x="${g.cx}" y="${subY}" text-anchor="middle" 
+      font-family="JM" font-size="20" letter-spacing="6" fill="${p.muted}">${cell.sub}</text>
+    <line x1="${g.bx + 50}" y1="${g.by + g.bh - 56}" x2="${g.bx + g.bw - 50}" y2="${g.by + g.bh - 56}" 
+      stroke="${p.borderStrong}" stroke-width="2"/>
+    <text x="${g.bx + g.bw - 44}" y="${g.by + g.bh - 24}" text-anchor="end" 
+      font-family="JM" font-size="16" letter-spacing="6" fill="${p.faint}">OPEN →</text>
+  `;
+}
+
+/* =============================================================================
    Render pipeline
    ============================================================================= */
 const VARIANTS = [
@@ -773,6 +949,8 @@ const VARIANTS = [
   { def: GOLD, base: goldBase, overlay: goldOverlay },
   { def: BRIGHT, base: brightBase, overlay: brightOverlay },
   { def: WEB, base: webBase, overlay: webOverlay },
+  { def: STACK_LIGHT, base: stackLightBase, overlay: stackLightOverlay },
+  { def: STACK_DARK, base: stackDarkBase, overlay: stackDarkOverlay },
 ];
 
 function fallbackBase(def) {
