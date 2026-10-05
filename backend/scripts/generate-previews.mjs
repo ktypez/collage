@@ -11,6 +11,8 @@ const sourceNames = ['order-clipboard.jpg', 'order-work.jpg', 'order-stack.jpg']
 const sourceFiles = [...sourceNames, ...sourceNames].map((name) => resolve(sourceDir, name));
 
 const themes = [
+  { id: '7days', output: 'pv-7days.jpg', imageCount: 4 },
+  { id: 'calendar', output: 'pv-calendar.jpg', imageCount: 7 },
   { id: 'min', output: 'pv-min.jpg' },
   { id: 'claude', output: 'pv-claude.jpg' },
   { id: 'studio', output: 'pv-studio.jpg' },
@@ -27,9 +29,12 @@ if (!selected.length) {
 
 await mkdir(previewDir, { recursive: true });
 
-for (const { id, output } of selected) {
+for (const { id, output, imageCount } of selected) {
+  // Use appropriate number of images for each theme
+  const files = imageCount ? sourceFiles.slice(0, imageCount) : sourceFiles;
+  
   const collage = await createCollage(
-    sourceFiles.map((path) => ({ path })),
+    files.map((path) => ({ path })),
     'ตัวอย่างงาน',
     '2026-09-25',
     'fri',
