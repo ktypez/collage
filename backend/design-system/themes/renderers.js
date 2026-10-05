@@ -6,14 +6,18 @@ import sharp from 'sharp';
 import { textPathSVG } from '../core/sharp-renderer.js';
 import { shapeThai } from '../core/hb-shape.js';
 
+// Each day carries three tones: `deep` carries white text on the badge pill,
+// `primary` tints the header and accents, `tint` washes the card so the day
+// reads at a glance without going harsh. The old palette was pastel-only and
+// rendered as a 28px dot on a white card, which read as almost white.
 const DAY_COLORS_7DAYS = {
-  mon: { primary: '#FFCBA4', name: 'จันทร์' },
-  tue: { primary: '#98D8C8', name: 'อังคาร' },
-  wed: { primary: '#C3B1E1', name: 'พุธ' },
-  thu: { primary: '#F08080', name: 'พฤหัสบดี' },
-  fri: { primary: '#87CEEB', name: 'ศุกร์' },
-  sat: { primary: '#DDA0DD', name: 'เสาร์' },
-  sun: { primary: '#FFD700', name: 'อาทิตย์' },
+  mon: { deep: '#B85A18', primary: '#E8894A', tint: '#FBEFE4', name: 'จันทร์' },
+  tue: { deep: '#1F7A63', primary: '#3FA98C', tint: '#E7F5F1', name: 'อังคาร' },
+  wed: { deep: '#5B3E9E', primary: '#8E6FC7', tint: '#F0EBF8', name: 'พุธ' },
+  thu: { deep: '#B33F3F', primary: '#D96A6A', tint: '#FAEBEB', name: 'พฤหัสบดี' },
+  fri: { deep: '#1F6FA8', primary: '#4A9FD4', tint: '#E9F3FA', name: 'ศุกร์' },
+  sat: { deep: '#8E3D8E', primary: '#C470C4', tint: '#F8ECF8', name: 'เสาร์' },
+  sun: { deep: '#A67512', primary: '#E0A81E', tint: '#FBF3DF', name: 'อาทิตย์' },
 };
 
 const DAY_COLORS_CALENDAR = {
@@ -120,10 +124,11 @@ export async function render7DaysCollage(files, name, date, preset, thaiFont, th
   const placements = [];
   
   for (let i = 0; i < count; i++) {
-    const colIdx = colHeights[0] < colHeights[1] ? 0 : 1;
+    // <= so ties start in the left column and the top row reads left-to-right
+    const colIdx = colHeights[0] <= colHeights[1] ? 0 : 1;
     const x = PAGE_PAD + colIdx * (cardW + CARD_GAP);
     const y = colHeights[colIdx];
-    const cardH = dims[i].photoH + CARD_PADDING * 2 + 60; // Extra for badge
+    const cardH = dims[i].photoH + CARD_PADDING * 2 + 52; // room for the day pill
     placements.push({ colIdx, x, y, ...dims[i], cardH });
     colHeights[colIdx] = y + cardH + CARD_GAP;
   }
@@ -138,12 +143,14 @@ export async function render7DaysCollage(files, name, date, preset, thaiFont, th
   // Build SVG
   const svg = [];
   
-  // Background
-  svg.push(`<rect width="${W}" height="${totalH}" fill="#fefefe"/>`);
+  // Background — warm off-white so the white cards still separate from the page
+  svg.push(`<rect width="${W}" height="${totalH}" fill="#F6F3F0"/>`);
 
   // Header
-  const headerColor = DAY_COLORS_7DAYS[preset]?.primary || '#FFCBA4';
-  svg.push(`<rect width="${W}" height="${HEADER_H}" fill="${headerColor}" fill-opacity="0.15"/>`);
+  const headerColor = DAY_COLORS_7DAYS[preset]?.primary || '#E8894A';
+  svg.push(`<rect width="${W}" height="${HEADER_H}" fill="${headerColor}" fill-opacity="0.16"/>`);
+  // Solid accent bar closes the header and gives the day colour real presence
+  svg.push(`<rect y="${HEADER_H - 10}" width="${W}" height="10" fill="${headerColor}"/>`);
   
   // Name
   if (name) {
@@ -164,20 +171,31 @@ export async function render7DaysCollage(files, name, date, preset, thaiFont, th
     const dayKey = THAI_DAYS[i % 7];
     const dayColor = DAY_COLORS_7DAYS[dayKey];
     
-    // Card background with shadow
+    // Card background with shadow — white base carries the shadow, then a
+    // per-day wash on top so the colour is legible across the whole card.
     svg.push(`<rect x="${p.x}" y="${p.y}" width="${cardW}" height="${p.cardH}" 
                rx="${CARD_RADIUS}" fill="#ffffff" 
                filter="drop-shadow(0 16px 32px rgba(0,0,0,0.08))"/>`);
-    
-    // Day badge (floating at top center)
-    const badgeSize = 28;
-    const badgeX = p.x + cardW / 2;
-    const badgeY = p.y + 20;
-    svg.push(`<circle cx="${badgeX}" cy="${badgeY}" r="${badgeSize}" fill="${dayColor.primary}"/>`);
-    
+    svg.push(`<rect x="${p.x}" y="${p.y}" width="${cardW}" height="${p.cardH}" 
+               rx="${CARD_RADIUS}" fill="${dayColor.tint}"/>`);
+
+    // Day pill — solid `deep` fill with the Thai day name in white. Sized from
+    // the measured text so long names like พฤหัสบดี still fit the card.
+    const labelSize = 46;
+    const labelW = Math.ceil(measureThaiTextSync(dayColor.name, labelSize, thaiFont, thaiShaper));
+    const pillH = 56;
+    const pillW = Math.min(cardW - 80, labelW + 72);
+    const pillX = p.x + (cardW - pillW) / 2;
+    const pillY = p.y + 20;
+    const photoY = p.y + CARD_PADDING + 52; // clears the pill
+
+    svg.push(`<rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" 
+               rx="${pillH / 2}" fill="${dayColor.deep}"/>`);
+    svg.push(renderThaiText(dayColor.name, thaiFont, thaiShaper,
+      p.x + cardW / 2, pillY + pillH / 2 + labelSize * 0.35, labelSize, '#ffffff', 'center', pillW - 32));
+
     // Photo placeholder (actual photo will be composited by sharp)
     const photoX = p.x + CARD_PADDING;
-    const photoY = p.y + CARD_PADDING + 40; // Account for badge
     svg.push(`<rect x="${photoX}" y="${photoY}" width="${p.photoW}" height="${p.photoH}" 
                rx="${PHOTO_RADIUS}" fill="#f5f5f5"/>`);
   }
@@ -190,7 +208,7 @@ export async function render7DaysCollage(files, name, date, preset, thaiFont, th
   for (let i = 0; i < count; i++) {
     const p = placements[i];
     const photoX = p.x + CARD_PADDING;
-    const photoY = p.y + CARD_PADDING + 40;
+    const photoY = p.y + CARD_PADDING + 52;
 
     // Resize and round photo
     const rounded = await sharp(files[i].path)
