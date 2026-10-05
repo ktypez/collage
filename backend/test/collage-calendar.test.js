@@ -1,60 +1,46 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { renderBackdrop, renderForeground } from '../design-system/core/sharp-renderer.js';
-import { DAY_PRESETS } from '../design-system/engine/layout.js';
-import { manifest } from '../design-system/themes/calendar/manifest.js';
+import { createCollage } from '../collage.js';
 
-function hexToRgb(hex) {
-  const n = parseInt(hex.replace('#', ''), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
+// NEW CALENDAR tests - Professional week view with Thai day names
 
-async function sample(svg, left, top) {
-  const { data } = await sharp(Buffer.from(svg))
-    .extract({ left, top, width: 1, height: 1 })
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  return [...data];
-}
-
-function assertColor(actual, expected, message) {
-  const rgb = hexToRgb(expected);
-  for (let i = 0; i < 3; i++) {
-    assert.ok(Math.abs(actual[i] - rgb[i]) <= 3, `${message}: expected ${expected}, got ${actual.slice(0, 3)}`);
-  }
-}
-
-function assertHue(actual, expected, message) {
-  const rgb = hexToRgb(expected);
-  const dot = actual[0] * rgb[0] + actual[1] * rgb[1] + actual[2] * rgb[2];
-  const magnitude = Math.hypot(...actual.slice(0, 3)) * Math.hypot(...rgb);
-  const similarity = magnitude ? dot / magnitude : 0;
-  assert.ok(similarity > 0.98, `${message}: expected hue ${expected}, got ${actual.slice(0, 3)}`);
-}
-
-test('CALENDAR header fill follows the selected day', async () => {
-  const W = 1200;
-  const HEADER_H = 300;
-  for (const preset of ['sun', 'wed', 'fri', 'sat']) {
-    const svg = renderBackdrop(manifest, {
-      W, H: HEADER_H, headerH: HEADER_H, name: '', date: '', cards: [], preset,
+test('CALENDAR PRO creates a valid collage image', async () => {
+  // Create test images for 7 days (2 photos per day expected)
+  const testFiles = [];
+  for (let i = 1; i <= 7; i++) {
+    const img = await sharp({
+      create: { width: 1920, height: 1080, channels: 3, background: { r: 100, g: 150, b: 200 } }
+    }).jpeg().toBuffer();
+    testFiles.push({ 
+      path: `test-temp-${i}.jpg`,
+      buffer: img,
     });
-    const pixel = await sample(svg, 20, 120);
-    assertColor(pixel, DAY_PRESETS[preset][1], `header for ${preset}`);
+    await sharp(img).toFile(`test-temp-${i}.jpg`);
+  }
+
+  const buffer = await createCollage(testFiles, 'มกราคม 2569', '', 'wed', 'calendar');
+  const meta = await sharp(buffer).metadata();
+  
+  // Calendar should be 2160px wide
+  assert.equal(meta.width, 2160, 'Width should be 2160px');
+  
+  // Should have header + day columns
+  assert.ok(meta.height >= 400, 'Height should include header and day columns');
+  
+  // Clean up
+  for (let i = 1; i <= 7; i++) {
+    try {
+      await import('fs').then(fs => fs.promises.unlink(`test-temp-${i}.jpg`));
+    } catch {}
   }
 });
 
-test('CALENDAR week strip renders all seven day colors and extends the active day', async () => {
-  const W = 1400;
-  const H = 300;
-  const svg = renderForeground(manifest, { W, H, cards: [], preset: 'fri' });
-  const keys = Object.keys(DAY_PRESETS);
-  const segmentW = W / keys.length;
-  for (let i = 0; i < keys.length; i++) {
-    const pixel = await sample(svg, Math.round(i * segmentW + segmentW / 2), 8);
-    assertHue(pixel, DAY_PRESETS[keys[i]][1], `week strip ${keys[i]}`);
-  }
-  const activePixel = await sample(svg, Math.round(5.5 * segmentW), 45);
-  assertColor(activePixel, DAY_PRESETS.fri[1], 'active day extension');
+test('CALENDAR PRO uses Thai day names', async () => {
+  const { manifest } = await import('../design-system/themes/calendar/manifest.js');
+  
+  // Check Thai day names are defined
+  assert.ok(manifest.dayColors, 'manifest should have dayColors');
+  assert.equal(manifest.dayColors.mon.name, 'จันทร์', 'Monday should be จันทร์');
+  assert.equal(manifest.dayColors.sun.name, 'อาทิตย์', 'Sunday should be อาทิตย์');
 });

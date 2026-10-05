@@ -254,6 +254,25 @@ export async function createCollage(files, name, date, preset, theme) {
   // Theme manifests use the shared image pipeline. 7 DAYS/default keeps the legacy renderer.
   const themeId = String(theme || '').toLowerCase();
   const themedManifest = THEME_MANIFESTS[themeId];
+  
+  // Specialized renderers for custom layouts
+  if (themeId === '7days') {
+    const thaiBuffer = readFileSync(resolve(__dirname, 'NotoSansThai.ttf'));
+    const thaiFont = opentype.parse(thaiBuffer);
+    const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
+    const thaiShaper = await getThaiShaper(thaiBuffer);
+    const filesWithMeta = files.map((f, i) => ({ path: f.path, meta: metas[i] }));
+    return render7DaysCollage(filesWithMeta, name, date, preset, thaiFont, thaiShaper);
+  }
+  
+  if (themeId === 'calendar') {
+    const thaiBuffer = readFileSync(resolve(__dirname, 'NotoSansThai.ttf'));
+    const thaiFont = opentype.parse(thaiBuffer);
+    const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
+    const thaiShaper = await getThaiShaper(thaiBuffer);
+    return renderCalendarCollage(files, name, date, thaiFont, thaiShaper);
+  }
+  
   if (themedManifest) {
     return createThemedCollage(files, name, date, preset, themedManifest, metas);
   }
@@ -429,7 +448,7 @@ export async function createThemedCollage(files, name, date, preset, manifest, m
    ============================================================================= */
 const THEME_MANIFESTS = {};
 try {
-  for (const id of ['calendar', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
+  for (const id of ['calendar', '7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet']) {
     const { manifest } = await import(`./design-system/themes/${id}/manifest.js`);
     if (manifest) THEME_MANIFESTS[id] = manifest;
   }
@@ -438,4 +457,7 @@ try {
 }
 export const SUPPORTED_THEME_IDS = Object.freeze(['min', ...Object.keys(THEME_MANIFESTS)]);
 export const SUPPORTED_PRESET_IDS = Object.freeze(Object.keys(THEMES));
+
+// Import specialized renderers
+const { render7DaysCollage, renderCalendarCollage } = await import('./design-system/themes/renderers.js');
 const { renderBackdrop, renderForeground, getPhotoFx, textPathSVG } = await import('./design-system/core/sharp-renderer.js');

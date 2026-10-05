@@ -163,6 +163,7 @@ test('createCollage — full pipeline renders complete header for every theme', 
     }
 
     const themedHeights = [];
+    const customLayoutThemes = ['7days', 'calendar']; // These use custom layouts, not masonry
     for (const theme of [...THEME_IDS, 'min']) {
       const out = await createCollage(files, NAME, '2026-08-11', 'tue', theme);
       const { format, width, height } = await sharp(out).metadata();
@@ -171,7 +172,7 @@ test('createCollage — full pipeline renders complete header for every theme', 
 
       // Themed themes: verify the rendered date isn't truncated in the real image.
       // (backdrop gradient is drawn over the full collage height, so pass it)
-      if (theme !== 'min') {
+      if (theme !== 'min' && !customLayoutThemes.includes(theme)) {
         themedHeights.push(height);
         const { manifest } = await import(`../design-system/themes/${theme}/manifest.js`);
         const c = manifest.canvas;

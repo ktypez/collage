@@ -1,38 +1,59 @@
-/* CALENDAR: a week strip and day-colored header with a precise paper grid. */
+/* CALENDAR PRO: Professional week view with Thai day names */
 export const manifest = {
   id: 'calendar',
-  name: 'CALENDAR WEEK',
-  dot: '#1d4ed8',
+  name: 'CALENDAR PRO',
+  dot: '#008080',
 
   ui: {
-    heroMeta: 'CALENDAR WEEK // DAY PRESET',
+    heroMeta: 'CALENDAR PRO // WEEK VIEW',
     genIdle: '> CHOOSE A DAY',
     genReady: '> WEEK READY',
-    genHint: '// active day colors the header and week strip',
-    outputTitle: 'CALENDAR WEEK · READY',
+    genHint: '// professional calendar grid with Thai day names',
+    outputTitle: 'CALENDAR PRO · READY',
     outputTag: 'WEEK',
     uploadText: 'เลือกรูปสำหรับสัปดาห์นี้',
-    logIntro: '$ calendar.week --today',
+    logIntro: '$ calendar.pro --week',
   },
 
   canvas: {
-    bg: '#f1eee5',
+    bg: '#f8f9fa',
     cell: {
-      border: '#171717', width: 3, rounded: 0, bg: '#fffefa',
-      label: '{n}', labelColor: '#fffefa', labelBg: '#171717',
-      labelSize: 24, labelHeight: 38, labelPosition: 'top-center', labelInset: 12,
-      labelRounded: 0,
+      border: '#E0E0E0',
+      width: 1,
+      rounded: 0,
+      bg: '#ffffff',
+      dayHeaderHeight: 80,
+      photoAspect: '1:1',
+      photosPerDay: 2,
     },
     header: {
-      text: '', color: '#171717', font: 'mono', size: 40, pad: 72, glow: false,
-      align: 'center', presetHeader: true, presetHeaderStop: 1,
+      text: '',
+      color: '#1a1a1a',
+      font: 'thai',
+      size: 64,
+      weight: 600,
+      pad: 480,
+      glow: false,
+      align: 'center',
     },
-    dayStrip: {
-      background: '#171717', height: 30, activeHeight: 58, gap: 4,
-      inactiveOpacity: 0.68, label: true, labelSize: 18,
+    grid: {
+      columns: 7,
+      columnWidth: 308,
+      gap: 2,
     },
     overlay: 'none',
     photoFx: 'none',
+  },
+
+  // Professional day colors
+  dayColors: {
+    mon: { primary: '#008080', name: 'จันทร์' },
+    tue: { primary: '#000080', name: 'อังคาร' },
+    wed: { primary: '#228B22', name: 'พุธ' },
+    thu: { primary: '#FFA500', name: 'พฤหัสบดี' },
+    fri: { primary: '#0000FF', name: 'ศุกร์' },
+    sat: { primary: '#800080', name: 'เสาร์' },
+    sun: { primary: '#DC143C', name: 'อาทิตย์' },
   },
 
   hooks: { preDraw: null, postDraw: null },
