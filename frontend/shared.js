@@ -163,8 +163,11 @@ let selectedPreset = CONFIG.DAYS[new Date().getDay()];
   });
 
   function applyOutputMode() {
-    document.querySelectorAll('.ochip').forEach((c) =>
-      c.classList.toggle('active', c.dataset.mode === outputMode));
+    document.querySelectorAll('.ochip').forEach((c) => {
+      const isActive = c.dataset.mode === outputMode;
+      c.classList.toggle('active', isActive);
+      c.setAttribute('aria-pressed', String(isActive));
+    });
     const daySection = $('dayPresetSection');
     if (daySection) daySection.style.display = (outputMode === '7days' || outputMode === 'calendar') ? 'block' : 'none';
     if (themePreviewImg) themePreviewImg.src = 'previews/pv-' + (CONFIG.THEME_IDS[outputMode] || 'min') + '.jpg?v=' + CONFIG.PREVIEW_VERSION;
