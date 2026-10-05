@@ -218,10 +218,17 @@ export async function render7DaysCollage(files, name, date, preset, thaiFont, th
     composites.push({ input: roundedPhoto, top: photoY, left: photoX });
   }
 
-  return sharp(backdrop)
+  const resultBuffer = await sharp(backdrop)
     .composite(composites)
     .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
     .toBuffer();
+
+  const metadata = await sharp(resultBuffer).metadata();
+  return {
+    buffer: resultBuffer,
+    width: metadata.width,
+    height: metadata.height
+  };
 }
 
 /* =============================================================================
@@ -338,8 +345,15 @@ export async function renderCalendarCollage(files, name, date, thaiFont, thaiSha
     composites.push({ input: resized, top: photoY, left: photoX });
   }
 
-  return sharp(backdrop)
+  const resultBuffer = await sharp(backdrop)
     .composite(composites)
     .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
     .toBuffer();
+
+  const metadata = await sharp(resultBuffer).metadata();
+  return {
+    buffer: resultBuffer,
+    width: metadata.width,
+    height: metadata.height
+  };
 }

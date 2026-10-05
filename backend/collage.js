@@ -262,7 +262,8 @@ export async function createCollage(files, name, date, preset, theme) {
     const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
     const thaiShaper = await getThaiShaper(thaiBuffer);
     const filesWithMeta = files.map((f, i) => ({ path: f.path, meta: metas[i] }));
-    return render7DaysCollage(filesWithMeta, name, date, preset, thaiFont, thaiShaper);
+    const result = await render7DaysCollage(filesWithMeta, name, date, preset, thaiFont, thaiShaper);
+    return result.buffer || result; // Handle both { buffer, width, height } and Buffer
   }
   
   if (themeId === 'calendar') {
@@ -270,7 +271,8 @@ export async function createCollage(files, name, date, preset, theme) {
     const thaiFont = opentype.parse(thaiBuffer);
     const { getThaiShaper } = await import('./design-system/core/hb-shape.js');
     const thaiShaper = await getThaiShaper(thaiBuffer);
-    return renderCalendarCollage(files, name, date, thaiFont, thaiShaper);
+    const result = await renderCalendarCollage(files, name, date, thaiFont, thaiShaper);
+    return result.buffer || result; // Handle both { buffer, width, height } and Buffer
   }
   
   if (themedManifest) {
