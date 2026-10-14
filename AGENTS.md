@@ -40,7 +40,7 @@ CORS และไม่มี service ที่ต้องคอยให้ต
 | `web/src/routes/api/cleanup/+server.ts` | ลบรูปเก่ากว่า 15 วัน (cron) |
 | `web/src/routes/api/webhook/+server.ts` | LINE Messaging API webhook |
 | `web/src/app.css` | design system ทั้งหมด (token, component class, `@font-face`) — แก้ที่เดียว |
-| `web/static/fonts/` | ฟอนต์ 5 ตัว self-host (ไม่ใช้ Google Fonts) |
+| `web/static/fonts/` | ฟอนต์ self-host 4 ตัว (ไม่ใช้ Google Fonts) — Chakra Petch ปลดระวางแล้ว ดู `render.ts` |
 | `web/static/previews/` | รูปตัวอย่าง output ต่อธีม (`pv-<id>.jpg`) + `og.jpg` |
 
 ธีมทั้ง 7: `7days`, `claude`, `lumen`, `post`, `studio`, `cinema`, `velvet`
@@ -65,7 +65,7 @@ cd web
 node scripts/richmenu.mjs --render              # ได้ scripts/richmenu.png (2500x843)
 node scripts/richmenu.mjs --deploy              # render + สร้างเมนู + ตั้งเป็นค่าเริ่มต้น
 node scripts/richmenu.mjs --image art.png --deploy
-node scripts/richmenu.mjs --list                # ดูเมนูทั้งหมด (บอทมี 18 อันค้างอยู่)
+node scripts/richmenu.mjs --list                # ดูเมนูทั้งหมด
 node scripts/richmenu.mjs --delete richmenu-xxx
 ```
 
@@ -74,6 +74,10 @@ node scripts/richmenu.mjs --delete richmenu-xxx
 ของเครื่อง (`--no-sandbox` จำเป็นบน Alpine ไม่งั้นไม่ได้ไฟล์) — เหตุผลเดียวกับที่
 คอลลาจเรนเดอร์ในเบราว์เซอร์ คืออักษรไทยจะ shape ถูกเฉพาะเมื่อเบราว์เซอร์เป็นคนวาด
 ต้องมี `LINE_CHANNEL_ACCESS_TOKEN` (อ่านจาก env หรือ `web/.env`)
+
+**อัปโหลดรูปต้องยิงไป `api-data.line.me`** ไม่ใช่ `api.line.me` — ส่งรูปไป
+`api.line.me/v2/bot/richmenu/{id}/content` ได้ 404 (metadata ใช้ `api.line.me`
+ตามปกติ) สคริปต์แยกเป็น `line()` กับ `dataLine()` แล้ว
 
 ## env
 
@@ -97,6 +101,10 @@ node scripts/richmenu.mjs --delete richmenu-xxx
   `วันที่` กลายเป็น `วันที`)
 - ผลลัพธ์ canvas ตรงกับ pipeline sharp เดิม: ขนาดเท่ากันทุกธีม และส่วนล่างของภาพ
   ต่างกัน <1% ของพิกเซล — ที่ต่างคือ rasterize ตัวอักษรในหัวเรื่องเท่านั้น
+- ฟอนต์เหลือ 4 ตัว (Noto Sans Thai, JetBrains Mono, Source Serif 4, Noto Serif Thai)
+  Chakra Petch ถูกปลดระวางทั้ง UI, ธีมคอลลาจ และ rich menu — 'display' ใน manifest
+  ตอนนี้คือ Noto Sans Thai น้ำหนัก 600 (ดู `FONT_DISPLAY` ใน `render.ts`)
+  หลังเปลี่ยนฟอนต์ หัวเรื่อง 7 DAYS กว้าง 1075px เทียบกับ 1072px เดิม จึงยังไม่ล้นกรอบ
 - `web/src/lib/collage/layout.ts` ต้องคงค่าคงที่เดิมไว้ ไม่งั้นผลลัพธ์จะต่างจากเวอร์ชันก่อน
 - `web/src/lib/server/` คือโฟลเดอร์ที่ SvelteKit บล็อกไม่ให้เข้า client bundle — อย่าย้าย
   `r2.ts` ออกไปข้างบน ไม่งั้น secret จะหลุด
