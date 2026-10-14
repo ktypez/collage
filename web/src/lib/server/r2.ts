@@ -1,8 +1,10 @@
 /* =============================================================================
    server/r2.ts — Cloudflare R2 over the S3 API
    -----------------------------------------------------------------------------
-   Only four operations are needed (put / get / list / delete), so this uses
+   Only three operations are needed (put / list / delete), so this uses
    aws4fetch (65 KB, one dependency) instead of @aws-sdk/client-s3 (18 MB).
+   Reads are deliberately absent: the bucket is public and LINE fetches the
+   objects from R2_PUBLIC_URL directly.
    Lives under lib/server/ so SvelteKit refuses to bundle it into the client.
    ============================================================================= */
 
@@ -64,13 +66,6 @@ export async function uploadCollage(body: Uint8Array, filename: string): Promise
 	}
 }
 
-export async function getCollage(filename: string): Promise<Blob> {
-	const res = await getClient().fetch(bucketUrl(filename));
-	if (res.status === 404) throw new Error('not found');
-	if (!res.ok) throw new Error(`R2 GET failed: ${res.status} ${await res.text()}`);
-	return res.blob();
-}
-
 interface S3Object {
 	Key: string;
 	LastModified: string;
@@ -111,7 +106,7 @@ async function listAll(prefix: string): Promise<S3Object[]> {
 }
 
 /** Delete collages older than `maxAgeDays`. Returns how many went. */
-export async function cleanupOldCollages(maxAgeDays = 15): Promise<{ deleted: number }> {
+export async function cleanupOldCollages(maxAgeDays = 7): Promise<{ deleted: number }> {
 	const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
 	const stale: S3Object[] = [];
 

@@ -26,10 +26,10 @@
 			.catch(() => true);
 	}
 
-	async function send(imageUrl: string) {
+	async function send(imageUrl: string, previewImageUrl: string) {
 		if (!liff) throw new Error('LINE ยังไม่พร้อมใช้งาน');
 		const messages = [
-			{ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl },
+			{ type: 'image', originalContentUrl: imageUrl, previewImageUrl },
 		];
 		try {
 			await liff.sendMessages(messages);
@@ -74,10 +74,10 @@
 		}
 	}
 
-	async function onresult({ imageUrl }: { imageUrl: string }) {
+	async function onresult({ imageUrl, previewUrl }: { imageUrl: string; previewUrl: string }) {
 		notice = { text: 'กำลังส่งเข้ากลุ่ม LINE...', kind: 'loading' };
 		try {
-			await send(imageUrl);
+			await send(imageUrl, previewUrl);
 		} catch (err) {
 			const e = err as Error & { needsScope?: boolean; needsReAuth?: boolean };
 			if (e.needsScope || e.needsReAuth) {

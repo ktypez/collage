@@ -1,5 +1,5 @@
 /* =============================================================================
-   /api/cleanup — deletes collages older than 15 days.
+   /api/cleanup — deletes collages older than 7 days.
    -----------------------------------------------------------------------------
    Two callers:
      • Vercel Cron (vercel.json) issues a GET with `Authorization: Bearer $CRON_SECRET`
@@ -13,7 +13,7 @@ import { CLEANUP_SECRET } from '$app/env/private';
 import { cleanupOldCollages } from '#lib/server/r2';
 import type { RequestHandler } from './$types';
 
-const MAX_AGE_DAYS = 15;
+const MAX_AGE_DAYS = 7;
 
 function authorized(request: Request): boolean {
 	if (!CLEANUP_SECRET) return false;

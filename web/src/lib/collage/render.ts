@@ -260,6 +260,24 @@ export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.95): Promise
 	});
 }
 
+/** Width of the chat-bubble copy handed to LINE. Half the sheet: still crisp
+ *  at bubble size on a 3x screen, a quarter of the pixels to fetch. */
+export const PREVIEW_WIDTH = 1080;
+
+/** The preview LINE shows in the chat. The full sheet is what opens on tap. */
+export function makePreview(canvas: HTMLCanvasElement, width = PREVIEW_WIDTH): HTMLCanvasElement {
+	const scale = Math.min(1, width / canvas.width);
+	const out = document.createElement('canvas');
+	out.width = Math.round(canvas.width * scale);
+	out.height = Math.round(canvas.height * scale);
+	const ctx = out.getContext('2d');
+	if (!ctx) throw new Error('Could not create preview canvas');
+	ctx.imageSmoothingEnabled = true;
+	ctx.imageSmoothingQuality = 'high';
+	ctx.drawImage(canvas, 0, 0, out.width, out.height);
+	return out;
+}
+
 /* =============================================================================
    Manifest renderer — one pass for every theme
    ============================================================================= */

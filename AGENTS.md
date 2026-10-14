@@ -23,6 +23,13 @@ CORS และไม่มี service ที่ต้องคอยให้ต
 วาดด้วย `<canvas>` แล้วส่ง JPEG ที่เสร็จแล้วไปเก็บที่ R2 เฉพาะกรณี LIFF ที่ต้องใช้ URL สาธารณะ
 ฝั่งเว็บ (`/`) ดาวน์โหลดจาก blob URL ได้เลย ไม่แตะเซิร์ฟเวอร์
 
+**R2 เลี่ยงไม่ได้ถ้ายังอยากส่งเข้ากลุ่ม** — LINE Messaging API รับรูปเป็น URL ไม่รับ bytes:
+`liff.sendMessages()` ต้องส่ง `originalContentUrl` + `previewImageUrl` ให้เซิร์ฟเวอร์ LINE
+ไปดึงเอง ไม่มี endpoint ไหนรับไฟล์รูปเข้าไปตรง ๆ (ทั้ง `sendMessages` และ `shareTargetPicker`)
+จึงต้องมีที่วางไฟล์ที่เปิดสาธารณะ — ตอนนี้คือ R2 (bucket ต้องอ่านได้จากอินเทอร์เน็ต)
+ส่ง 2 ไฟล์ต่อครั้ง: ตัวเต็ม (สูงสุด 10MB) กับ preview ย่อครึ่งหนึ่ง 1080px (LINE จำกัด 1MB)
+เพราะ LINE โหลด preview มาตอนแสดงในแชท ส่วนตัวเต็มโหลดตอนแตะดู
+
 ### โค้ดอยู่ตรงไหน
 
 | ไฟล์ | หน้าที่ |
@@ -35,9 +42,8 @@ CORS และไม่มี service ที่ต้องคอยให้ต
 | `web/src/lib/liff.ts` | ตัว loader/typing ของ LINE LIFF SDK |
 | `web/src/routes/+page.svelte` | เว็บ — ดาวน์โหลด |
 | `web/src/routes/liff/+page.svelte` | ใน LINE — ส่งเข้ากลุ่ม |
-| `web/src/routes/api/collage/+server.ts` | รับ JPEG → R2 → คืน public URL |
-| `web/src/routes/api/image/[filename]/+server.ts` | ส่งรูปกลับ (LINE ดึงจาก URL นี้) |
-| `web/src/routes/api/cleanup/+server.ts` | ลบรูปเก่ากว่า 15 วัน (cron) |
+| `web/src/routes/api/collage/+server.ts` | รับ JPEG (ตัวเต็ม + preview) → R2 → คืน public URL |
+| `web/src/routes/api/cleanup/+server.ts` | ลบรูปเก่ากว่า 7 วัน (cron) |
 | `web/src/routes/api/webhook/+server.ts` | LINE Messaging API webhook |
 | `web/src/app.css` | design system ทั้งหมด (token, component class, `@font-face`) — แก้ที่เดียว |
 | `web/static/fonts/` | ฟอนต์ self-host 4 ตัว (ไม่ใช้ Google Fonts) — Chakra Petch ปลดระวางแล้ว ดู `render.ts` |
@@ -112,5 +118,11 @@ node scripts/richmenu.mjs --delete richmenu-xxx
   ไม่งั้นรอบแรกจะได้ฟอนต์ fallback
 - `web/src/lib/collage/*.ts` เป็น canvas TS ล้วน ไม่ผูกกับ Svelte เลย ถ้าวันหนึ่งเปลี่ยน
   เฟรมเวิร์ก ย้ายแค่สามไฟล์ในโฟลเดอร์นั้นก็ได้
+- ส่งเข้ากลุ่ม LINE หนึ่งครั้ง = เข้ารหัส JPEG สองรอบ (ตัวเต็ม 2160px q0.95 + preview
+  1080px q0.92) วัดที่ CPU throttle x6 แล้วกดปุ่มจนถึง `sendMessages` ใช้เวลา
+  ~2.1–2.7 วินาที เทียบกับ ~1.5–1.9 วินาทีถ้าไม่ส่ง preview — จ่ายเพิ่ม ~0.5–0.7 วินาที
+  แลกกับการที่คนในกลุ่มโหลดรูปในแชท 149KB แทน 584KB (`makePreview` ใน `render.ts`)
+- `originalContentUrl` ของ LINE จำกัด 10MB และ `previewImageUrl` จำกัด 1MB —
+  `/api/collage` รับไฟล์เต็มได้ถึง 25MB แต่ preview เกิน 1MB จะถูกปฏิเสธ
 - โปรเจกต์นี้ใช้ **minimem** เป็นความจำถาวร (ไม่ใช่ Second Brain แล้ว) —
   ค้นก่อนทำงาน บันทึกเฉพาะข้อเท็จจริงที่อยู่ยาว

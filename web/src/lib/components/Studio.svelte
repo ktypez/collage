@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MAX_FILES } from '#lib/config';
-	import { loadImages, renderCollage, canvasToBlob } from '#lib/collage/render';
+	import { loadImages, renderCollage, canvasToBlob, makePreview } from '#lib/collage/render';
 	import { defaultPreset, type DayPreset, type ThemeId } from '#lib/collage/themes';
 	import FileDrop from './FileDrop.svelte';
 	import PhotoGrid from './PhotoGrid.svelte';
@@ -87,12 +87,15 @@
 			const images = await loadImages(files);
 			const canvas = await renderCollage(images, { name: name.trim(), date, preset, theme });
 			const blob = await canvasToBlob(canvas);
-			const previewUrl = URL.createObjectURL(blob);
+			let previewUrl = URL.createObjectURL(blob);
 
 			let imageUrl = previewUrl;
 			if (upload) {
 				const fd = new FormData();
 				fd.append('image', blob, 'collage.jpg');
+				// LINE shows the preview in the chat and only fetches the full
+				// sheet when someone taps it, so send a smaller copy too.
+				fd.append('preview', await canvasToBlob(makePreview(canvas), 0.92), 'collage-preview.jpg');
 				fd.append('name', name.trim());
 				fd.append('preset', preset);
 				fd.append('theme', theme);
@@ -102,6 +105,7 @@
 				const data = await res.json().catch(() => ({ success: false, error: 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง' }));
 				if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
 				imageUrl = data.imageUrl;
+				previewUrl = data.previewUrl ?? imageUrl;
 			}
 
 			status = { text: 'สำเร็จแล้ว', kind: 'success' };
