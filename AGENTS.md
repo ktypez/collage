@@ -5,9 +5,12 @@
 ## โครงสร้าง
 
 ```
-web/       SvelteKit (Svelte 5 runes) — UI, canvas renderer และ /api/* ทั้งหมด  → Vercel
-scripts/   สคริปต์ rich menu รุ่นเก่า (ผูกกับ backend/ + frontend/ ที่ถูกลบแล้ว — ยังรันไม่ได้)
+web/   SvelteKit (Svelte 5 runes) — UI, canvas renderer และ /api/* ทั้งหมด  → Vercel
 ```
+
+ไม่มีโฟลเดอร์อื่นที่รันได้ — สคริปต์ rich menu รุ่นเก่า (`scripts/*.cjs` ที่ต้องใช้
+`sharp` + `@line/bot-sdk` + ฟอนต์จาก `backend/`) ถูกลบแล้ว แทนด้วย
+`web/scripts/richmenu.mjs`
 
 `frontend/` (HTML/CSS/JS) และ `backend/` (Express + sharp) ถูกลบทั้งคู่ —
 งานทุกอย่างย้ายเข้า `web/`
@@ -54,6 +57,23 @@ bun run build
 ```
 
 ต้องใช้ Bun (`bun` อยู่ที่ `~/.bun/bin`)
+
+## rich menu
+
+```bash
+cd web
+node scripts/richmenu.mjs --render              # ได้ scripts/richmenu.png (2500x843)
+node scripts/richmenu.mjs --deploy              # render + สร้างเมนู + ตั้งเป็นค่าเริ่มต้น
+node scripts/richmenu.mjs --image art.png --deploy
+node scripts/richmenu.mjs --list                # ดูเมนูทั้งหมด (บอทมี 18 อันค้างอยู่)
+node scripts/richmenu.mjs --delete richmenu-xxx
+```
+
+แก้เมนู = แก้ `CELLS` กับสีใน `web/scripts/richmenu.mjs` แล้ว `--deploy` ซ้ำ
+สคริปต์ไม่พึ่ง dependency ใด ๆ: วาดบน `<canvas>` แล้ว screenshot ด้วย Chromium
+ของเครื่อง (`--no-sandbox` จำเป็นบน Alpine ไม่งั้นไม่ได้ไฟล์) — เหตุผลเดียวกับที่
+คอลลาจเรนเดอร์ในเบราว์เซอร์ คืออักษรไทยจะ shape ถูกเฉพาะเมื่อเบราว์เซอร์เป็นคนวาด
+ต้องมี `LINE_CHANNEL_ACCESS_TOKEN` (อ่านจาก env หรือ `web/.env`)
 
 ## env
 
