@@ -42,7 +42,7 @@ const CELLS = [
 	{ num: '01', icon: 'collage', title: 'ส่งรูปงาน', sub: 'COLLAGE', uri: `https://liff.line.me/${LIFF_ID}` },
 	{ num: '02', icon: 'truck', title: 'บันทึกงาน', sub: 'TRUCK', uri: 'https://truck.mcky.space' },
 	{ num: '03', icon: 'data', title: 'เปิดหน้าลูกค้า', sub: 'CLIENT DATA', uri: 'https://data.mcky.space' },
-	{ num: '04', icon: 'orders', title: 'ระบบขนส่ง', sub: 'OMS', uri: 'https://oms.cfwenterprise.com/sts' },
+	{ num: '04', icon: 'rider', title: 'ไรเดอร์', sub: 'RIDER', uri: 'https://rider.ezzytransporter.com/' },
 	{ num: '05', icon: 'portal', title: 'เปิดสมาชิก', sub: 'PORTAL', uri: 'https://me.mcky.space' },
 ];
 
@@ -134,9 +134,16 @@ const ICONS = {
 		c.beginPath(); c.ellipse(12, 12, 8, 3, 0, 0, Math.PI); c.stroke();
 		c.beginPath(); c.ellipse(12, 18, 8, 3, 0, 0, Math.PI); c.stroke();
 	},
-	orders(c) {
-		roundRect(c, 5, 3, 14, 18, 2); c.stroke();
-		c.beginPath(); c.moveTo(9, 9); c.lineTo(15, 9); c.moveTo(9, 13); c.lineTo(15, 13); c.moveTo(9, 17); c.lineTo(13, 17); c.stroke();
+	rider(c) {
+		// scooter: two wheels, a frame, a handlebar — straight strokes only
+		c.beginPath(); c.arc(5.5, 17.2, 3.2, 0, Math.PI * 2); c.stroke();
+		c.beginPath(); c.arc(18.5, 17.2, 3.2, 0, Math.PI * 2); c.stroke();
+		c.beginPath();
+		c.moveTo(5.5, 17.2); c.lineTo(11, 17.2); c.lineTo(13.8, 11); c.lineTo(18.5, 17.2);
+		c.stroke();
+		c.beginPath();
+		c.moveTo(13.8, 11); c.lineTo(12.6, 6.8); c.lineTo(16.2, 6.8);
+		c.stroke();
 	},
 	portal(c) {
 		c.beginPath(); c.arc(12, 8, 3.6, 0, Math.PI * 2); c.stroke();
