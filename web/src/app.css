@@ -9,13 +9,6 @@
 /* ========== FONTS (self-hosted: the canvas renderer needs them, and the UI
    uses Noto Sans Thai; no Google Fonts round-trip) ========== */
 @font-face {
-  font-family: 'Chakra Petch';
-  src: url('/fonts/ChakraPetch-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
   font-family: 'JetBrains Mono';
   src: url('/fonts/JetBrainsMono-Regular.ttf') format('truetype');
   font-weight: 400;
@@ -70,7 +63,7 @@
 
   /* Typography */
   --font-body: 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
-  --font-display: 'Chakra Petch', 'Noto Sans Thai', system-ui, sans-serif;
+  --font-display: 'Noto Sans Thai', system-ui, sans-serif;
 
   /* Spacing */
   --radius: 18px;

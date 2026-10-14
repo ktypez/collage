@@ -92,7 +92,6 @@ function buildHtml() {
 <meta charset="utf-8">
 <style>
 	@font-face { font-family: 'Noto Sans Thai'; src: url('${fontData('NotoSansThai.ttf')}'); font-weight: 100 900; }
-	@font-face { font-family: 'Chakra Petch'; src: url('${fontData('ChakraPetch-SemiBold.ttf')}'); font-weight: 600; }
 	@font-face { font-family: 'JetBrains Mono'; src: url('${fontData('JetBrainsMono-Regular.ttf')}'); font-weight: 400; }
 	html, body { margin: 0; padding: 0; background: ${C.bg}; }
 </style>
@@ -206,7 +205,7 @@ function draw() {
 		ctx.fillText(cell.sub, bx + bw / 2, by + 525);
 
 		ctx.fillStyle = C.text;
-		ctx.font = '600 62px "Chakra Petch", "Noto Sans Thai", sans-serif';
+		ctx.font = '600 62px "Noto Sans Thai", sans-serif';
 		ctx.fillText(cell.title, bx + bw / 2, by + bh - 108);
 	});
 
@@ -224,7 +223,6 @@ function draw() {
 // Draw only once the Thai + Latin faces are actually usable, otherwise the
 // screenshot races the font load and Thai falls back to a system face.
 Promise.all([
-	document.fonts.load('600 62px "Chakra Petch"'),
 	document.fonts.load('600 62px "Noto Sans Thai"'),
 	document.fonts.load('400 28px "JetBrains Mono"'),
 ]).then(() => document.fonts.ready).then(() => {

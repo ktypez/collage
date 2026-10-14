@@ -23,10 +23,13 @@ import {
 type FontKind = 'display' | 'serif' | 'mono' | 'sans';
 
 /* ---------- fonts ---------- */
-const FONT_DISPLAY = "'Chakra Petch', 'Noto Sans Thai', system-ui, sans-serif";
+/* 'display' is a role, not a family: it means the sans face at weight 600.
+   Chakra Petch was retired so the collage, the UI and the rich menu all draw
+   from the same font set. */
+const FONT_DISPLAY = "'Noto Sans Thai', system-ui, sans-serif";
 const FONT_SERIF = "'Source Serif 4', 'Noto Serif Thai', Georgia, 'Times New Roman', serif";
 const FONT_MONO = "'JetBrains Mono', 'Noto Sans Thai', ui-monospace, Menlo, Consolas, monospace";
-const FONT_SANS = "'Noto Sans Thai', 'Chakra Petch', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+const FONT_SANS = "'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 function fontFor(kind: FontKind, size: number, weight?: number) {
 	const family =
@@ -43,7 +46,7 @@ function fontFor(kind: FontKind, size: number, weight?: number) {
 async function ensureFonts() {
 	if (typeof document === 'undefined' || !document.fonts?.load) return;
 	const specs = [
-		'600 132px "Chakra Petch"',
+		'600 132px "Noto Sans Thai"',
 		'400 57px "JetBrains Mono"',
 		'400 132px "Source Serif 4"',
 		'400 57px "Noto Serif Thai"',
