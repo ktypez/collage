@@ -31,6 +31,9 @@ const FONTS = join(WEB, 'static', 'fonts');
 const OUT_PNG = join(HERE, 'richmenu.png');
 
 const LINE_API = 'https://api.line.me/v2/bot';
+/* The artwork lives on a different host from the menu metadata: posting the
+   image to api.line.me/.../content returns 404, it has to go to api-data. */
+const LINE_DATA_API = 'https://api-data.line.me/v2/bot';
 const CHROME = process.env.CHROMIUM ?? 'chromium';
 
 /* --- menu definition ------------------------------------------------------ */
@@ -267,7 +270,15 @@ function render(imagePath = OUT_PNG) {
 
 /* --- LINE ----------------------------------------------------------------- */
 async function line(path, init = {}) {
-	const res = await fetch(`${LINE_API}${path}`, {
+	return request(LINE_API, path, init);
+}
+
+async function dataLine(path, init = {}) {
+	return request(LINE_DATA_API, path, init);
+}
+
+async function request(base, path, init = {}) {
+	const res = await fetch(`${base}${path}`, {
 		...init,
 		headers: { Authorization: `Bearer ${token()}`, ...(init.headers ?? {}) },
 	});
@@ -298,7 +309,7 @@ async function deploy(imagePath, { dryRun = false } = {}) {
 		body: JSON.stringify(body),
 	})).json();
 
-	await line(`/richmenu/${created.richMenuId}/content`, {
+	await dataLine(`/richmenu/${created.richMenuId}/content`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'image/png' },
 		body: readFileSync(imagePath),
