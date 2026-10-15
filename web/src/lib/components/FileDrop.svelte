@@ -6,6 +6,8 @@
 		ondrop: (files: File[]) => void;
 	}
 
+	const HEIC_TYPES = ['image/heic', 'image/heif'];
+
 	let { count, ondrop }: Props = $props();
 	let input = $state<HTMLInputElement | null>(null);
 	let dragover = $state(false);
@@ -15,7 +17,10 @@
 		if (!list) return [];
 		const out: File[] = [];
 		for (const f of Array.from(list)) {
-			if (!ACCEPTED_TYPES.includes(f.type)) continue;
+			// iOS can hand over HEIC, or an empty type for files from the photo library.
+			// The browser decodes HEIC in Safari, so let those through instead of dropping them.
+			const byName = /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+			if (!ACCEPTED_TYPES.includes(f.type) && !(f.type === '' && byName) && !HEIC_TYPES.includes(f.type)) continue;
 			out.push(f);
 		}
 		return out;
