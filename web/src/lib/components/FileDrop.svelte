@@ -52,10 +52,7 @@
 <div
 	class="upload-zone"
 	class:dragover
-	role="button"
-	tabindex="0"
-	onclick={() => input?.click()}
-	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), input?.click())}
+	role="presentation"
 	ondragover={(e) => {
 		e.preventDefault();
 		dragover = true;
