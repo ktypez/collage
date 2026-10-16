@@ -99,6 +99,8 @@ node scripts/richmenu.mjs --delete richmenu-xxx
 - Vercel project `collage` ต้องตั้ง **Root Directory = `web`**
 - `web/vercel.json` ตั้ง cron เก็บกวาดรูปเก่า ทุกวัน 03:17 UTC
 - Render, Fly.io, Elysia, Bun runtime ถูกเลิกใช้ทั้งหมด
+- **Auto-deploy:** เมื่อ push ไป branch `main` Vercel จะ deploy production อัตโนมัติ (Production Branch = `main`) ไม่ต้องรัน `vercel --prod` ด้วยมือ — ตรวจสอบเฉพาะเมื่อจำเป็นหรือมีเหตุผลแน่ชัด
+- **โดเมน:** `report.mcky.space` ผูกกับ production ของ project `collage` (เช็คชื่อโดเมนกับ project ผ่าน Vercel ก่อน deploy ใหม่)
 
 ## หมายเหตุ
 
