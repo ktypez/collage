@@ -23,7 +23,7 @@
 	let previewOpen = $state(false);
 
 	const todayLabel = $derived(DAY_LABELS[new Date().getDay()]);
-	const previewSrc = $derived(`/previews/pv-${THEME_PREVIEW[theme]}.jpg`);
+	const previewSrc = $derived(`/previews/${THEME_PREVIEW[theme]}`);
 	const previewCap = $derived(THEME_LABELS[theme]);
 	const showDayPicker = $derived(theme === '7days');
 </script>

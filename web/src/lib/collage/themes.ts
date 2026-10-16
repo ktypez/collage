@@ -7,6 +7,8 @@
    ============================================================================= */
 
 export type DayPreset = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
+export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet', 'glitch', 'anime'] as const;
+export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DAY_PRESETS: Record<DayPreset, [string, string, string]> = {
 	sun: ['#DC2626', '#EF4444', '#F87171'],
@@ -403,10 +405,75 @@ export const THEMES = {
 			},
 		},
 	},
+	glitch: {
+		id: 'glitch',
+		name: 'GLITCH MEME',
+		dot: '#00e5ff',
+		ui: {
+			heroMeta: '404: SERIOUSNESS NOT FOUND',
+			genIdle: '> DROP THE RECEIPTS',
+			genReady: '> DEPLOY THE MEMES',
+			genHint: '// chaotic energy, questionable decisions',
+			outputTitle: 'GLITCH MODE · NO CONTEXT',
+			outputTag: 'LOLWUT',
+			uploadText: 'โยนหลักฐานความปั่นมาเลย',
+			logIntro: '$ chaos.exe --send-it',
+		},
+		canvas: {
+			bg: { gradient: ['#100b24', '#17102b', '#080713'], vertical: true },
+			cell: {
+				backplate: { dx: 12, dy: 10, rounded: 3, fill: '#ff2b6d' },
+				border: '#00e5ff', width: 4, rounded: 3, bg: '#171124',
+				label: '?? {n}', labelColor: '#100b24', labelBg: '#b7ff00',
+				labelSize: 22, labelHeight: 38, labelPosition: 'top-left', labelInset: 12,
+				labelRounded: 2,
+				cropMarks: { color: '#ff2b6d', size: 24, width: 4, inset: 8 },
+			},
+			header: {
+				kicker: 'BREAKING: GROUP CHAT', kickerFont: 'mono', kickerColor: '#b7ff00', kickerSize: 22,
+				text: '', color: '#00e5ff', font: 'mono', size: 40, pad: 76, glow: true,
+				align: 'center', ink: '#f7f1ff',
+				stripe: '#ff2b6d', stripeHeight: 12, stripePos: 'top',
+			},
+			photoFx: 'saturate(1.18) brightness(1.03)',
+		},
+	},
+	anime: {
+		id: 'anime',
+		name: 'KAWAII CLUB',
+		dot: '#f29ac2',
+		ui: {
+			heroMeta: 'KAWAII CLUB // AFTER SCHOOL',
+			genIdle: '> PICK YOUR FAVORITE MOMENTS',
+			genReady: '> SPARKLES, ACTIVATE!',
+			genHint: '// pastel skies, tiny heart energy',
+			outputTitle: 'KAWAII CLUB · BESTIES FOREVER',
+			outputTag: 'SWEET!',
+			uploadText: 'เลือกรูปน่ารักๆ มาใส่เลย ♡',
+			logIntro: '$ sparkle.mode --on',
+		},
+		canvas: {
+			bg: { gradient: ['#fff3f8', '#f8f1ff', '#eefaff'], vertical: true },
+			cell: {
+				backplate: { dx: 8, dy: 9, rounded: 28, fill: '#d8c5f4' },
+				border: '#f29ac2', width: 3, rounded: 28, bg: '#fffafd', shadow: 0.08,
+				label: '♡ {n}', labelColor: '#7d568a', labelBg: '#ffe0ee',
+				labelSize: 22, labelHeight: 40, labelPosition: 'bottom-right', labelInset: 12,
+				labelRounded: 20,
+			},
+			header: {
+				kicker: '♡ FRIENDS / LITTLE MOMENTS ♡', kickerFont: 'display', kickerColor: '#a267a2', kickerSize: 22,
+				text: '', color: '#c24c88', font: 'serif', size: 40, pad: 76, glow: false,
+				align: 'center', ink: '#743d77',
+				stripe: '#f9c6dc', stripeHeight: 12, stripePos: 'top',
+			},
+			photoFx: 'saturate(1.08) brightness(1.03)',
+			chrome: {
+				frame: { inset: 26, color: '#f29ac2', width: 3, opacity: 0.42, rounded: 48 },
+			},
+		},
+	},
 } satisfies Record<string, ThemeManifest>;
-
-export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet'] as const;
-export type ThemeId = (typeof THEME_IDS)[number];
 
 /** Chip label + preview caption for each style. */
 export const THEME_LABELS: Record<ThemeId, string> = {
@@ -417,6 +484,8 @@ export const THEME_LABELS: Record<ThemeId, string> = {
 	studio: 'STUDIO',
 	cinema: 'CINEMA',
 	velvet: 'VELVET',
+	glitch: 'GLITCH',
+	anime: 'ANIME',
 };
 
 /** Chip sub-label. */
@@ -428,17 +497,21 @@ export const THEME_SUBS: Record<ThemeId, string> = {
 	studio: 'web',
 	cinema: 'film',
 	velvet: 'album',
+	glitch: 'meme',
+	anime: 'kawaii',
 };
 
 /** Preview thumbnail for each style — one image per theme. */
 export const THEME_PREVIEW: Record<ThemeId, string> = {
-	'7days': '7days',
-	claude: 'claude',
-	lumen: 'lumen',
-	post: 'post',
-	studio: 'studio',
-	cinema: 'cinema',
-	velvet: 'velvet',
+	'7days': 'pv-7days.jpg',
+	claude: 'pv-claude.jpg',
+	lumen: 'pv-lumen.jpg',
+	post: 'pv-post.jpg',
+	studio: 'pv-studio.jpg',
+	cinema: 'pv-cinema.jpg',
+	velvet: 'pv-velvet.jpg',
+	glitch: 'pv-glitch.svg',
+	anime: 'pv-anime.svg',
 };
 
 export function defaultPreset(): DayPreset {
