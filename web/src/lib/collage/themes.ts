@@ -510,8 +510,8 @@ export const THEME_PREVIEW: Record<ThemeId, string> = {
 	studio: 'pv-studio.jpg',
 	cinema: 'pv-cinema.jpg',
 	velvet: 'pv-velvet.jpg',
-	glitch: 'pv-glitch.svg',
-	anime: 'pv-anime.svg',
+	glitch: 'pv-glitch.jpg',
+	anime: 'pv-anime.jpg',
 };
 
 export function defaultPreset(): DayPreset {
