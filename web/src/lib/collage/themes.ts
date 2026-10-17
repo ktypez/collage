@@ -430,7 +430,6 @@ export const THEMES = {
 				cropMarks: { color: '#ff2b6d', size: 24, width: 4, inset: 8 },
 			},
 			header: {
-				kicker: 'BREAKING: GROUP CHAT', kickerFont: 'mono', kickerColor: '#b7ff00', kickerSize: 22,
 				text: '', color: '#00e5ff', font: 'mono', size: 40, pad: 76, glow: true,
 				align: 'center', ink: '#f7f1ff',
 				stripe: '#ff2b6d', stripeHeight: 12, stripePos: 'top',
@@ -462,7 +461,6 @@ export const THEMES = {
 				labelRounded: 20,
 			},
 			header: {
-				kicker: '♡ FRIENDS / LITTLE MOMENTS ♡', kickerFont: 'display', kickerColor: '#a267a2', kickerSize: 22,
 				text: '', color: '#c24c88', font: 'serif', size: 40, pad: 76, glow: false,
 				align: 'center', ink: '#743d77',
 				stripe: '#f9c6dc', stripeHeight: 12, stripePos: 'top',
