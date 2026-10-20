@@ -129,8 +129,12 @@ node scripts/richmenu.mjs --delete richmenu-xxx
 - `renderThemed()` yield ด้วย `requestAnimationFrame` ระหว่าง 3 phase
   (backdrop → photos → foreground) ให้หน้าจอไม่ค้างและสถานะ "กำลังสร้างภาพ" วาดได้
 - `/api/collage` อัปโหลดขึ้น R2 **2 ไฟล์พร้อมกัน** (`Promise.all`) ไม่ต้องรอกัน
-- รูปตัวอย่างใน `web/static/previews/` ยังเป็นเวอร์ชันฟอนต์เก่า (ยังไม่ได้ re-render)
-  — ต้องมีรูปต้นฉบับของแต่ละธีมถึงจะ re-render ให้ตรงกันได้
+- รูปตัวอย่างใน `web/static/previews/` **re-render ใหม่แล้ว** (commit `0c67028`) — สร้างจาก
+ แอปจริงด้วยรูป Unsplash 6 ใบ (seed `team-a`..`team-f`, picsum.photos) ย่อเหลือ 1400px
+ q84 (~210KB/ไฟล์) ใช้แค่ใน theme picker จึงไม่ต้องเต็ม 2160px
+ ถ้าจะ re-render ใหม่: เปิด dev server แล้วรันสคริปต์ที่ไล่ธีมทั้ง 9 แล้ว save ผลจาก
+ `<img class="result-img">` (blob URL ของ JPEG ที่แอปเพิ่งเรนเดอร์) — อย่าเรนเดอร์เอง
+ เพราะฟอนต์ไทยต้องให้เบราว์เซอร์ shape เอง
 - `web/src/lib/collage/layout.ts` ต้องคงค่าคงที่เดิมไว้ ไม่งั้นผลลัพธ์จะต่างจากเวอร์ชันก่อน
 - `web/src/lib/server/` คือโฟลเดอร์ที่ SvelteKit บล็อกไม่ให้เข้า client bundle — อย่าย้าย
   `r2.ts` ออกไปข้างบน ไม่งั้น secret จะหลุด
