@@ -473,14 +473,14 @@ export const THEMES = {
 	},
 	tape: {
 		id: 'tape',
-		name: 'WASHI TAPE',
+		name: 'WASHI',
 		dot: '#7a9e7e',
 		ui: {
 			heroMeta: 'WASHI // TAPE',
 			genIdle: '> STICK IT',
 			genReady: '> WASHI READY',
 			genHint: '// clear tape, sage paper',
-			outputTitle: 'WASHI TAPE · READY',
+			outputTitle: 'WASHI · READY',
 			outputTag: 'WASHI',
 			uploadText: 'เลือกรูปสำหรับเทปวาชิ',
 			logIntro: '$ washi.stick --ready',
@@ -589,7 +589,7 @@ export const THEME_LABELS: Record<ThemeId, string> = {
 	velvet: 'VELVET',
 	glitch: 'GLITCH',
 	anime: 'ANIME',
-	tape: 'WASHI TAPE',
+	tape: 'WASHI',
 	polar: 'POLAROID',
 	press: 'PRESS',
 };
