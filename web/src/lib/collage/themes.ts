@@ -7,7 +7,7 @@
    ============================================================================= */
 
 export type DayPreset = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
-export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet', 'glitch', 'anime', 'tape', 'polar', 'press', 'brutal', 'retro', 'neon'] as const;
+export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet', 'glitch', 'anime', 'tape', 'polar', 'press', 'mono', 'film', 'scrap'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DAY_PRESETS: Record<DayPreset, [string, string, string]> = {
@@ -473,37 +473,145 @@ export const THEMES = {
 	},
 	tape: {
 		id: 'tape',
-		name: 'PAPER TAPE',
-		dot: '#e8d9a8',
+		name: 'CLEAR TAPE',
+		dot: '#d9c9a0',
 		ui: {
-			heroMeta: 'TAPE // MEMO',
+			heroMeta: 'TAPE // CLEAR',
 			genIdle: '> TAPE IT',
 			genReady: '> TAPED',
-			genHint: '// paper, tape, a little crooked',
-			outputTitle: 'PAPER TAPE · READY',
+			genHint: '// clear tape, torn edges',
+			outputTitle: 'CLEAR TAPE · READY',
 			outputTag: 'MEMO',
 			uploadText: 'วางรูปลงบนกระดาษโน้ต',
-			logIntro: '$ tape.memo --stick',
+			logIntro: '$ tape.clear --stick',
 		},
 		canvas: {
-			bg: '#f7f2e8',
+			bg: '#f2ebdc',
 			cell: {
-				border: '#e8e0d4', width: 1, rounded: 6, bg: '#ffffff', shadow: 0.08,
-				backplate: { dx: 6, dy: 8, rounded: 6, fill: '#e8d9a8' },
-				label: '{n}', labelColor: '#3a3226', labelBg: '#e8d9a8',
+				border: '#d9c9a0', width: 1, rounded: 4, bg: '#fffdf7', shadow: 0.12,
+				backplate: { dx: 8, dy: 10, rounded: 4, fill: '#d9c9a0' },
+				label: '{n}', labelColor: '#3a3226', labelBg: '#d9c9a0',
 				labelSize: 16, labelHeight: 22, labelPad: 10,
 				labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
 			},
 			header: {
-				kicker: 'MEMO / 01', kickerFont: 'serif', kickerColor: '#8a7a55', kickerSize: 22,
+				kicker: 'TAPE / 01', kickerFont: 'serif', kickerColor: '#8a7a55', kickerSize: 22,
 				text: '', color: '#3a3226', font: 'serif', size: 40, pad: 48, glow: false,
 				align: 'left', margin: 120, ink: '#3a3226',
-				stripe: '#e8d9a8', stripeHeight: 6, stripePos: 'top',
+				stripe: '#d9c9a0', stripeHeight: 8, stripePos: 'top',
 			},
 			overlay: 'none',
 			photoFx: 'none',
 			chrome: {
-				frame: { inset: 16, color: '#e8e0d4', width: 1, opacity: 0.8, rounded: 10 },
+				frame: { inset: 16, color: '#d9c9a0', width: 1, opacity: 0.9, rounded: 6 },
+			},
+		},
+	},
+	mono: {
+		id: 'mono',
+		name: 'MONO INK',
+		dot: '#1a1a1a',
+		ui: {
+			heroMeta: 'MONO // INK',
+			genIdle: '> INK IT',
+			genReady: '> PRINTED',
+			genHint: '// black ink on cream',
+			outputTitle: 'MONO INK · READY',
+			outputTag: 'INK',
+			uploadText: 'เลือกรูปสำหรับหมึกดำ',
+			logIntro: '$ mono.ink --print',
+		},
+		canvas: {
+			bg: '#f5f1e8',
+			cell: {
+				border: '#1a1a1a', width: 2, rounded: 0, bg: '#ffffff', shadow: 0,
+				cropMarks: { color: '#1a1a1a', size: 22, width: 2, inset: 8 },
+				label: 'NO.{n}', labelColor: '#ffffff', labelBg: '#1a1a1a',
+				labelSize: 16, labelHeight: 26, labelPad: 8,
+				labelPosition: 'top-left', labelInset: 8, labelRounded: 0,
+			},
+			header: {
+				kicker: 'MONO / 01', kickerFont: 'mono', kickerColor: '#5a5a5a', kickerSize: 20,
+				text: '', color: '#1a1a1a', font: 'mono', size: 40, pad: 60, glow: false,
+				align: 'left', margin: 120, ink: '#1a1a1a',
+				stripe: '#1a1a1a', stripeHeight: 2, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'grayscale',
+			chrome: {
+				frame: { inset: 20, color: '#1a1a1a', width: 2, opacity: 0.9, rounded: 0 },
+			},
+		},
+	},
+	film: {
+		id: 'film',
+		name: 'FILM STRIP',
+		dot: '#3a2a1a',
+		ui: {
+			heroMeta: 'FILM STRIP // 35MM',
+			genIdle: '> EXPOSE',
+			genReady: '> DEVELOPED',
+			genHint: '// 35mm film, sprocket holes',
+			outputTitle: 'FILM STRIP · READY',
+			outputTag: '35MM',
+			uploadText: 'เลือกรูปสำหรับฟิล์ม 35 มม.',
+			logIntro: '$ film.expose --ready',
+		},
+		canvas: {
+			bg: '#1a1410',
+			cell: {
+				border: '#3a2a1a', width: 2, rounded: 0, bg: '#2a1f18', shadow: 0.2,
+				label: 'FR.{n}', labelColor: '#f4e4c1', labelBg: '#3a2a1a',
+				labelSize: 16, labelHeight: 26, labelPad: 8,
+				labelPosition: 'bottom-right', labelInset: 10, labelRounded: 0,
+			},
+			header: {
+				kicker: '35MM / 01', kickerFont: 'mono', kickerColor: '#d4a373', kickerSize: 20,
+				text: '', color: '#d4a373', font: 'mono', size: 40, pad: 60, glow: false,
+				align: 'left', margin: 120, ink: '#f4e4c1',
+				stripe: '#d4a373', stripeHeight: 4, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(0.9) brightness(0.95) contrast(1.05)',
+			chrome: {
+				frame: { inset: 16, color: '#d4a373', width: 2, opacity: 0.6, rounded: 0 },
+				filmPerforations: { width: 16, height: 26, gap: 70, pad: 12, color: '#f4e4c1', opacity: 0.5, rounded: 2, start: 40 },
+			},
+		},
+	},
+	scrap: {
+		id: 'scrap',
+		name: 'SCRAPBOOK',
+		dot: '#c9a227',
+		ui: {
+			heroMeta: 'SCRAPBOOK // MIXED',
+			genIdle: '> SCRAP IT',
+			genReady: '> SCRAPBOOK READY',
+			genHint: '// torn paper, mixed fonts',
+			outputTitle: 'SCRAPBOOK · READY',
+			outputTag: 'SCRAP',
+			uploadText: 'เลือกรูปสำหรับสมุดตัดปะ',
+			logIntro: '$ scrapbook.mix --ready',
+		},
+		canvas: {
+			bg: { gradient: ['#f0e6d2', '#e8d9b8', '#f5ecd6'], vertical: true },
+			cell: {
+				border: '#b8956a', width: 2, rounded: 8, bg: '#fffaf0', shadow: 0.12,
+				backplate: { dx: 6, dy: 8, rounded: 8, fill: '#c9a227' },
+				label: '{n}', labelColor: '#fffaf0', labelBg: '#c9a227',
+				labelSize: 18, labelHeight: 26, labelPad: 10,
+				labelPosition: 'bottom-right', labelInset: 10, labelRounded: 12,
+			},
+			header: {
+				kicker: 'SCRAP / 01', kickerFont: 'serif', kickerColor: '#8b6f47', kickerSize: 22,
+				text: '', color: '#5a3e2b', font: 'serif', size: 44, pad: 60, glow: false,
+				align: 'center', ink: '#5a3e2b',
+				stripe: '#c9a227', stripeHeight: 8, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(0.95) brightness(1.03)',
+			chrome: {
+				frame: { inset: 18, color: '#b8956a', width: 2, opacity: 0.6, rounded: 12 },
 			},
 		},
 	},
@@ -576,114 +684,6 @@ export const THEMES = {
 			},
 		},
 	},
-	brutal: {
-		id: 'brutal',
-		name: 'BRUTAL',
-		dot: '#f5d547',
-		ui: {
-			heroMeta: 'BRUTAL // BLOCK',
-			genIdle: '> BLOCK IT',
-			genReady: '> BRUTAL READY',
-			genHint: '// hard edges, loud accent',
-			outputTitle: 'BRUTAL · READY',
-			outputTag: 'BLOCK',
-			uploadText: 'เลือกรูปสำหรับบล็อกนี้',
-			logIntro: '$ brutal.block --ready',
-		},
-		canvas: {
-			bg: '#f5d547',
-			cell: {
-				border: '#0a0a0a', width: 4, rounded: 0, bg: '#ffffff', shadow: 0.18,
-				backplate: { dx: 12, dy: 12, rounded: 0, fill: '#0a0a0a' },
-				label: '{n}', labelColor: '#f5d547', labelBg: '#0a0a0a',
-				labelSize: 24, labelHeight: 34, labelPad: 12,
-				labelPosition: 'top-left', labelInset: 10, labelRounded: 0,
-			},
-			header: {
-				kicker: 'BLOCK / 01', kickerFont: 'mono', kickerColor: '#0a0a0a', kickerSize: 24,
-				text: '', color: '#0a0a0a', font: 'display', size: 44, pad: 60, glow: false,
-				align: 'left', margin: 120, ink: '#0a0a0a',
-				stripe: '#0a0a0a', stripeHeight: 12, stripePos: 'top',
-			},
-			overlay: 'none',
-			photoFx: 'saturate(1.15) brightness(1.05)',
-			chrome: {
-				frame: { inset: 16, color: '#0a0a0a', width: 4, opacity: 1, rounded: 0 },
-			},
-		},
-	},
-	retro: {
-		id: 'retro',
-		name: 'RETRO FILM',
-		dot: '#d4a373',
-		ui: {
-			heroMeta: 'RETRO FILM // VINTAGE',
-			genIdle: '> EXPOSE',
-			genReady: '> DEVELOPED',
-			genHint: '// warm light, soft grain',
-			outputTitle: 'RETRO FILM · READY',
-			outputTag: 'EXPOSED',
-			uploadText: 'เลือกรูปสำหรับฟิล์มย้อนยุค',
-			logIntro: '$ retro.develop --ready',
-		},
-		canvas: {
-			bg: { gradient: ['#d4a373', '#e9c46a', '#f4a261'], vertical: true },
-			cell: {
-				border: '#a07850', width: 2, rounded: 22, bg: '#fff8eb', shadow: 0.1,
-				label: 'FR.{n}', labelColor: '#fff8eb', labelBg: '#a07850',
-				labelSize: 16, labelHeight: 24, labelPad: 10,
-				labelPosition: 'bottom-right', labelInset: 12, labelRounded: 12,
-			},
-			header: {
-				kicker: 'RETRO / 01', kickerFont: 'serif', kickerColor: '#5a3e2b', kickerSize: 22,
-				text: '', color: '#5a3e2b', font: 'serif', size: 44, pad: 60, glow: false,
-				align: 'center', ink: '#5a3e2b',
-				stripe: '#5a3e2b', stripeHeight: 6, stripePos: 'top',
-			},
-			overlay: 'none',
-			photoFx: 'saturate(0.88) brightness(1.06)',
-			chrome: {
-				frame: { inset: 24, color: '#5a3e2b', width: 2, opacity: 0.5, rounded: 30 },
-				filmPerforations: { width: 18, height: 30, gap: 90, pad: 14, color: '#5a3e2b', opacity: 0.35, rounded: 3, start: 60 },
-			},
-		},
-	},
-	neon: {
-		id: 'neon',
-		name: 'NEON NIGHT',
-		dot: '#00e5ff',
-		ui: {
-			heroMeta: 'NEON NIGHT // GLOW',
-			genIdle: '> IGNITE',
-			genReady: '> NEON READY',
-			genHint: '// glow in the dark',
-			outputTitle: 'NEON NIGHT · READY',
-			outputTag: 'GLOW',
-			uploadText: 'เลือกรูปสำหรับค่ำคืนนี้',
-			logIntro: '$ neon.ignite --ready',
-		},
-		canvas: {
-			bg: { gradient: ['#0a0a14', '#12122a', '#050510'], vertical: true },
-			cell: {
-				border: '#00e5ff', width: 2, rounded: 14, bg: '#0f1020', shadow: 0.35,
-				backplate: { dx: 0, dy: 0, rounded: 14, fill: '#00e5ff' },
-				label: '{n}', labelColor: '#0a0a14', labelBg: '#00e5ff',
-				labelSize: 16, labelHeight: 22, labelPad: 10,
-				labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
-			},
-			header: {
-				kicker: 'NEON / 01', kickerFont: 'mono', kickerColor: '#ff2d95', kickerSize: 24,
-				text: '', color: '#00e5ff', font: 'mono', size: 44, pad: 60, glow: true,
-				align: 'center', ink: '#00e5ff',
-				stripe: '#ff2d95', stripeHeight: 4, stripePos: 'top',
-			},
-			overlay: 'none',
-			photoFx: 'saturate(1.3) brightness(1.05)',
-			chrome: {
-				frame: { inset: 18, color: '#00e5ff', width: 2, opacity: 0.5, rounded: 20 },
-			},
-		},
-	},
 } satisfies Record<string, ThemeManifest>;
 
 /** Chip label + preview caption for each style. */
@@ -697,12 +697,12 @@ export const THEME_LABELS: Record<ThemeId, string> = {
 	velvet: 'VELVET',
 	glitch: 'GLITCH',
 	anime: 'ANIME',
-	tape: 'PAPER TAPE',
+	mono: 'MONO INK',
+	film: 'FILM STRIP',
+	scrap: 'SCRAPBOOK',
+	tape: 'CLEAR TAPE',
 	polar: 'POLAROID',
 	press: 'PRESS',
-	brutal: 'BRUTAL',
-	retro: 'RETRO FILM',
-	neon: 'NEON NIGHT',
 };
 
 /** Chip sub-label. */
@@ -716,12 +716,12 @@ export const THEME_SUBS: Record<ThemeId, string> = {
 	velvet: 'album',
 	glitch: 'meme',
 	anime: 'kawaii',
-	tape: 'memo',
+	mono: 'ink',
+	film: 'strip',
+	scrap: 'collage',
+	tape: 'clear',
 	polar: 'snapshot',
 	press: 'print',
-	brutal: 'block',
-	retro: 'vintage',
-	neon: 'glow',
 };
 
 /** Preview thumbnail for each style — one image per theme. */
@@ -735,12 +735,12 @@ export const THEME_PREVIEW: Record<ThemeId, string> = {
 	velvet: 'pv-velvet.jpg',
 	glitch: 'pv-glitch.jpg',
 	anime: 'pv-anime.jpg',
+	mono: 'pv-mono.jpg',
+	film: 'pv-film.jpg',
+	scrap: 'pv-scrap.jpg',
 	tape: 'pv-tape.jpg',
 	polar: 'pv-polar.jpg',
 	press: 'pv-press.jpg',
-	brutal: 'pv-brutal.jpg',
-	retro: 'pv-retro.jpg',
-	neon: 'pv-neon.jpg',
 };
 
 export function defaultPreset(): DayPreset {
