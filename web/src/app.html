@@ -7,6 +7,9 @@
 		<meta name="theme-color" content="#151311" media="(prefers-color-scheme: dark)" />
 		<meta name="description" content="สร้างคอลลาจจากรูปกลุ่ม ทั้งดาวน์โหลดหรือส่งเข้า LINE" />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<!-- the primary face is needed for the first paint and for every collage
+		     render; the rest load on demand -->
+		<link rel="preload" href="/fonts/NotoSansThai.woff2" as="font" type="font/woff2" crossorigin />
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

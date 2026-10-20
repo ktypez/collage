@@ -152,11 +152,3 @@ export function makeGradient(
 	stops.forEach((s, i) => g.addColorStop(i / span, toRgba(s)));
 	return g;
 }
-
-/** Detect a light background so header text flips to dark ink. */
-export function isLightBg(c: { bg: string | { gradient: string[] } }): boolean {
-	const first =
-		typeof c.bg === 'string' ? c.bg : (c.bg.gradient?.[0] ?? '#ffffff');
-	const { r, g, b } = parseColor(first);
-	return (r * 299 + g * 587 + b * 114) / 1000 > 140;
-}

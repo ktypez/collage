@@ -34,27 +34,70 @@ const FONT_SANS = "'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', Robot
 function fontFor(kind: FontKind, size: number, weight?: number) {
 	const family =
 		kind === 'mono' ? FONT_MONO : kind === 'serif' ? FONT_SERIF : kind === 'display' ? FONT_DISPLAY : FONT_SANS;
-	const w = weight ?? (kind === 'display' ? 600 : 400);
+	// Pixel's system text reads chunky because the UI face is drawn at medium
+	// weight with a tight tracking. Noto Sans Thai is a variable font
+	// (wght 100-900), so these are real weights, not a faux-bold stroke.
+	const w = weight ?? (kind === 'display' ? 700 : kind === 'serif' ? 500 : kind === 'sans' ? 500 : 400);
 	return `${w} ${size}px ${family}`;
 }
 
-/**
- * Force every face we draw with to load. `document.fonts.ready` alone is not
- * enough — a face that has not been requested yet is never fetched, and the
- * first render would silently fall back.
- */
-async function ensureFonts() {
+/** `ctx.letterSpacing` is Chromium/Safari 18+; older engines ignore it. */
+function setLetterSpacing(ctx: CanvasRenderingContext2D, value: string | undefined) {
+	if (!value) return;
+	try {
+		(ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = value;
+	} catch {
+		/* not supported — tracking stays at the default */
+	}
+}
+
+/* Faces are loaded per group, so a theme only pays for the families it draws,
+   and every face is cached: the second render of a session fetches nothing.
+   `document.fonts.ready` alone is not enough — a face that has not been
+   requested yet is never fetched, and the first render would silently fall
+   back to the system font. */
+type FaceGroup = 'sans' | 'serif' | 'mono';
+
+const FACE_SPECS: Record<FaceGroup, string[]> = {
+	sans: ['400 57px "Noto Sans Thai"', '500 132px "Noto Sans Thai"', '700 132px "Noto Sans Thai"'],
+	serif: ['400 132px "Source Serif 4"', '400 57px "Noto Serif Thai"'],
+	mono: ['400 57px "JetBrains Mono"', '400 26px "JetBrains Mono"'],
+};
+
+const loadedFaces = new Set<string>();
+const facePromises = new Map<string, Promise<void>>();
+
+function loadFace(spec: string): Promise<void> {
+	if (loadedFaces.has(spec)) return Promise.resolve();
+	let pending = facePromises.get(spec);
+	if (!pending) {
+		pending = document.fonts
+			.load(spec)
+			.then(() => {
+				loadedFaces.add(spec);
+			})
+			.catch(() => {
+				/* a face that fails to load just falls back */
+			});
+		facePromises.set(spec, pending);
+	}
+	return pending;
+}
+
+async function ensureFonts(groups: FaceGroup[]) {
 	if (typeof document === 'undefined' || !document.fonts?.load) return;
-	const specs = [
-		'600 132px "Noto Sans Thai"',
-		'400 57px "JetBrains Mono"',
-		'400 132px "Source Serif 4"',
-		'400 57px "Noto Serif Thai"',
-		'400 132px "Noto Sans Thai"',
-		'700 132px "Noto Sans Thai"',
-	];
-	await Promise.all(specs.map((s) => document.fonts.load(s).catch(() => {})));
+	await Promise.all(groups.flatMap((g) => FACE_SPECS[g]).map(loadFace));
 	await document.fonts.ready;
+}
+
+/** Which families a manifest actually draws with. */
+function faceGroupsFor(manifest: ThemeManifest): FaceGroup[] {
+	const groups: FaceGroup[] = ['sans'];
+	const hd = manifest.canvas.header ?? {};
+	if (hd.font === 'serif') groups.push('serif');
+	if (hd.font === 'mono') groups.push('mono');
+	if (manifest.canvas.cell?.label || manifest.canvas.dayStrip) groups.push('mono');
+	return groups;
 }
 
 /* ---------- low-level canvas helpers ---------- */
@@ -83,12 +126,22 @@ function drawText(
 	text: string,
 	x: number,
 	y: number,
-	opts: { size: number; font: FontKind; color: string; align?: CanvasTextAlign; weight?: number; glow?: string | null },
+	opts: {
+		size: number;
+		font: FontKind;
+		color: string;
+		align?: CanvasTextAlign;
+		weight?: number;
+		glow?: string | null;
+		/** tracking, e.g. '-1.3px' */
+		tracking?: string;
+	},
 ) {
 	ctx.save();
 	ctx.font = fontFor(opts.font, opts.size, opts.weight);
 	ctx.textAlign = opts.align ?? 'left';
 	ctx.textBaseline = 'alphabetic';
+	setLetterSpacing(ctx, opts.tracking);
 	if (opts.glow) {
 		ctx.shadowColor = opts.glow;
 		ctx.shadowBlur = 8;
@@ -156,13 +209,32 @@ function fillBackground(ctx: CanvasRenderingContext2D, bg: ThemeManifest['canvas
 
 /* ---------- image loading ---------- */
 
+/* Decoded photos are cached per File: regenerating with the same photos (the
+   common case when only the name, date or style changed) must not decode
+   20 megapixel JPEGs again. */
+const decodedImages = new WeakMap<File, HTMLImageElement>();
+
 export function loadImage(file: File | Blob): Promise<HTMLImageElement> {
+	if (file instanceof File) {
+		const hit = decodedImages.get(file);
+		if (hit) return Promise.resolve(hit);
+	}
 	return new Promise((resolve, reject) => {
 		const url = URL.createObjectURL(file);
 		const img = new Image();
-		img.onload = () => {
+		const done = () => {
 			URL.revokeObjectURL(url);
+			if (file instanceof File) decodedImages.set(file, img);
 			resolve(img);
+		};
+		img.onload = () => {
+			// decode() hands the bitmap to the compositor off the main thread;
+			// onload only means the bytes are parsed.
+			if (typeof img.decode === 'function') {
+				img.decode().then(done, done);
+			} else {
+				done();
+			}
 		};
 		img.onerror = () => {
 			URL.revokeObjectURL(url);
@@ -237,6 +309,11 @@ function drawPhotoFx(
 
 /* ---------- public API ---------- */
 
+/** Hand the frame back to the browser so the UI can paint mid-render. */
+function nextFrame(): Promise<void> {
+	return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 export interface RenderOpts {
 	name: string;
 	date: string;
@@ -245,8 +322,8 @@ export interface RenderOpts {
 }
 
 export async function renderCollage(images: HTMLImageElement[], opts: RenderOpts): Promise<HTMLCanvasElement> {
-	await ensureFonts();
 	const manifest = THEMES[opts.theme] ?? THEMES['7days'];
+	await ensureFonts(faceGroupsFor(manifest));
 	return renderThemed(images, opts, manifest);
 }
 
@@ -264,16 +341,34 @@ export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.95): Promise
  *  at bubble size on a 3x screen, a quarter of the pixels to fetch. */
 export const PREVIEW_WIDTH = 1080;
 
-/** The preview LINE shows in the chat. The full sheet is what opens on tap. */
-export function makePreview(canvas: HTMLCanvasElement, width = PREVIEW_WIDTH): HTMLCanvasElement {
+/** The preview LINE shows in the chat. The full sheet is what opens on tap.
+ *  `createImageBitmap` with a resize is much cheaper than redrawing the
+ *  2160px sheet into a second canvas — it scales in the decoder. */
+export async function makePreview(canvas: HTMLCanvasElement, width = PREVIEW_WIDTH): Promise<HTMLCanvasElement> {
 	const scale = Math.min(1, width / canvas.width);
 	const out = document.createElement('canvas');
-	out.width = Math.round(canvas.width * scale);
-	out.height = Math.round(canvas.height * scale);
+	out.width = Math.max(1, Math.round(canvas.width * scale));
+	out.height = Math.max(1, Math.round(canvas.height * scale));
 	const ctx = out.getContext('2d');
 	if (!ctx) throw new Error('Could not create preview canvas');
 	ctx.imageSmoothingEnabled = true;
 	ctx.imageSmoothingQuality = 'high';
+
+	if (typeof createImageBitmap === 'function') {
+		try {
+			const bitmap = await createImageBitmap(canvas, {
+				resizeWidth: out.width,
+				resizeHeight: out.height,
+				resizeQuality: 'high',
+			});
+			ctx.drawImage(bitmap, 0, 0);
+			bitmap.close?.();
+			return out;
+		} catch {
+			/* resize options unsupported — fall through to the plain draw */
+		}
+	}
+
 	ctx.drawImage(canvas, 0, 0, out.width, out.height);
 	return out;
 }
@@ -281,7 +376,11 @@ export function makePreview(canvas: HTMLCanvasElement, width = PREVIEW_WIDTH): H
 /* =============================================================================
    Manifest renderer — one pass for every theme
    ============================================================================= */
-function renderThemed(images: HTMLImageElement[], opts: RenderOpts, manifest: ThemeManifest): HTMLCanvasElement {
+async function renderThemed(
+	images: HTMLImageElement[],
+	opts: RenderOpts,
+	manifest: ThemeManifest,
+): Promise<HTMLCanvasElement> {
 	const date = fmtDate(opts.date);
 	const c = manifest.canvas;
 	const cell = c.cell ?? {};
@@ -358,13 +457,24 @@ function renderThemed(images: HTMLImageElement[], opts: RenderOpts, manifest: Th
 	if (opts.name) {
 		const nameSize = Math.round(HEADER_H * (hasBoth ? 0.3 : 0.34));
 		drawText(ctx, opts.name, textX, Math.round(HEADER_H * (hasBoth ? 0.47 : 0.55)), {
-			size: nameSize, font: nameFont, color: hexToRgba(ink, 0.9), align, glow,
+			size: nameSize,
+			font: nameFont,
+			color: hexToRgba(ink, 0.9),
+			align,
+			glow,
+			// tight tracking is what makes the display face read like a system
+			// UI font instead of a wide book face
+			tracking: `${(-nameSize * 0.012).toFixed(2)}px`,
 		});
 	}
 	{
 		const dateSize = Math.round(HEADER_H * 0.13);
 		drawText(ctx, date, textX, Math.round(HEADER_H * (hasBoth ? 0.78 : 0.55)), {
-			size: dateSize, font: nameFont, color: hexToRgba(ink, 0.8), align,
+			size: dateSize,
+			font: nameFont,
+			color: hexToRgba(ink, 0.8),
+			align,
+			tracking: `${(-dateSize * 0.008).toFixed(2)}px`,
 		});
 	}
 
@@ -405,6 +515,10 @@ function renderThemed(images: HTMLImageElement[], opts: RenderOpts, manifest: Th
 	}
 
 	/* ---------------- 2. photos ---------------- */
+	// A 2160px sheet takes seconds of main-thread time; handing the frame back
+	// between phases lets the loading state paint instead of freezing.
+	await nextFrame();
+
 	const fx = c.photoFx && c.photoFx !== 'none' ? c.photoFx : null;
 	const photoRadius = cell.rounded ? Math.min(14, cell.rounded) : 0;
 	if (fx && supportsFilter()) {
@@ -431,6 +545,7 @@ function renderThemed(images: HTMLImageElement[], opts: RenderOpts, manifest: Th
 	}
 
 	/* ---------------- 3. foreground ---------------- */
+	await nextFrame();
 
 	// day strip (7 DAYS only)
 	if (c.dayStrip && preset && DAY_PRESETS[preset]) {

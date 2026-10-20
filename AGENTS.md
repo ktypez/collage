@@ -46,7 +46,7 @@ CORS และไม่มี service ที่ต้องคอยให้ต
 | `web/src/routes/api/cleanup/+server.ts` | ลบรูปเก่ากว่า 7 วัน (cron) |
 | `web/src/routes/api/webhook/+server.ts` | LINE Messaging API webhook |
 | `web/src/app.css` | design system ทั้งหมด (token, component class, `@font-face`) — แก้ที่เดียว |
-| `web/static/fonts/` | ฟอนต์ self-host 4 ตัว (ไม่ใช้ Google Fonts) — Chakra Petch ปลดระวางแล้ว ดู `render.ts` |
+| `web/static/fonts/` | ฟอนต์ self-host 4 ตัวเป็น **woff2 subset** (Latin+Thai+punctuation, 464KB จากเดิม 1.8MB) — ไม่ใช้ Google Fonts ดู `render.ts` |
 | `web/static/previews/` | รูปตัวอย่าง output ต่อธีม (`pv-<id>.jpg`) + `og.jpg` |
 
 ธีมทั้ง 7: `7days`, `claude`, `lumen`, `post`, `studio`, `cinema`, `velvet`
@@ -60,6 +60,7 @@ bun install
 bun run dev        # http://localhost:5173
 bun run check      # svelte-check + tsc
 bun run build
+npm test           # node --test test/*.test.mjs — เลย์เอร์ + manifest (ไม่ต้องมี browser)
 ```
 
 ต้องใช้ Bun (`bun` อยู่ที่ `~/.bun/bin`)
@@ -110,9 +111,26 @@ node scripts/richmenu.mjs --delete richmenu-xxx
 - ผลลัพธ์ canvas ตรงกับ pipeline sharp เดิม: ขนาดเท่ากันทุกธีม และส่วนล่างของภาพ
   ต่างกัน <1% ของพิกเซล — ที่ต่างคือ rasterize ตัวอักษรในหัวเรื่องเท่านั้น
 - ฟอนต์เหลือ 4 ตัว (Noto Sans Thai, JetBrains Mono, Source Serif 4, Noto Serif Thai)
-  Chakra Petch ถูกปลดระวางทั้ง UI, ธีมคอลลาจ และ rich menu — 'display' ใน manifest
-  ตอนนี้คือ Noto Sans Thai น้ำหนัก 600 (ดู `FONT_DISPLAY` ใน `render.ts`)
-  หลังเปลี่ยนฟอนต์ หัวเรื่อง 7 DAYS กว้าง 1075px เทียบกับ 1072px เดิม จึงยังไม่ล้นกรอบ
+  Chakra Petch ถูกปลดระวางทั้ง UI, ธีมคอลลาจ และ rich menu
+- **ฟอนต์เป็น woff2 subset** ไม่ใช่ TTF: subset เหลือ Latin + ไทย 87 ตัวอักษร
+  + punctuation (1.8MB → 464KB) สร้างด้วย `pyftsubset ... --flavor=woff2 --unicodes=...`
+  (ต้องมี `fonttools` + `brotli`) แกน `wght` ยังอยู่ครบ — Noto Sans Thai เป็น variable font
+  100–900 ทำให้ "หนาขึ้น" ได้ด้วย weight จริง ไม่ใช่ faux bold
+  ถ้าขยายชุดอักษรต้องแก้ `web/scripts/richmenu.mjs` ด้วย (มัน inline ไฟล์ฟอนต์ชุดเดียวกัน)
+- `'display'` ใน manifest = Noto Sans Thai **weight 700** + tracking ติดลบ (เลียนแบบ
+  system font ของ Pixel) — ถ้าลดกลับไป 600 หัวเรื่องจะดูบางกว่าที่ตั้งใจ
+  วัด ink ของข้อความหัวเรื่อง: 400 = 8.2M, 500 = 9.6M, 600 = 10.9M, 700 = 12.1M
+- `ensureFonts()` โหลดฟอนต์เฉพาะที่ธีมนั้นใช้ และ **cache ต่อ face** — ครั้งที่สอง
+  ใน session เดียวกันไม่ fetch ซ้ำ
+- `loadImages()` cache รูปที่ decode แล้วไว้ใน `WeakMap<File, …>` — เปลี่ยนแค่ชื่อ/วันที่
+  แล้วกดใหม่ไม่ต้อง decode รูปใหม่
+- `makePreview()` ใช้ `createImageBitmap(canvas, {resizeWidth…})` แทนการวาด canvas
+  2160px ซ้ำสองรอบ
+- `renderThemed()` yield ด้วย `requestAnimationFrame` ระหว่าง 3 phase
+  (backdrop → photos → foreground) ให้หน้าจอไม่ค้างและสถานะ "กำลังสร้างภาพ" วาดได้
+- `/api/collage` อัปโหลดขึ้น R2 **2 ไฟล์พร้อมกัน** (`Promise.all`) ไม่ต้องรอกัน
+- รูปตัวอย่างใน `web/static/previews/` ยังเป็นเวอร์ชันฟอนต์เก่า (ยังไม่ได้ re-render)
+  — ต้องมีรูปต้นฉบับของแต่ละธีมถึงจะ re-render ให้ตรงกันได้
 - `web/src/lib/collage/layout.ts` ต้องคงค่าคงที่เดิมไว้ ไม่งั้นผลลัพธ์จะต่างจากเวอร์ชันก่อน
 - `web/src/lib/server/` คือโฟลเดอร์ที่ SvelteKit บล็อกไม่ให้เข้า client bundle — อย่าย้าย
   `r2.ts` ออกไปข้างบน ไม่งั้น secret จะหลุด

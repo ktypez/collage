@@ -32,6 +32,9 @@
 	let preset = $state<DayPreset>(defaultPreset());
 	let busy = $state(false);
 	let status = $state<{ text: string; kind: 'loading' | 'success' | 'error' } | null>(null);
+	/** Object URL of the last rendered blob (the web flow downloads it). */
+	let resultUrl = $state<string | null>(null);
+	let imageUrl = $state('');
 
 	// persist the name across sessions (same behaviour as the old shared.js)
 	$effect(() => {
@@ -87,18 +90,18 @@
 			const images = await loadImages(files);
 			const canvas = await renderCollage(images, { name: name.trim(), date, preset, theme });
 			const blob = await canvasToBlob(canvas);
-			let previewUrl = URL.createObjectURL(blob);
+			// The previous result's object URL is dead weight by now.
+			if (resultUrl) URL.revokeObjectURL(resultUrl);
+			resultUrl = URL.createObjectURL(blob);
+			let previewUrl = resultUrl;
+			imageUrl = resultUrl;
 
-			let imageUrl = previewUrl;
 			if (upload) {
 				const fd = new FormData();
 				fd.append('image', blob, 'collage.jpg');
 				// LINE shows the preview in the chat and only fetches the full
 				// sheet when someone taps it, so send a smaller copy too.
-				fd.append('preview', await canvasToBlob(makePreview(canvas), 0.92), 'collage-preview.jpg');
-				fd.append('name', name.trim());
-				fd.append('preset', preset);
-				fd.append('theme', theme);
+				fd.append('preview', await canvasToBlob(await makePreview(canvas), 0.92), 'collage-preview.jpg');
 				// same origin — the storage API lives in this app, so there is
 				// no CORS and no second service to keep alive
 				const res = await fetch('/api/collage', { method: 'POST', body: fd });
@@ -116,6 +119,14 @@
 			busy = false;
 		}
 	}
+
+	// Release the object URLs when the studio goes away.
+	$effect(() => {
+		return () => {
+			if (resultUrl) URL.revokeObjectURL(resultUrl);
+			for (const u of urls) URL.revokeObjectURL(u);
+		};
+	});
 </script>
 
 <div class="studio">

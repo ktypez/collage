@@ -52,8 +52,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
 	if (!FILENAME_RE.test(filename) || !FILENAME_RE.test(previewName)) return fail(500, 'Bad filename');
 
 	try {
-		await uploadCollage(bytes, filename);
-		if (previewBytes) await uploadCollage(previewBytes, previewName);
+		// Both objects go up at the same time — the two round trips are the
+		// slowest part of the send, and they don't depend on each other.
+		await Promise.all([
+			uploadCollage(bytes, filename),
+			previewBytes ? uploadCollage(previewBytes, previewName) : Promise.resolve(),
+		]);
 	} catch (err) {
 		console.error('Upload error:', err);
 		if (err instanceof R2NotConfiguredError) return fail(503, 'Storage not configured');

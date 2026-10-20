@@ -85,17 +85,20 @@ function token() {
 }
 
 /* --- artwork -------------------------------------------------------------- */
+/* The woff2 subsets in static/fonts are what the app ships; the menu artwork
+   inlines the same files so the drawn text matches the app exactly. */
 function fontData(name) {
 	const buf = readFileSync(join(FONTS, name));
-	return `data:font/ttf;base64,${buf.toString('base64')}`;
+	const mime = name.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
+	return `data:${mime};base64,${buf.toString('base64')}`;
 }
 
 function buildHtml() {
 	return `<!doctype html>
 <meta charset="utf-8">
 <style>
-	@font-face { font-family: 'Noto Sans Thai'; src: url('${fontData('NotoSansThai.ttf')}'); font-weight: 100 900; }
-	@font-face { font-family: 'JetBrains Mono'; src: url('${fontData('JetBrainsMono-Regular.ttf')}'); font-weight: 400; }
+	@font-face { font-family: 'Noto Sans Thai'; src: url('${fontData('NotoSansThai.woff2')}'); font-weight: 100 900; }
+	@font-face { font-family: 'JetBrains Mono'; src: url('${fontData('JetBrainsMono.woff2')}'); font-weight: 400; }
 	html, body { margin: 0; padding: 0; background: ${C.bg}; }
 </style>
 <canvas id="c" width="${W}" height="${H}"></canvas>
@@ -208,7 +211,7 @@ function draw() {
 		ctx.fillText(cell.sub, bx + bw / 2, by + 525);
 
 		ctx.fillStyle = C.text;
-		ctx.font = '600 62px "Noto Sans Thai", sans-serif';
+		ctx.font = '700 62px "Noto Sans Thai", sans-serif';
 		ctx.fillText(cell.title, bx + bw / 2, by + bh - 108);
 	});
 
