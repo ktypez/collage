@@ -7,7 +7,7 @@
    ============================================================================= */
 
 export type DayPreset = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
-export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet', 'glitch', 'anime'] as const;
+export const THEME_IDS = ['7days', 'claude', 'lumen', 'post', 'studio', 'cinema', 'velvet', 'glitch', 'anime', 'tape', 'polar', 'press', 'brutal', 'retro', 'neon'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DAY_PRESETS: Record<DayPreset, [string, string, string]> = {
@@ -471,6 +471,219 @@ export const THEMES = {
 			},
 		},
 	},
+	tape: {
+		id: 'tape',
+		name: 'PAPER TAPE',
+		dot: '#e8d9a8',
+		ui: {
+			heroMeta: 'TAPE // MEMO',
+			genIdle: '> TAPE IT',
+			genReady: '> TAPED',
+			genHint: '// paper, tape, a little crooked',
+			outputTitle: 'PAPER TAPE · READY',
+			outputTag: 'MEMO',
+			uploadText: 'วางรูปลงบนกระดาษโน้ต',
+			logIntro: '$ tape.memo --stick',
+		},
+		canvas: {
+			bg: '#f7f2e8',
+			cell: {
+				border: '#e8e0d4', width: 1, rounded: 6, bg: '#ffffff', shadow: 0.08,
+				backplate: { dx: 6, dy: 8, rounded: 6, fill: '#e8d9a8' },
+				label: '{n}', labelColor: '#3a3226', labelBg: '#e8d9a8',
+				labelSize: 16, labelHeight: 22, labelPad: 10,
+				labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
+			},
+			header: {
+				kicker: 'MEMO / 01', kickerFont: 'serif', kickerColor: '#8a7a55', kickerSize: 22,
+				text: '', color: '#3a3226', font: 'serif', size: 40, pad: 48, glow: false,
+				align: 'left', margin: 120, ink: '#3a3226',
+				stripe: '#e8d9a8', stripeHeight: 6, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'none',
+			chrome: {
+				frame: { inset: 16, color: '#e8e0d4', width: 1, opacity: 0.8, rounded: 10 },
+			},
+		},
+	},
+	polar: {
+		id: 'polar',
+		name: 'POLAROID',
+		dot: '#f5f1ea',
+		ui: {
+			heroMeta: 'POLAROID // SNAPSHOT',
+			genIdle: '> FRAME IT',
+			genReady: '> POLAROID READY',
+			genHint: '// white border, bottom caption',
+			outputTitle: 'POLAROID · READY',
+			outputTag: 'SNAP',
+			uploadText: 'เลือกรูปสำหรับโพลารอยด์',
+			logIntro: '$ polaroid.snap --ready',
+		},
+		canvas: {
+			bg: '#e9e6e1',
+			cell: {
+				border: '#f5f1ea', width: 1, rounded: 4, bg: '#ffffff', shadow: 0.14,
+				label: '{n}', labelColor: '#1a1a1a', labelBg: 'rgba(0,0,0,0.06)',
+				labelSize: 18, labelHeight: 120, labelPad: 12,
+				labelPosition: 'bottom-center', labelInset: 14, labelRounded: 0,
+			},
+			header: {
+				kicker: 'SNAPSHOT / 01', kickerFont: 'sans', kickerColor: '#6b6b6b', kickerSize: 20,
+				text: '', color: '#1a1a1a', font: 'sans', size: 40, pad: 72, glow: false,
+				align: 'center', ink: '#1a1a1a',
+				stripe: '#1a1a1a', stripeHeight: 4, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(0.92) brightness(1.02)',
+			chrome: {},
+		},
+	},
+	press: {
+		id: 'press',
+		name: 'PRESS',
+		dot: '#1a1a1a',
+		ui: {
+			heroMeta: 'PRESS // EDITORIAL',
+			genIdle: '> SET TYPE',
+			genReady: '> PRINTED',
+			genHint: '// ink on newsprint',
+			outputTitle: 'PRESS · READY',
+			outputTag: 'PRINT',
+			uploadText: 'เลือกรูปสำหรับหน้าหนังสือพิมพ์',
+			logIntro: '$ press.print --ready',
+		},
+		canvas: {
+			bg: '#f4efe6',
+			cell: {
+				border: '#1a1a1a', width: 2, rounded: 0, bg: '#faf7f0', shadow: 0,
+				cropMarks: { color: '#1a1a1a', size: 24, width: 3, inset: 10 },
+				label: 'NO.{n}', labelColor: '#faf7f0', labelBg: '#1a1a1a',
+				labelSize: 18, labelHeight: 30, labelPad: 10,
+				labelPosition: 'top-left', labelInset: 12, labelRounded: 0,
+			},
+			header: {
+				kicker: 'VOL. 01 · EDITION', kickerFont: 'mono', kickerColor: '#5a5a5a', kickerSize: 20,
+				text: '', color: '#1a1a1a', font: 'serif', size: 48, pad: 60, glow: false,
+				align: 'left', margin: 120, ink: '#1a1a1a',
+				stripe: '#1a1a1a', stripeHeight: 3, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(0.85) brightness(0.96)',
+			chrome: {
+				frame: { inset: 24, color: '#1a1a1a', width: 3, opacity: 0.85, rounded: 0 },
+			},
+		},
+	},
+	brutal: {
+		id: 'brutal',
+		name: 'BRUTAL',
+		dot: '#f5d547',
+		ui: {
+			heroMeta: 'BRUTAL // BLOCK',
+			genIdle: '> BLOCK IT',
+			genReady: '> BRUTAL READY',
+			genHint: '// hard edges, loud accent',
+			outputTitle: 'BRUTAL · READY',
+			outputTag: 'BLOCK',
+			uploadText: 'เลือกรูปสำหรับบล็อกนี้',
+			logIntro: '$ brutal.block --ready',
+		},
+		canvas: {
+			bg: '#f5d547',
+			cell: {
+				border: '#0a0a0a', width: 4, rounded: 0, bg: '#ffffff', shadow: 0.18,
+				backplate: { dx: 12, dy: 12, rounded: 0, fill: '#0a0a0a' },
+				label: '{n}', labelColor: '#f5d547', labelBg: '#0a0a0a',
+				labelSize: 24, labelHeight: 34, labelPad: 12,
+				labelPosition: 'top-left', labelInset: 10, labelRounded: 0,
+			},
+			header: {
+				kicker: 'BLOCK / 01', kickerFont: 'mono', kickerColor: '#0a0a0a', kickerSize: 24,
+				text: '', color: '#0a0a0a', font: 'display', size: 44, pad: 60, glow: false,
+				align: 'left', margin: 120, ink: '#0a0a0a',
+				stripe: '#0a0a0a', stripeHeight: 12, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(1.15) brightness(1.05)',
+			chrome: {
+				frame: { inset: 16, color: '#0a0a0a', width: 4, opacity: 1, rounded: 0 },
+			},
+		},
+	},
+	retro: {
+		id: 'retro',
+		name: 'RETRO FILM',
+		dot: '#d4a373',
+		ui: {
+			heroMeta: 'RETRO FILM // VINTAGE',
+			genIdle: '> EXPOSE',
+			genReady: '> DEVELOPED',
+			genHint: '// warm light, soft grain',
+			outputTitle: 'RETRO FILM · READY',
+			outputTag: 'EXPOSED',
+			uploadText: 'เลือกรูปสำหรับฟิล์มย้อนยุค',
+			logIntro: '$ retro.develop --ready',
+		},
+		canvas: {
+			bg: { gradient: ['#d4a373', '#e9c46a', '#f4a261'], vertical: true },
+			cell: {
+				border: '#a07850', width: 2, rounded: 22, bg: '#fff8eb', shadow: 0.1,
+				label: 'FR.{n}', labelColor: '#fff8eb', labelBg: '#a07850',
+				labelSize: 16, labelHeight: 24, labelPad: 10,
+				labelPosition: 'bottom-right', labelInset: 12, labelRounded: 12,
+			},
+			header: {
+				kicker: 'RETRO / 01', kickerFont: 'serif', kickerColor: '#5a3e2b', kickerSize: 22,
+				text: '', color: '#5a3e2b', font: 'serif', size: 44, pad: 60, glow: false,
+				align: 'center', ink: '#5a3e2b',
+				stripe: '#5a3e2b', stripeHeight: 6, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(0.88) brightness(1.06)',
+			chrome: {
+				frame: { inset: 24, color: '#5a3e2b', width: 2, opacity: 0.5, rounded: 30 },
+				filmPerforations: { width: 18, height: 30, gap: 90, pad: 14, color: '#5a3e2b', opacity: 0.35, rounded: 3, start: 60 },
+			},
+		},
+	},
+	neon: {
+		id: 'neon',
+		name: 'NEON NIGHT',
+		dot: '#00e5ff',
+		ui: {
+			heroMeta: 'NEON NIGHT // GLOW',
+			genIdle: '> IGNITE',
+			genReady: '> NEON READY',
+			genHint: '// glow in the dark',
+			outputTitle: 'NEON NIGHT · READY',
+			outputTag: 'GLOW',
+			uploadText: 'เลือกรูปสำหรับค่ำคืนนี้',
+			logIntro: '$ neon.ignite --ready',
+		},
+		canvas: {
+			bg: { gradient: ['#0a0a14', '#12122a', '#050510'], vertical: true },
+			cell: {
+				border: '#00e5ff', width: 2, rounded: 14, bg: '#0f1020', shadow: 0.35,
+				backplate: { dx: 0, dy: 0, rounded: 14, fill: '#00e5ff' },
+				label: '{n}', labelColor: '#0a0a14', labelBg: '#00e5ff',
+				labelSize: 16, labelHeight: 22, labelPad: 10,
+				labelPosition: 'top-left', labelInset: 2, labelRounded: 4,
+			},
+			header: {
+				kicker: 'NEON / 01', kickerFont: 'mono', kickerColor: '#ff2d95', kickerSize: 24,
+				text: '', color: '#00e5ff', font: 'mono', size: 44, pad: 60, glow: true,
+				align: 'center', ink: '#00e5ff',
+				stripe: '#ff2d95', stripeHeight: 4, stripePos: 'top',
+			},
+			overlay: 'none',
+			photoFx: 'saturate(1.3) brightness(1.05)',
+			chrome: {
+				frame: { inset: 18, color: '#00e5ff', width: 2, opacity: 0.5, rounded: 20 },
+			},
+		},
+	},
 } satisfies Record<string, ThemeManifest>;
 
 /** Chip label + preview caption for each style. */
@@ -484,6 +697,12 @@ export const THEME_LABELS: Record<ThemeId, string> = {
 	velvet: 'VELVET',
 	glitch: 'GLITCH',
 	anime: 'ANIME',
+	tape: 'PAPER TAPE',
+	polar: 'POLAROID',
+	press: 'PRESS',
+	brutal: 'BRUTAL',
+	retro: 'RETRO FILM',
+	neon: 'NEON NIGHT',
 };
 
 /** Chip sub-label. */
@@ -497,6 +716,12 @@ export const THEME_SUBS: Record<ThemeId, string> = {
 	velvet: 'album',
 	glitch: 'meme',
 	anime: 'kawaii',
+	tape: 'memo',
+	polar: 'snapshot',
+	press: 'print',
+	brutal: 'block',
+	retro: 'vintage',
+	neon: 'glow',
 };
 
 /** Preview thumbnail for each style — one image per theme. */
@@ -510,6 +735,12 @@ export const THEME_PREVIEW: Record<ThemeId, string> = {
 	velvet: 'pv-velvet.jpg',
 	glitch: 'pv-glitch.jpg',
 	anime: 'pv-anime.jpg',
+	tape: 'pv-tape.jpg',
+	polar: 'pv-polar.jpg',
+	press: 'pv-press.jpg',
+	brutal: 'pv-brutal.jpg',
+	retro: 'pv-retro.jpg',
+	neon: 'pv-neon.jpg',
 };
 
 export function defaultPreset(): DayPreset {
