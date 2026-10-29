@@ -973,10 +973,18 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 /* Keep the mobile workflow short without shrinking touch targets. */
 body {
   width: 100%;
+  max-width: none;
+  margin: 0;
   padding: calc(10px + env(safe-area-inset-top, 0px))
     calc(12px + env(safe-area-inset-right, 0px))
     calc(16px + env(safe-area-inset-bottom, 0px))
     calc(12px + env(safe-area-inset-left, 0px));
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1040px;
+  margin-inline: auto;
 }
 
 .topbar { height: 40px; }
@@ -1008,9 +1016,17 @@ body {
 .footer { margin-top: 16px; padding-top: 12px; gap: 4px; }
 .footer span:first-child, .footer span:last-child { font-size: 11px; }
 
+@media (min-width: 480px) {
+  body {
+    padding-inline: 20px;
+  }
+  .studio { padding: 16px; }
+  .upload-zone { height: 140px; }
+  .preview-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}
+
 @media (min-width: 720px) {
   body {
-    max-width: 1040px;
     padding: 24px;
   }
   .topbar { height: 44px; }
@@ -1025,4 +1041,32 @@ body {
   .ochip { height: 52px; font-size: 13px; }
   .btn-primary { height: 50px; }
   .footer { flex-direction: row; justify-content: space-between; }
+}
+
+
+/* Responsive polish: avoid narrow-page inheritance and overflow at every width. */
+.topbar { min-width: 0; }
+.brand { min-width: 0; }
+.brand-name { white-space: nowrap; }
+.top-actions { flex-shrink: 0; }
+.studio, .result-area { min-width: 0; }
+.grid-2 > section { min-width: 0; }
+.preview-item { min-width: 0; }
+.result-img { height: auto; }
+
+@media (max-width: 360px) {
+  body { padding-inline: 8px; }
+  .brand { gap: 6px; }
+  .brand-mark { width: 32px; height: 32px; font-size: 12px; }
+  .brand-name { font-size: 12px; }
+  .top-actions { gap: 5px; }
+  .btn-liff { gap: 5px; padding-inline: 8px; font-size: 12px; }
+  .studio { padding: 10px; }
+  .theme-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .studio { padding: 24px; }
+  .grid-2 { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 32px; }
+  .upload-zone { height: 160px; }
 }
