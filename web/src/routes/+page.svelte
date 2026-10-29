@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fly, fade } from 'svelte/transition';
 	import { CONFIG } from '#lib/config';
 	import Studio from '#lib/components/Studio.svelte';
 
@@ -53,7 +54,7 @@
 	<Studio onresult={(r) => (result = { imageUrl: r.imageUrl, blob: r.blob })} upload={false} />
 
 	{#if result}
-		<div class="result-area">
+		<div class="result-area" in:fly={{ y: 22, duration: 420, opacity: 0.01 }} out:fade={{ duration: 160 }}>
 			<div class="result-title">พร้อมแบบรูปเรียบร้อย ✦</div>
 			<img class="result-img" src={result.imageUrl} alt="ภาพคอลลาจที่สร้างเสร็จ" />
 			<button type="button" class="result-download" onclick={download}>
