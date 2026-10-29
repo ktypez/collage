@@ -141,3 +141,13 @@ test('theme registry has unique ids matching its manifest keys', () => {
 	assert.equal(new Set(THEME_IDS).size, THEME_IDS.length);
 	for (const id of THEME_IDS) assert.equal(THEMES[id].id, id);
 });
+ 
+test('Anime avoids a redundant inset frame around its rounded cards', () => {
+	assert.deepEqual(THEMES.anime.canvas.chrome, {});
+	assert.equal(THEMES.anime.canvas.cell.rounded, 28);
+});
+
+test('Velvet cards separate photos from the dark canvas', () => {
+	assert.equal(THEMES.velvet.canvas.cell.bg, '#f8e9e7');
+	assert.equal(THEMES.velvet.canvas.cell.border, '#9a6681');
+});
