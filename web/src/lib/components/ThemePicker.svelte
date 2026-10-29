@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fly, fade } from 'svelte/transition';
 	import {
 		DAYS,
 		DAY_LABELS,
@@ -77,6 +78,6 @@
 		<span class="chev" aria-hidden="true">▼</span>
 	</button>
 	{#if previewOpen}
-		<div class="theme-preview-body"><img src={previewSrc} alt="ตัวอย่าง output สไตล์ {previewCap}" /></div>
+		<div class="theme-preview-body" in:fly={{ y: 10, duration: 260, opacity: 0.01 }} out:fade={{ duration: 130 }}><img src={previewSrc} alt="ตัวอย่าง output สไตล์ {previewCap}" /></div>
 	{/if}
 </div>
