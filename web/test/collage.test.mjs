@@ -128,3 +128,16 @@ test('the day presets cover every weekday with three colours', () => {
 		for (const c of stops) assert.match(c, /^#[0-9a-f]{6}$/i);
 	}
 });
+
+test('Polaroid captions use a distinct paper band without covering the photo', () => {
+	const cell = THEMES.polar.canvas.cell;
+	assert.equal(cell.labelBg, '#fffdf8');
+	assert.equal(cell.labelColor, '#1a1a1a');
+	assert.equal(cell.labelPosition, 'bottom-center');
+	assert.equal(cell.labelHeight, 30);
+});
+
+test('theme registry has unique ids matching its manifest keys', () => {
+	assert.equal(new Set(THEME_IDS).size, THEME_IDS.length);
+	for (const id of THEME_IDS) assert.equal(THEMES[id].id, id);
+});
