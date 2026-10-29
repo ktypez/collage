@@ -45,6 +45,29 @@ test('masonry keeps every image inside the canvas width', () => {
 	assert.ok(L.totalH > L.contentY, 'content starts below the header');
 });
 
+test('masonry handles different counts and aspect-ratio mixes without invalid geometry', () => {
+	const fixtures = [
+		[{ w: 1200, h: 800 }],
+		[{ w: 800, h: 1200 }, { w: 1200, h: 800 }],
+		[{ w: 1000, h: 1000 }, { w: 600, h: 1200 }, { w: 1200, h: 600 }],
+		[{ w: 400, h: 1200 }, { w: 400, h: 1200 }, { w: 1200, h: 400 }, { w: 1200, h: 400 }],
+		Array.from({ length: 5 }, (_, i) => ({ w: i % 2 ? 400 : 1200, h: i % 2 ? 1200 : 400 })),
+		Array.from({ length: 12 }, (_, i) => ({ w: 500 + i * 80, h: 400 + (i % 4) * 350 })),
+	];
+
+	for (const sizes of fixtures) {
+		const L = masonry(sizes, { headerH: 440, hasBoth: true });
+		assert.equal(L.placements.length, sizes.length);
+		assert.ok(L.contentH > 0);
+		assert.ok(L.totalH > L.contentY + L.contentH - 1);
+		for (const p of L.placements) {
+			assert.ok(p.x >= 0 && p.x + L.cardW <= W, 'card stays within canvas width');
+			assert.ok(p.y >= 0 && p.ch > 0 && p.ih > 0, 'placement dimensions are positive');
+			assert.ok(Number.isFinite(p.x + p.y + p.ch + p.ih), 'geometry remains finite');
+		}
+	}
+});
+
 test('masonry survives a photo with no dimensions', () => {
 	const L = masonry([{ w: 0, h: 0 }], { headerH: 440, hasBoth: true });
 	assert.ok(Number.isFinite(L.totalH));
