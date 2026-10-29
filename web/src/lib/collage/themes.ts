@@ -388,7 +388,7 @@ export const THEMES = {
 		canvas: {
 			bg: { gradient: ['#25131f', '#160b14'], vertical: true },
 			cell: {
-				border: '#6f405b', width: 2, rounded: 36, bg: '#321a2a',
+				border: '#9a6681', width: 3, rounded: 36, bg: '#f8e9e7',
 				label: 'S{n}', labelColor: '#25131f', labelBg: '#f2a6a2',
 				labelSize: 24, labelHeight: 40, labelPosition: 'bottom-center', labelInset: 12,
 				labelRounded: 20,
@@ -401,7 +401,7 @@ export const THEMES = {
 			overlay: 'none',
 			photoFx: 'none',
 			chrome: {
-				frame: { inset: 24, width: 2, color: '#f2a6a2', opacity: 0.5, rounded: 52 },
+				frame: { inset: 24, width: 2, color: '#f2a6a2', opacity: 0.28, rounded: 52 },
 			},
 		},
 	},
@@ -465,9 +465,9 @@ export const THEMES = {
 				stripe: '#f9c6dc', stripeHeight: 12, stripePos: 'top',
 			},
 			photoFx: 'saturate(1.08) brightness(1.03)',
-			chrome: {
-				frame: { inset: 26, color: '#f29ac2', width: 3, opacity: 0.42, rounded: 48 },
-			},
+			// The rounded card border and offset backplate provide enough framing;
+			// a second inset frame made the photo edges feel crowded.
+			chrome: {},
 		},
 	},
 	tape: {
