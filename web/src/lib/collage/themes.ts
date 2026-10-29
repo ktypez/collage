@@ -186,7 +186,7 @@ export const THEMES = {
 				align: 'center', presetHeader: true, presetHeaderStop: 2,
 			},
 			dayStrip: {
-				background: '#f0e8dd', height: 26, activeHeight: 52, gap: 4,
+				background: '#f0e8dd', height: 20, activeHeight: 42, gap: 4,
 				inactiveOpacity: 0.34, label: true, labelSize: 18,
 			},
 			overlay: 'none',
@@ -252,7 +252,7 @@ export const THEMES = {
 			bg: '#f1eff7',
 			cell: {
 				border: '#2a1b38', width: 3, rounded: 0, bg: '#fffefa',
-				backplate: { fill: '#ff7657', dx: 10, dy: 10, rounded: 0 },
+				backplate: { fill: '#ff7657', dx: 6, dy: 6, rounded: 0 },
 				label: 'NO.{n}', labelColor: '#fffefa', labelBg: '#2a1b38',
 				labelSize: 24, labelHeight: 42, labelPosition: 'top-left', labelInset: 14,
 				labelRounded: 0,
@@ -282,7 +282,7 @@ export const THEMES = {
 			logIntro: '$ postcard.stamp --ready',
 		},
 		canvas: {
-			bg: '#f2d35e',
+			bg: '#eee0a0',
 			cell: {
 				border: '#742437', width: 5, rounded: 2, bg: '#fff7df',
 				backplate: { fill: '#e85d3f', dx: 10, dy: 10, rounded: 2 },
@@ -422,12 +422,11 @@ export const THEMES = {
 		canvas: {
 			bg: { gradient: ['#100b24', '#17102b', '#080713'], vertical: true },
 			cell: {
-				backplate: { dx: 12, dy: 10, rounded: 3, fill: '#ff2b6d' },
-				border: '#00e5ff', width: 4, rounded: 3, bg: '#171124',
-				label: '?? {n}', labelColor: '#100b24', labelBg: '#b7ff00',
-				labelSize: 22, labelHeight: 38, labelPosition: 'top-left', labelInset: 12,
+				backplate: { dx: 8, dy: 8, rounded: 3, fill: '#ff2b6d' },
+				border: '#00e5ff', width: 3, rounded: 3, bg: '#171124',
+				label: '{n}', labelColor: '#100b24', labelBg: '#b7ff00',
+				labelSize: 20, labelHeight: 34, labelPosition: 'top-left', labelInset: 12,
 				labelRounded: 2,
-				cropMarks: { color: '#ff2b6d', size: 24, width: 4, inset: 8 },
 			},
 			header: {
 				text: '', color: '#00e5ff', font: 'mono', size: 40, pad: 76, glow: true,
@@ -503,7 +502,7 @@ export const THEMES = {
 			overlay: 'none',
 			photoFx: 'none',
 			chrome: {
-				frame: { inset: 16, color: '#7a9e7e', width: 1, opacity: 0.8, rounded: 10 },
+				frame: { inset: 22, color: '#7a9e7e', width: 1, opacity: 0.42, rounded: 10 },
 			},
 		},
 	},
