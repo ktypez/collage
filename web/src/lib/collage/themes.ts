@@ -524,8 +524,8 @@ export const THEMES = {
 			bg: '#e9e6e1',
 			cell: {
 				border: '#f5f1ea', width: 1, rounded: 4, bg: '#ffffff', shadow: 0.14,
-				label: '{n}', labelColor: '#1a1a1a', labelBg: 'rgba(0,0,0,0.06)',
-				labelSize: 18, labelHeight: 120, labelPad: 12,
+				label: '{n}', labelColor: '#1a1a1a', labelBg: '#fffdf8',
+				labelSize: 18, labelHeight: 30, labelPad: 12,
 				labelPosition: 'bottom-center', labelInset: 14, labelRounded: 0,
 			},
 			header: {
