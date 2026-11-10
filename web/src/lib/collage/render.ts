@@ -388,7 +388,11 @@ async function renderThemed(
 
 	const sizes = images.map((im) => ({ w: im.naturalWidth || im.width, h: im.naturalHeight || im.height }));
 	const hasBoth = !!opts.name;
-	const L = masonry(sizes, { headerH: HEADER_H, hasBoth });
+	// 7days V5: sticker chips sit below the name/date, so push the canvas down.
+	const hd = c.header ?? {};
+	const isV5Week = manifest.id === '7days' && !hd.presetHeader;
+	const headerHForLayout = isV5Week ? HEADER_H + 90 : HEADER_H;
+	const L = masonry(sizes, { headerH: headerHForLayout, hasBoth });
 
 	const H = L.totalH;
 	const canvas = document.createElement('canvas');
@@ -401,8 +405,6 @@ async function renderThemed(
 
 	/* ---------------- 1. backdrop ---------------- */
 	fillBackground(ctx, c.bg, W, H);
-
-	const hd = c.header ?? {};
 	const presetStops = preset ? DAY_PRESETS[preset] : null;
 	const presetHeaderColor =
 		hd.presetHeader && presetStops ? presetStops[hd.presetHeaderStop ?? 1] : null;
@@ -560,7 +562,8 @@ async function renderThemed(
 			const margin = Math.max(72, hd.margin || 96);
 			const avail = W - margin * 2;
 			const chipW = Math.floor((avail - gap * 6) / 7);
-			const y = HEADER_H - chipH - 18;
+			// sit below the name/date block, above the collage canvas
+			const y = Math.round(HEADER_H * (hasBoth ? 0.78 : 0.55)) + 28;
 			DAYS.forEach((key, i) => {
 				const colors = DAY_PRESETS[key];
 				const active = key === preset;
