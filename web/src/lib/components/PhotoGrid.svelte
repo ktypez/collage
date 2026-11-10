@@ -27,7 +27,7 @@
 </script>
 
 {#if urls.length}
-	<div class="preview-grid">
+	<div class="preview-grid" role="list" aria-label="รูปที่เลือก">
 		{#each urls as url, i (i)}
 			<div
 				class="preview-item"

@@ -17,8 +17,6 @@
 		if (!list) return [];
 		const out: File[] = [];
 		for (const f of Array.from(list)) {
-			// iOS can hand over HEIC, or an empty type for files from the photo library.
-			// The browser decodes HEIC in Safari, so let those through instead of dropping them.
 			const byName = /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
 			if (!ACCEPTED_TYPES.includes(f.type) && !(f.type === '' && byName) && !HEIC_TYPES.includes(f.type)) continue;
 			out.push(f);
@@ -41,12 +39,6 @@
 		ondrop(files.slice(0, room));
 		if (files.length > room) error = `เพิ่มได้อีก ${room} รูป (สูงสุด ${MAX_FILES})`;
 	}
-
-	function onInput(e: Event) {
-		const t = e.currentTarget as HTMLInputElement;
-		handle(t.files);
-		t.value = '';
-	}
 </script>
 
 <div
@@ -64,11 +56,11 @@
 		handle(e.dataTransfer?.files ?? null);
 	}}
 >
-	<input bind:this={input} type="file" accept="image/jpeg,image/png,image/webp" multiple onchange={onInput} />
-	<div class="upload-icon">
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+	<input bind:this={input} type="file" accept="image/jpeg,image/png,image/webp" multiple onchange={(e) => { handle((e.currentTarget as HTMLInputElement).files); (e.currentTarget as HTMLInputElement).value = ''; }} />
+	<div class="upload-icon" aria-hidden="true">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
 	</div>
 	<div class="upload-text">ลากหรือกดเพื่อเลือกรูป</div>
 	<div class="upload-hint">JPG · PNG · WEBP — ไม่เกิน {MAX_FILES} รูป</div>
-	{#if error}<div class="upload-error">{error}</div>{/if}
+	{#if error}<div class="upload-error" role="alert">{error}</div>{/if}
 </div>

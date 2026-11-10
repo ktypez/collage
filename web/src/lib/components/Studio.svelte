@@ -14,11 +14,8 @@
 	}
 
 	interface Props {
-		/** Button caption. */
 		cta?: string;
-		/** Called once the collage exists and (if it uploads) is on the server. */
 		onresult?: (r: Result) => unknown;
-		/** When true the finished JPEG is uploaded to the API (needed for LIFF). */
 		upload?: boolean;
 	}
 
@@ -32,11 +29,9 @@
 	let preset = $state<DayPreset>(defaultPreset());
 	let busy = $state(false);
 	let status = $state<{ text: string; kind: 'loading' | 'success' | 'error' } | null>(null);
-	/** Object URL of the last rendered blob (the web flow downloads it). */
 	let resultUrl = $state<string | null>(null);
 	let imageUrl = $state('');
 
-	// persist the name across sessions (same behaviour as the old shared.js)
 	$effect(() => {
 		const saved = localStorage.getItem('collage_name');
 		if (saved && !name) name = saved;
@@ -44,8 +39,6 @@
 	$effect(() => {
 		if (name) localStorage.setItem('collage_name', name);
 	});
-
-	// default the date to today
 	$effect(() => {
 		if (date) return;
 		const n = new Date();
@@ -84,13 +77,10 @@
 		busy = true;
 		status = { text: 'กำลังสร้างภาพ...', kind: 'loading' };
 		try {
-			// Yield once so the loading state paints before the render blocks the thread.
 			await new Promise((r) => requestAnimationFrame(() => r(null)));
-
 			const images = await loadImages(files);
 			const canvas = await renderCollage(images, { name: name.trim(), date, preset, theme });
 			const blob = await canvasToBlob(canvas);
-			// The previous result's object URL is dead weight by now.
 			if (resultUrl) URL.revokeObjectURL(resultUrl);
 			resultUrl = URL.createObjectURL(blob);
 			let previewUrl = resultUrl;
@@ -99,11 +89,7 @@
 			if (upload) {
 				const fd = new FormData();
 				fd.append('image', blob, 'collage.jpg');
-				// LINE shows the preview in the chat and only fetches the full
-				// sheet when someone taps it, so send a smaller copy too.
 				fd.append('preview', await canvasToBlob(await makePreview(canvas), 0.92), 'collage-preview.jpg');
-				// same origin — the storage API lives in this app, so there is
-				// no CORS and no second service to keep alive
 				const res = await fetch('/api/collage', { method: 'POST', body: fd });
 				const data = await res.json().catch(() => ({ success: false, error: 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง' }));
 				if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
@@ -120,7 +106,6 @@
 		}
 	}
 
-	// Release the object URLs when the studio goes away.
 	$effect(() => {
 		return () => {
 			if (resultUrl) URL.revokeObjectURL(resultUrl);
@@ -129,22 +114,34 @@
 	});
 </script>
 
-<div class="studio">
+<section class="studio card">
+	<div class="studio-head">
+		<div>
+			<p class="label">Studio</p>
+			<h1 class="studio-title">สร้างคอลลาจ</h1>
+			<p class="studio-desc">เลือกรูป จัดลำดับ ใส่รายละเอียด แล้วเรนเดอร์ในเบราว์เซอร์</p>
+		</div>
+		<div class="count-sticker" aria-label={`เลือกแล้ว ${files.length} จาก ${MAX_FILES} รูป`}>
+			<span class="count-sticker-n">{files.length}</span>
+			<span class="count-sticker-l">/ {MAX_FILES} รูป</span>
+		</div>
+	</div>
+
 	<div class="grid-2">
-		<section>
-			<div class="section-label"><span class="num">01</span> รูปของคุณ</div>
+		<section class="panel">
+			<p class="label section-label">01 · รูปของคุณ</p>
 			<FileDrop count={files.length} ondrop={addFiles} />
 			<PhotoGrid {urls} onremove={removeFile} onreorder={reorder} />
 		</section>
 
-		<section>
-			<div class="section-label"><span class="num">02</span> รายละเอียด</div>
+		<section class="panel">
+			<p class="label section-label">02 · รายละเอียด</p>
 
-			<div class="field">
-				<label for="nameInput">ชื่อ</label>
+			<div class="field-group">
+				<label class="label field-label" for="nameInput">ชื่อ</label>
 				<input
 					id="nameInput"
-					class="input"
+					class="input field"
 					type="text"
 					placeholder="ชื่อของคุณ"
 					inputmode="text"
@@ -153,19 +150,19 @@
 				/>
 			</div>
 
-			<div class="field">
-				<span class="label-like" id="dateLabel">วันที่</span>
+			<div class="field-group">
+				<span class="label label-like" id="dateLabel">วันที่</span>
 				<DatePicker value={date} onchange={(iso) => (date = iso)} />
 			</div>
 
-			<div class="field">
-				<span class="label-like">สไตล์</span>
+			<div class="field-group">
+				<span class="label label-like">สไตล์</span>
 				<ThemePicker {theme} {preset} ontheme={(t) => (theme = t)} onpreset={(p) => (preset = p)} />
 			</div>
 
 			<div class="create-bar">
-				<button type="button" class="btn-primary" disabled={busy} class:loading={busy} onclick={generate}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6" /><path d="M12 19h9" /></svg>
+				<button type="button" class="btn btn-acc btn-primary" disabled={busy} class:loading={busy} onclick={generate}>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6"/><path d="M12 19h9"/></svg>
 					{cta}
 				</button>
 				{#if status}
@@ -174,4 +171,4 @@
 			</div>
 		</section>
 	</div>
-</div>
+</section>

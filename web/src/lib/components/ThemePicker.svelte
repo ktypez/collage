@@ -62,7 +62,7 @@
 				></button>
 			{/each}
 		</div>
-		<div class="theme-label">today: <strong>{todayLabel}</strong></div>
+		<div class="theme-label">วันนี้: <strong>{todayLabel}</strong></div>
 	</div>
 {/if}
 
@@ -78,6 +78,8 @@
 		<span class="chev" aria-hidden="true">▼</span>
 	</button>
 	{#if previewOpen}
-		<div class="theme-preview-body" in:fly={{ y: 10, duration: 260, opacity: 0.01 }} out:fade={{ duration: 130 }}><img src={previewSrc} alt="ตัวอย่าง output สไตล์ {previewCap}" /></div>
+		<div class="theme-preview-body" in:fly={{ y: 10, duration: 220, opacity: 0.01 }} out:fade={{ duration: 120 }}>
+			<img src={previewSrc} alt={`ตัวอย่าง output สไตล์ ${previewCap}`} />
+		</div>
 	{/if}
 </div>

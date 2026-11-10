@@ -48,7 +48,6 @@
 			liff = sdk;
 
 			if (!(await hasGrantedSendScope())) {
-				// Don't loop: after one forced re-auth, tell the user to retry manually.
 				let tried = false;
 				try {
 					tried = sessionStorage.getItem('collageReauth') === '1';
@@ -120,13 +119,20 @@
 </svelte:head>
 
 <div class="wrap">
-	<div class="topbar">
+	<header class="topbar">
 		<div class="brand">
-			<div class="brand-mark">S//F</div>
-			<div class="brand-name">STACK<span>//</span>FRAME</div>
+			<div class="brand-mark" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M4.3 7.5l15.4 9M19.7 7.5l-15.4 9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+			</div>
+			<div class="brand-text">
+				<div class="brand-name">Collage <span>Studio</span></div>
+				<div class="brand-sub">LINE · LIFF</div>
+			</div>
 		</div>
-		<div class="liff-banner"><span class="dot"></span> IN-LINE · ส่งเข้ากลุ่ม</div>
-	</div>
+		<div class="top-actions">
+			<div class="liff-banner"><span class="dot"></span> ส่งเข้ากลุ่ม LINE</div>
+		</div>
+	</header>
 
 	{#if bootError}
 		<div class="boot-error" role="alert">{bootError}</div>
@@ -140,7 +146,7 @@
 	{/if}
 
 	<footer class="footer">
-		<span>STACK//FRAME <span class="dot"></span> COLLAGE STUDIO</span>
-		<span>IN-LINE FLOW · LINE MESSAGING API</span>
+		<span>Collage Studio <span class="dot"></span> V5 Paper Pop</span>
+		<span>LIFF · LINE Messaging API</span>
 	</footer>
 </div>
