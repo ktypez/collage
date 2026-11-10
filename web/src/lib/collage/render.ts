@@ -405,6 +405,19 @@ async function renderThemed(
 
 	/* ---------------- 1. backdrop ---------------- */
 	fillBackground(ctx, c.bg, W, H);
+	// 7days V5: dotted ledger paper
+	if (isV5Week) {
+		ctx.save();
+		ctx.fillStyle = '#e6dfcc';
+		for (let y = 11; y < H; y += 22) {
+			for (let x = 11; x < W; x += 22) {
+				ctx.beginPath();
+				ctx.arc(x, y, 1.1, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
+		ctx.restore();
+	}
 	const presetStops = preset ? DAY_PRESETS[preset] : null;
 	const presetHeaderColor =
 		hd.presetHeader && presetStops ? presetStops[hd.presetHeaderStop ?? 1] : null;
@@ -485,10 +498,10 @@ async function renderThemed(
 	if (isV5Week && presetStops) {
 		const accent = presetStops[1];
 		const titleY = Math.round(HEADER_H * (hasBoth ? 0.47 : 0.55));
-		// asterisk sticker
+		// asterisk sticker (kept clear of the name)
 		ctx.save();
-		ctx.translate(margin + 210, titleY - 48);
-		ctx.rotate((-8 * Math.PI) / 180);
+		ctx.translate(W - margin - 36, 74);
+		ctx.rotate((10 * Math.PI) / 180);
 		fillRoundRect(ctx, -18, -18, 36, 36, 10, accent);
 		strokeRoundRect(ctx, -18, -18, 36, 36, 10, '#28251d', 3);
 		ctx.fillStyle = contrastTextOn(accent);
