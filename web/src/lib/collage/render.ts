@@ -414,7 +414,10 @@ async function renderThemed(
 	// header stripe
 	if (hd.stripe) {
 		const sh = hd.stripeHeight || Math.round(HEADER_H * 0.06);
-		ctx.fillStyle = hd.stripe;
+		// 7days V5: tint the accent stripe with the selected day colour.
+		const stripeColor =
+			manifest.id === '7days' && !hd.presetHeader && presetStops ? presetStops[1] : hd.stripe;
+		ctx.fillStyle = stripeColor;
 		ctx.fillRect(0, hd.stripePos === 'top' ? 0 : HEADER_H, W, sh);
 	}
 
