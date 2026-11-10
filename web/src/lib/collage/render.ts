@@ -414,7 +414,7 @@ async function renderThemed(
 	// header stripe
 	if (hd.stripe) {
 		const sh = hd.stripeHeight || Math.round(HEADER_H * 0.06);
-		// 7days V5: tint the accent stripe with the selected day colour.
+		// 7days V5: stronger accent stripe tinted with the selected day colour.
 		const stripeColor =
 			manifest.id === '7days' && !hd.presetHeader && presetStops ? presetStops[1] : hd.stripe;
 		ctx.fillStyle = stripeColor;
@@ -553,27 +553,65 @@ async function renderThemed(
 	// day strip (7 DAYS only)
 	if (c.dayStrip && preset && DAY_PRESETS[preset]) {
 		const strip = c.dayStrip;
-		const height = strip.height || 30;
-		const activeHeight = strip.activeHeight || Math.round(height * 1.7);
-		const gap = strip.gap ?? 4;
-		const segmentW = W / DAYS.length;
-		ctx.fillStyle = strip.background || '#111111';
-		ctx.fillRect(0, 0, W, activeHeight);
-		DAYS.forEach((key, i) => {
-			const colors = DAY_PRESETS[key];
-			const active = key === preset;
-			const blockH = active ? activeHeight : height;
-			const blockW = segmentW - gap;
-			const x = i * segmentW + gap / 2;
-			ctx.fillStyle = toRgba(colors[1], active ? 1 : (strip.inactiveOpacity ?? 0.62));
-			ctx.fillRect(x, 0, blockW, blockH);
-			if (active && strip.label !== false) {
-				const size = strip.labelSize || 18;
-				drawText(ctx, DAY_SHORT[key], x + blockW / 2, Math.round(activeHeight / 2 + size * 0.35), {
-					size, font: 'mono', color: contrastTextOn(colors[1]), align: 'center',
-				});
-			}
-		});
+		if (manifest.id === '7days' && !hd.presetHeader) {
+			// V5: a row of sticker chips in the header instead of the old full-width bar.
+			const chipH = 40;
+			const gap = 10;
+			const margin = Math.max(72, hd.margin || 96);
+			const avail = W - margin * 2;
+			const chipW = Math.floor((avail - gap * 6) / 7);
+			const y = HEADER_H - chipH - 18;
+			DAYS.forEach((key, i) => {
+				const colors = DAY_PRESETS[key];
+				const active = key === preset;
+				const x = margin + i * (chipW + gap);
+				const fill = active ? colors[1] : hexToRgba(colors[1], 0.18);
+				const inkColor = active ? contrastTextOn(colors[1]) : colors[0];
+				if (active) {
+					// hard offset shadow
+					fillRoundRect(ctx, x + 4, y + 4, chipW, chipH, 12, '#28251d');
+				}
+				fillRoundRect(ctx, x, y, chipW, chipH, 12, fill);
+				strokeRoundRect(ctx, x, y, chipW, chipH, 12, '#28251d', active ? 3 : 2);
+				if (active) {
+					const size = 17;
+					drawText(ctx, DAY_SHORT[key], x + chipW / 2, y + Math.round(chipH / 2 + size * 0.35), {
+						size, font: 'mono', color: inkColor, align: 'center',
+					});
+				} else {
+					// small day dot for inactive chips
+					ctx.beginPath();
+					ctx.arc(x + chipW / 2, y + chipH / 2, 6, 0, Math.PI * 2);
+					ctx.fillStyle = colors[1];
+					ctx.fill();
+					ctx.strokeStyle = '#28251d';
+					ctx.lineWidth = 2;
+					ctx.stroke();
+				}
+			});
+		} else {
+			const height = strip.height || 30;
+			const activeHeight = strip.activeHeight || Math.round(height * 1.7);
+			const gap = strip.gap ?? 4;
+			const segmentW = W / DAYS.length;
+			ctx.fillStyle = strip.background || '#111111';
+			ctx.fillRect(0, 0, W, activeHeight);
+			DAYS.forEach((key, i) => {
+				const colors = DAY_PRESETS[key];
+				const active = key === preset;
+				const blockH = active ? activeHeight : height;
+				const blockW = segmentW - gap;
+				const x = i * segmentW + gap / 2;
+				ctx.fillStyle = toRgba(colors[1], active ? 1 : (strip.inactiveOpacity ?? 0.62));
+				ctx.fillRect(x, 0, blockW, blockH);
+				if (active && strip.label !== false) {
+					const size = strip.labelSize || 18;
+					drawText(ctx, DAY_SHORT[key], x + blockW / 2, Math.round(activeHeight / 2 + size * 0.35), {
+						size, font: 'mono', color: contrastTextOn(colors[1]), align: 'center',
+					});
+				}
+			});
+		}
 	}
 
 	// cell borders
@@ -614,13 +652,14 @@ async function renderThemed(
 		const baseH = cell.labelHeight || 34;
 		const inset = cell.labelInset ?? 12;
 		const position = cell.labelPosition || 'bottom-right';
+		const dayAccent = manifest.id === '7days' && presetStops ? presetStops[1] : null;
 		cards.forEach((card, i) => {
 			const text =
 				cell.label === true
 					? String(i + 1).padStart(2, '0')
 					: String(cell.label).replace('{n}', String(i + 1).padStart(2, '0'));
-			const labelBg = cell.labelBg ?? 'rgba(0,0,0,0.55)';
-			const labelColor = cell.labelColor ?? '#fff';
+			const labelBg = dayAccent || cell.labelBg || 'rgba(0,0,0,0.55)';
+			const labelColor = dayAccent ? contrastTextOn(dayAccent) : (cell.labelColor ?? '#fff');
 			const textW = measureText(ctx, text, ls, 'mono');
 			const boxW = textW + pad * 2;
 			const isCircle = cell.labelShape === 'circle';
@@ -656,7 +695,8 @@ async function renderThemed(
 			const inset = f.inset ?? 24;
 			ctx.save();
 			ctx.globalAlpha = f.opacity ?? 1;
-			strokeRoundRect(ctx, inset, inset, W - inset * 2, H - inset * 2, f.rounded ?? 0, f.color, f.width || 2);
+			const frameColor = manifest.id === '7days' && presetStops ? presetStops[1] : f.color;
+			strokeRoundRect(ctx, inset, inset, W - inset * 2, H - inset * 2, f.rounded ?? 0, frameColor, (f.width || 2) + (manifest.id === '7days' ? 1 : 0));
 			ctx.restore();
 		}
 		if (ch.filmPerforations) {

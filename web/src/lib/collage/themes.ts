@@ -170,7 +170,7 @@ export const THEMES = {
 			heroMeta: '7 DAYS // PAPER POP',
 			genIdle: '> CHOOSE A DAY',
 			genReady: '> WEEK READY',
-			genHint: '// สีของวันถูกใช้กับแถบสัปดาห์และเส้นเน้นสไตล์ V5',
+			genHint: '// สีของวันเป็น accent หลักบนคอลลาจสไตล์ V5',
 			outputTitle: '7 DAYS · READY',
 			outputTag: 'V5',
 			uploadText: 'เลือกรูปสำหรับสัปดาห์นี้',
@@ -186,11 +186,12 @@ export const THEMES = {
 				labelPosition: 'top-left', labelInset: 4, labelRounded: 8,
 			},
 			header: {
-				text: '7 DAYS', color: '#28251d', font: 'display', size: 42, pad: 72, glow: false,
+				text: '7 DAYS', color: '#28251d', font: 'display', size: 44, pad: 84, glow: false,
 				align: 'left', margin: 120, ink: '#28251d',
-				stripe: '#158068', stripeHeight: 10, stripePos: 'top',
+				stripe: '#158068', stripeHeight: 14, stripePos: 'top',
 				presetHeader: false,
 			},
+			// day strip is drawn with a custom V5 treatment in the renderer
 			dayStrip: {
 				background: '#eee9db', height: 22, activeHeight: 44, gap: 4,
 				inactiveOpacity: 0.38, label: true, labelSize: 18,
@@ -198,7 +199,7 @@ export const THEMES = {
 			overlay: 'none',
 			photoFx: 'none',
 			chrome: {
-				frame: { inset: 24, width: 3, color: '#28251d', opacity: 0.9, rounded: 24 },
+				frame: { inset: 24, width: 3, color: '#28251d', opacity: 1, rounded: 24 },
 			},
 		},
 	},
