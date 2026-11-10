@@ -53,14 +53,20 @@ const W = 2500;
 const H = 843;
 const COL = W / CELLS.length;
 
-/* App palette (light theme in web/src/app.css) so the menu matches the product. */
+/* V5 Paper Pop palette (matches web UI) so the menu matches the product. */
 const C = {
-	bg: '#F6F4F0',
-	surface: '#FFFFFF',
-	border: '#E4DFD7',
-	text: '#1F1B16',
-	muted: '#6B645C',
-	accent: '#B8502F',
+	bg: '#f6f2e9',
+	paper2: '#eee9db',
+	surface: '#fffdf6',
+	border: '#e6dfcc',
+	rule2: '#cfc5a9',
+	ink: '#28251d',
+	text: '#28251d',
+	muted: '#6f685b',
+	faint: '#a29a89',
+	accent: '#158068',
+	accentInk: '#0c5b44',
+	accentTint: '#e2f2e8',
 };
 
 const NAME = 'COLLAGE หลัก';
@@ -97,8 +103,11 @@ function buildHtml() {
 	return `<!doctype html>
 <meta charset="utf-8">
 <style>
+	@font-face { font-family: 'Sora'; src: url('${fontData('sora-latin-400-normal.woff2')}'); font-weight: 400; }
+	@font-face { font-family: 'Sora'; src: url('${fontData('sora-latin-700-normal.woff2')}'); font-weight: 700; }
+	@font-face { font-family: 'Sora'; src: url('${fontData('sora-latin-800-normal.woff2')}'); font-weight: 800; }
 	@font-face { font-family: 'Noto Sans Thai'; src: url('${fontData('NotoSansThai.woff2')}'); font-weight: 100 900; }
-	@font-face { font-family: 'JetBrains Mono'; src: url('${fontData('JetBrainsMono.woff2')}'); font-weight: 400; }
+	@font-face { font-family: 'JetBrains Mono'; src: url('${fontData('JetBrainsMono.woff2')}'); font-weight: 400 700; }
 	html, body { margin: 0; padding: 0; background: ${C.bg}; }
 </style>
 <canvas id="c" width="${W}" height="${H}"></canvas>
@@ -159,78 +168,95 @@ const ICONS = {
 function draw() {
 	const ctx = document.getElementById('c').getContext('2d');
 
+	// V5 paper background + dotted grid
 	ctx.fillStyle = C.bg;
 	ctx.fillRect(0, 0, W, H);
+	ctx.fillStyle = 'rgba(230, 223, 204, 0.95)';
+	for (let y = 18; y < H; y += 22) {
+		for (let x = 18; x < W; x += 22) {
+			ctx.beginPath();
+			ctx.arc(x, y, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+		}
+	}
 
 	CELLS.forEach((cell, i) => {
 		const x = i * COL;
 		const pad = 34;
 		const bx = x + pad;
-		const by = 30;
+		const by = 28;
 		const bw = COL - pad * 2;
 		const bh = H - by * 2;
+		const r = 28;
 
-		ctx.save();
-		ctx.shadowColor = 'rgba(31,27,22,0.10)';
-		ctx.shadowBlur = 18;
-		ctx.shadowOffsetY = 6;
-		roundRect(ctx, bx, by, bw, bh, 26);
+		// hard offset shadow (sticker)
+		roundRect(ctx, bx + 6, by + 6, bw, bh, r);
+		ctx.fillStyle = C.ink;
+		ctx.fill();
+
+		// card
+		roundRect(ctx, bx, by, bw, bh, r);
 		ctx.fillStyle = C.surface;
 		ctx.fill();
-		ctx.restore();
-
-		roundRect(ctx, bx, by, bw, bh, 26);
-		ctx.strokeStyle = C.border;
 		ctx.lineWidth = 3;
+		ctx.strokeStyle = C.ink;
 		ctx.stroke();
 
 		// accent tab
-		roundRect(ctx, bx + 30, by + 30, 58, 8, 4);
+		roundRect(ctx, bx + 30, by + 30, 58, 10, 5);
 		ctx.fillStyle = C.accent;
 		ctx.fill();
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = C.ink;
+		ctx.stroke();
 
 		ctx.textAlign = 'left';
 		ctx.fillStyle = C.muted;
-		ctx.font = '400 32px "JetBrains Mono", monospace';
-		ctx.fillText(cell.num, bx + 32, by + 96);
+		ctx.font = '700 30px "JetBrains Mono", monospace';
+		ctx.fillText(cell.num, bx + 34, by + 94);
 
-		// icon, centred in the empty middle of the card
+		// icon in a soft sticker circle
+		const icx = bx + bw / 2;
+		const icy = 360;
+		ctx.beginPath();
+		ctx.arc(icx, icy + ICON_PX / 2 - 6, 104, 0, Math.PI * 2);
+		ctx.fillStyle = C.accentTint;
+		ctx.fill();
+		ctx.lineWidth = 3;
+		ctx.strokeStyle = C.ink;
+		ctx.stroke();
+
 		ctx.save();
-		ctx.translate(bx + bw / 2 - ICON_PX / 2, 300);
+		ctx.translate(icx - ICON_PX / 2, 286);
 		ctx.scale(ICON_PX / 24, ICON_PX / 24);
-		ctx.strokeStyle = C.accent;
-		ctx.lineWidth = 1.6;
+		ctx.strokeStyle = C.accentInk;
+		ctx.lineWidth = 1.8;
 		ctx.lineCap = 'round';
 		ctx.lineJoin = 'round';
 		ICONS[cell.icon](ctx);
 		ctx.restore();
 
+		// sub label (mono pill-like text)
 		ctx.textAlign = 'center';
-		ctx.fillStyle = C.accent;
-		ctx.font = '400 34px "JetBrains Mono", monospace';
-		ctx.fillText(cell.sub, bx + bw / 2, by + 525);
+		ctx.fillStyle = C.accentInk;
+		ctx.font = '700 30px "JetBrains Mono", monospace';
+		ctx.fillText('✳ ' + cell.sub, bx + bw / 2, by + 545);
 
+		// title
 		ctx.fillStyle = C.text;
-		ctx.font = '700 62px "Noto Sans Thai", sans-serif';
-		ctx.fillText(cell.title, bx + bw / 2, by + bh - 108);
+		ctx.font = '700 58px "Noto Sans Thai", "Sora", sans-serif';
+		ctx.fillText(cell.title, bx + bw / 2, by + bh - 104);
 	});
 
-	// separator rules between cells
-	ctx.strokeStyle = C.border;
-	ctx.lineWidth = 2;
-	for (let i = 1; i < CELLS.length; i++) {
-		ctx.beginPath();
-		ctx.moveTo(i * COL, 150);
-		ctx.lineTo(i * COL, H - 150);
-		ctx.stroke();
-	}
+	// no separator rules — cards define the grid in V5
 }
 
 // Draw only once the Thai + Latin faces are actually usable, otherwise the
 // screenshot races the font load and Thai falls back to a system face.
 Promise.all([
-	document.fonts.load('600 62px "Noto Sans Thai"'),
-	document.fonts.load('400 28px "JetBrains Mono"'),
+	document.fonts.load('700 58px "Noto Sans Thai"'),
+	document.fonts.load('700 58px "Sora"'),
+	document.fonts.load('700 30px "JetBrains Mono"'),
 ]).then(() => document.fonts.ready).then(() => {
 	draw();
 	document.title = 'rendered';
