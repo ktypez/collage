@@ -138,8 +138,9 @@
 		<div class="boot-error" role="alert">{bootError}</div>
 	{/if}
 
-	<!-- upload=true: LINE needs a public HTTPS URL, so the finished JPEG goes to R2 -->
-	<Studio cta="สร้างและส่งเข้ากลุ่ม" {onresult} upload />
+	<!-- upload=true: LINE needs a public HTTPS URL, so the finished JPEG goes to R2.
+	     getIdToken feeds the Authorization header /api/collage now requires. -->
+	<Studio cta="สร้างและส่งเข้ากลุ่ม" {onresult} upload getIdToken={() => liff?.getIDToken() ?? null} />
 
 	{#if notice}
 		<div class="status {notice.kind}" role="status" aria-live="polite">{notice.text}</div>

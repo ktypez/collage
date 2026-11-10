@@ -17,6 +17,8 @@ const config = {
 
 const LIFF_URL_BASE = `https://liff.line.me/${LIFF_ID}`;
 const CLIENTDATA_URL = 'https://data.mcky.space';
+/** A hung upstream must not hold the handler until LINE times out and retries the batch. */
+const CLIENTDATA_TIMEOUT_MS = 5000;
 
 const client = config.channelAccessToken ? LineBotClient.fromChannelAccessToken({ channelAccessToken: config.channelAccessToken }) : null;
 
@@ -173,7 +175,9 @@ interface ClientRow {
 
 async function handleSearchClient(replyToken: string, query: string) {
 	try {
-		const res = await fetch(`${CLIENTDATA_URL}/api/clients/search?${new URLSearchParams({ q: query })}`);
+		const res = await fetch(`${CLIENTDATA_URL}/api/clients/search?${new URLSearchParams({ q: query })}`, {
+			signal: AbortSignal.timeout(CLIENTDATA_TIMEOUT_MS),
+		});
 		if (!res.ok) throw new Error(`API error ${res.status}`);
 		const clients: ClientRow[] = await res.json();
 

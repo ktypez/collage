@@ -110,6 +110,7 @@ node scripts/richmenu.mjs --delete richmenu-xxx
   `วันที่` กลายเป็น `วันที`)
 - ผลลัพธ์ canvas ตรงกับ pipeline sharp เดิม: ขนาดเท่ากันทุกธีม และส่วนล่างของภาพ
   ต่างกัน <1% ของพิกเซล — ที่ต่างคือ rasterize ตัวอักษรในหัวเรื่องเท่านั้น
+  (ยกเว้น sheet ที่พื้นที่เกิน `MAX_CANVAS_AREA` — ดูข้อ `createSheet()` ด้านล่าง)
 - ฟอนต์เหลือ 4 ตัว (Noto Sans Thai, JetBrains Mono, Source Serif 4, Noto Serif Thai)
   Chakra Petch ถูกปลดระวางทั้ง UI, ธีมคอลลาจ และ rich menu
 - **ฟอนต์เป็น woff2 subset** ไม่ใช่ TTF: subset เหลือ Latin + ไทย 87 ตัวอักษร
@@ -122,13 +123,36 @@ node scripts/richmenu.mjs --delete richmenu-xxx
   วัด ink ของข้อความหัวเรื่อง: 400 = 8.2M, 500 = 9.6M, 600 = 10.9M, 700 = 12.1M
 - `ensureFonts()` โหลดฟอนต์เฉพาะที่ธีมนั้นใช้ และ **cache ต่อ face** — ครั้งที่สอง
   ใน session เดียวกันไม่ fetch ซ้ำ
-- `loadImages()` cache รูปที่ decode แล้วไว้ใน `WeakMap<File, …>` — เปลี่ยนแค่ชื่อ/วันที่
-  แล้วกดใหม่ไม่ต้อง decode รูปใหม่
+- `loadImages()` decode **ทีละรูป** ไม่ใช่ `Promise.all` แล้วย่อเหลือด้านยาวสุด 1152px
+  (1920/984 สำหรับ 1–2 รูป) ก่อนเก็บลง `WeakMap<File, …>` — 20 รูป 12MP ที่ decode
+  เต็มความละเอียดพร้อมกันคือเกือบ 1GB ของ RGBA ทำให้ tab ดับบน iOS;
+  `width/height` ที่เก็บไว้ยังเป็นขนาดจริงของไฟล์ เพราะ `masonry()` ต้องได้ค่าเดิมเป๊ะ
+  เปลี่ยนแค่ชื่อ/วันที่/ธีมแล้วกดใหม่ = ไม่ decode ซ้ำ
+- `createSheet()` เช็ค `sheetScale()` ก่อนสร้าง canvas: iOS Safari รุ่นก่อน 18 วาด
+  canvas ที่พื้นที่เกิน 16,777,216 px (4096×4096) เป็นภาพ **ว่างทั้งใบ** และ 20 รูปแนวตั้ง
+  9:16 คือ 2160×8345 (18 Mpx) — เกินกว่าจึงย่อทั้ง sheet ลงด้วย `ctx.scale`
+  โดยโค้ดวาดทุก phase ยังใช้พิกัดเดิม test อยู่ใน `test/collage.test.mjs`
 - `makePreview()` ใช้ `createImageBitmap(canvas, {resizeWidth…})` แทนการวาด canvas
   2160px ซ้ำสองรอบ
 - `renderThemed()` yield ด้วย `requestAnimationFrame` ระหว่าง 3 phase
   (backdrop → photos → foreground) ให้หน้าจอไม่ค้างและสถานะ "กำลังสร้างภาพ" วาดได้
 - `/api/collage` อัปโหลดขึ้น R2 **2 ไฟล์พร้อมกัน** (`Promise.all`) ไม่ต้องรอกัน
+- `/api/collage` **ต้องมี `Authorization: Bearer <LINE ID token>`** จาก `liff.getIDToken()`
+  แล้วเซิร์ฟเวอร์ตรวจกับ `api.line.me/oauth2/v2.1/verify` ด้วย channel ID ที่แยกมาจาก
+  `LIFF_ID` (`<channelId>-<suffix>`) — ไม่ต้องใช้ secret เพิ่ม (`server/lineAuth.ts`)
+  หน้า `/` ไม่ได้อัปโหลด (`upload={false}`) มีแค่ `/liff` ที่ล็อกอินอยู่แล้ว
+  ถ้าเปลี่ยนหน้าไหนให้ `upload` ต้องส่ง `getIdToken` ด้วย ไม่งั้นจะได้ 401
+- จำกัด **12 ครั้ง/ผู้ใช้/10 นาที** เป็น sliding window ที่เก็บใน R2 (`quota/<sha256(sub)>`,
+  `server/quota.ts`) ไม่ใช่ในหน่วยความจำ จึงบังคับใช้ข้าม instance ของ Vercel ได้จริง
+  — เขียนแบบ optimistic concurrency ด้วย `If-Match` / `If-None-Match: *` ที่ R2 ตรวจ
+  แบบ atomic (แพ้การแข่งขัน = 412 แล้วอ่านใหม่สูงสุด 4 ครั้ง) ก่อนหน้านี้เป็น in-memory
+  ซึ่งกัน burst ได้แค่ instance เดียว; ถ้าอ่าน/เขียนโควต้าไม่ได้จะตอบ 503 ไม่ใช่ปล่อยผ่าน
+  cron `/api/cleanup` กวาดเอกสาร `quota/` ที่ไม่ถูกแตะเกิน 30 วัน ไม่ให้ piled up
+  — ค่าคงที่ `UPLOAD_QUOTA` และข้อความไทยของ UI (ทั้ง 429 และยอดที่เหลือ) อยู่ที่
+  `lib/quota.ts` ที่เดียว route กับ `Studio.svelte` import ไปใช้ร่วมกัน
+- ชื่อไฟล์เป็น `collage-<uuid>.jpg` (`crypto.randomUUID()`) — เดิมใช้ `Date.now()`
+  ทั้งเดาง่ายและสองคนกดพร้อมกันในมิลลิวินาทีเดียวเขียนทับกัน; **prefix `collage-`
+  ต้องคงไว้** ไม่งั้น /api/cleanup จะไม่เห็นไฟล์
 - รูปตัวอย่างใน `web/static/previews/` **re-render ใหม่แล้ว** (commit `0c67028`) — สร้างจาก
  แอปจริงด้วยรูป Unsplash 6 ใบ (seed `team-a`..`team-f`, picsum.photos) ย่อเหลือ 1400px
  q84 (~210KB/ไฟล์) ใช้แค่ใน theme picker จึงไม่ต้องเต็ม 2160px

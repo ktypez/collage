@@ -13,6 +13,8 @@ export interface Liff {
 	isLoggedIn(): boolean;
 	login(config?: { redirectUri?: string; scope?: string[] }): Promise<{ code: string }>;
 	logout(): void;
+	/** Signed OIDC token for the logged-in user; /api/collage verifies it. */
+	getIDToken(): string | null;
 	sendMessages(messages: LiffMessage[]): Promise<unknown>;
 	closeWindow(): void;
 	permission?: { getGrantedAll(): Promise<string[]> };
