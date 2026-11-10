@@ -467,8 +467,6 @@ async function renderThemed(
 			color: hexToRgba(ink, 0.9),
 			align,
 			glow,
-			// tight tracking is what makes the display face read like a system
-			// UI font instead of a wide book face
 			tracking: `${(-nameSize * 0.012).toFixed(2)}px`,
 		});
 	}
@@ -480,6 +478,53 @@ async function renderThemed(
 			color: hexToRgba(ink, 0.8),
 			align,
 			tracking: `${(-dateSize * 0.008).toFixed(2)}px`,
+		});
+	}
+
+	// 7days V5: playful header marks (asterisk sticker, squiggle, confetti in day accent)
+	if (isV5Week && presetStops) {
+		const accent = presetStops[1];
+		const titleY = Math.round(HEADER_H * (hasBoth ? 0.47 : 0.55));
+		// asterisk sticker
+		ctx.save();
+		ctx.translate(margin + 210, titleY - 48);
+		ctx.rotate((-8 * Math.PI) / 180);
+		fillRoundRect(ctx, -18, -18, 36, 36, 10, accent);
+		strokeRoundRect(ctx, -18, -18, 36, 36, 10, '#28251d', 3);
+		ctx.fillStyle = contrastTextOn(accent);
+		ctx.font = `700 26px ${FONT_MONO}`;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText('✳', 0, 1);
+		ctx.restore();
+		// squiggle under date
+		const sy = Math.round(HEADER_H * (hasBoth ? 0.78 : 0.55)) + 12;
+		ctx.save();
+		ctx.strokeStyle = accent;
+		ctx.lineWidth = 5;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		for (let i = 0; i <= 140; i++) {
+			const px = margin + i * 1.6;
+			const py = sy + Math.sin(i / 10) * 4;
+			if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+		}
+		ctx.stroke();
+		ctx.restore();
+		// confetti dots in the header area
+		const dots = [
+			[W - 420, 70, 10], [W - 360, 110, 7], [W - 300, 60, 12], [W - 250, 130, 8],
+			[W - 520, 120, 6], [W - 470, 55, 9], [W - 180, 95, 7], [W - 140, 150, 11],
+			[W - 600, 80, 7], [W - 560, 140, 5],
+		];
+		dots.forEach(([dx, dy, r], i) => {
+			ctx.beginPath();
+			ctx.arc(dx, dy, r, 0, Math.PI * 2);
+			ctx.fillStyle = i % 3 === 0 ? accent : i % 3 === 1 ? '#f2b63d' : '#57a7e0';
+			ctx.fill();
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = '#28251d';
+			ctx.stroke();
 		});
 	}
 
@@ -568,23 +613,26 @@ async function renderThemed(
 				const colors = DAY_PRESETS[key];
 				const active = key === preset;
 				const x = margin + i * (chipW + gap);
-				const fill = active ? colors[1] : hexToRgba(colors[1], 0.18);
+				const fill = active ? colors[1] : hexToRgba(colors[1], 0.22);
 				const inkColor = active ? contrastTextOn(colors[1]) : colors[0];
 				if (active) {
-					// hard offset shadow
-					fillRoundRect(ctx, x + 4, y + 4, chipW, chipH, 12, '#28251d');
-				}
-				fillRoundRect(ctx, x, y, chipW, chipH, 12, fill);
-				strokeRoundRect(ctx, x, y, chipW, chipH, 12, '#28251d', active ? 3 : 2);
-				if (active) {
+					ctx.save();
+					ctx.translate(x + chipW / 2, y + chipH / 2);
+					ctx.rotate((-4 * Math.PI) / 180);
+					ctx.translate(-(x + chipW / 2), -(y + chipH / 2));
+					fillRoundRect(ctx, x + 5, y + 5, chipW, chipH, 14, '#28251d');
+					fillRoundRect(ctx, x, y, chipW, chipH, 14, fill);
+					strokeRoundRect(ctx, x, y, chipW, chipH, 14, '#28251d', 3);
 					const size = 17;
 					drawText(ctx, DAY_SHORT[key], x + chipW / 2, y + Math.round(chipH / 2 + size * 0.35), {
 						size, font: 'mono', color: inkColor, align: 'center',
 					});
+					ctx.restore();
 				} else {
-					// small day dot for inactive chips
+					fillRoundRect(ctx, x, y + 2, chipW, chipH - 4, 12, fill);
+					strokeRoundRect(ctx, x, y + 2, chipW, chipH - 4, 12, '#28251d', 2);
 					ctx.beginPath();
-					ctx.arc(x + chipW / 2, y + chipH / 2, 6, 0, Math.PI * 2);
+					ctx.arc(x + chipW / 2, y + chipH / 2, 7, 0, Math.PI * 2);
 					ctx.fillStyle = colors[1];
 					ctx.fill();
 					ctx.strokeStyle = '#28251d';

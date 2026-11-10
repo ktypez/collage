@@ -179,16 +179,16 @@ export const THEMES = {
 		canvas: {
 			bg: '#f6f2e9',
 			cell: {
-				backplate: { dx: 8, dy: 8, rounded: 22, fill: '#cfc5a9' },
-				border: '#28251d', width: 3, rounded: 22, bg: '#fffdf6', shadow: 0.04,
+				backplate: { dx: 9, dy: 9, rounded: 24, fill: '#28251d' },
+				border: '#28251d', width: 3, rounded: 24, bg: '#fffdf6', shadow: 0,
 				label: '{n}', labelColor: '#fffdf6', labelBg: '#28251d',
-				labelSize: 16, labelHeight: 24, labelPad: 10,
-				labelPosition: 'top-left', labelInset: 4, labelRounded: 8,
+				labelSize: 17, labelHeight: 26, labelPad: 11,
+				labelPosition: 'top-left', labelInset: -2, labelRounded: 9,
 			},
 			header: {
-				text: '7 DAYS', color: '#28251d', font: 'display', size: 44, pad: 84, glow: false,
+				text: '7 DAYS', color: '#28251d', font: 'display', size: 52, pad: 84, glow: false,
 				align: 'left', margin: 120, ink: '#28251d',
-				stripe: '#158068', stripeHeight: 14, stripePos: 'top',
+				stripe: '#158068', stripeHeight: 16, stripePos: 'top',
 				presetHeader: false,
 			},
 			// day strip is drawn with a custom V5 treatment in the renderer
@@ -197,9 +197,9 @@ export const THEMES = {
 				inactiveOpacity: 0.38, label: true, labelSize: 18,
 			},
 			overlay: 'none',
-			photoFx: 'none',
+			photoFx: 'saturate(1.06) contrast(1.02)',
 			chrome: {
-				frame: { inset: 24, width: 3, color: '#28251d', opacity: 1, rounded: 24 },
+				frame: { inset: 22, width: 4, color: '#28251d', opacity: 1, rounded: 28 },
 			},
 		},
 	},
