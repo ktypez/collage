@@ -215,32 +215,26 @@ function draw() {
 		ctx.font = '700 30px "JetBrains Mono", monospace';
 		ctx.fillText(cell.num, bx + 34, by + 94);
 
-		// icon in a soft sticker circle
-		const icx = bx + bw / 2;
-		const icy = 360;
-		ctx.beginPath();
-		ctx.arc(icx, icy + ICON_PX / 2 - 6, 104, 0, Math.PI * 2);
-		ctx.fillStyle = C.accentTint;
-		ctx.fill();
-		ctx.lineWidth = 3;
-		ctx.strokeStyle = C.ink;
-		ctx.stroke();
-
+		// ghost icon: large, faint, fills the card behind content (no blocking circle)
+		const gSize = bw * 0.78;
+		const gcx = bx + bw / 2;
+		const gcy = by + bh * 0.5;
 		ctx.save();
-		ctx.translate(icx - ICON_PX / 2, 286);
-		ctx.scale(ICON_PX / 24, ICON_PX / 24);
-		ctx.strokeStyle = C.accentInk;
-		ctx.lineWidth = 1.8;
+		ctx.globalAlpha = 0.13;
+		ctx.translate(gcx - gSize / 2, gcy - gSize / 2);
+		ctx.scale(gSize / 24, gSize / 24);
+		ctx.strokeStyle = C.accent;
+		ctx.lineWidth = 1.4;
 		ctx.lineCap = 'round';
 		ctx.lineJoin = 'round';
 		ICONS[cell.icon](ctx);
 		ctx.restore();
 
-		// sub label (mono pill-like text)
+		// sub label (mono)
 		ctx.textAlign = 'center';
 		ctx.fillStyle = C.accentInk;
 		ctx.font = '700 30px "JetBrains Mono", monospace';
-		ctx.fillText('✳ ' + cell.sub, bx + bw / 2, by + 545);
+		ctx.fillText('✳ ' + cell.sub, bx + bw / 2, by + 520);
 
 		// title
 		ctx.fillStyle = C.text;
