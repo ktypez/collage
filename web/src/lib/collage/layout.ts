@@ -20,6 +20,25 @@ export const SY = 14;
 export const SB = 36;
 export const SA = 0.10;
 
+/**
+ * iOS Safari before 18 blanks any canvas whose area passes 16,777,216 px
+ * (4096×4096) — it draws nothing at all, not a clipped image. A 20-photo
+ * portrait sheet is 2160×8345 (18 Mpx), so it would come out empty in the
+ * LINE webview on an older iPhone. 16 Mpx leaves a little headroom under the
+ * exact limit. Sheets that fit are unaffected (scale stays 1).
+ */
+export const MAX_CANVAS_AREA = 16_000_000;
+
+/**
+ * Scale a sheet down so `w * h` stays inside `maxArea`. Applied to both edges
+ * so the output keeps its aspect ratio; callers draw in sheet coordinates and
+ * let the context transform do the shrinking.
+ */
+export function sheetScale(w: number, h: number, maxArea = MAX_CANVAS_AREA): number {
+	const area = w * h;
+	return area > maxArea ? Math.sqrt(maxArea / area) : 1;
+}
+
 export interface Placement {
 	colIdx: number;
 	x: number;

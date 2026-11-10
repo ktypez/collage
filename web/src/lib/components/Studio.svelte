@@ -2,6 +2,7 @@
 	import { MAX_FILES } from '#lib/config';
 	import { loadImages, renderCollage, canvasToBlob, makePreview } from '#lib/collage/render';
 	import { defaultPreset, type DayPreset, type ThemeId } from '#lib/collage/themes';
+	import { quotaLeftText, quotaRemainingText, quotaWaitText, UPLOAD_QUOTA } from '#lib/quota';
 	import FileDrop from './FileDrop.svelte';
 	import PhotoGrid from './PhotoGrid.svelte';
 	import DatePicker from './DatePicker.svelte';
@@ -17,9 +18,11 @@
 		cta?: string;
 		onresult?: (r: Result) => unknown;
 		upload?: boolean;
+		/** LINE ID token sent with the upload — /api/collage refuses anonymous sends. */
+		getIdToken?: () => string | null;
 	}
 
-	let { cta = 'สร้างคอลลาจ', onresult, upload = true }: Props = $props();
+	let { cta = 'สร้างคอลลาจ', onresult, upload = true, getIdToken }: Props = $props();
 
 	let files = $state<File[]>([]);
 	let urls = $state<string[]>([]);
@@ -31,6 +34,117 @@
 	let status = $state<{ text: string; kind: 'loading' | 'success' | 'error' } | null>(null);
 	let resultUrl = $state<string | null>(null);
 	let imageUrl = $state('');
+
+	/** Last quota answer from the server, kept so a reload doesn't lose it. */
+	const QUOTA_NOTE_KEY = 'collage_quota_left';
+	const QUOTA_BLOCKED_KEY = 'collage_quota_blocked';
+	let quotaNote = $state<{ left: number; at: number } | null>(null);
+	let quotaBlockedUntil = $state<number | null>(null);
+
+	// The stable LINE user id lives in the ID token (`sub`). Scoping the cache by
+	// it stops two accounts on the same device from inheriting each other's count.
+	function quotaUserSub(): string | null {
+		const token = getIdToken?.() ?? null;
+		if (!token) return null;
+		try {
+			const part = token.split('.')[1];
+			if (!part) return null;
+			const json = atob(part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '='));
+			const sub = (JSON.parse(json) as { sub?: unknown }).sub;
+			return typeof sub === 'string' && sub ? sub : null;
+		} catch {
+			return null;
+		}
+	}
+
+	function scopedKey(base: string, sub: string | null): string | null {
+		return sub ? `${base}:${sub}` : null;
+	}
+
+	/** A saved count is only shown while it could still be true. */
+	function freshQuotaNote(value: unknown): { left: number; at: number } | null {
+		const note = value as { left?: unknown; at?: unknown } | null;
+		if (typeof note?.left !== 'number' || typeof note?.at !== 'number') return null;
+		return Date.now() - note.at < UPLOAD_QUOTA.windowMs ? { left: note.left, at: note.at } : null;
+	}
+
+	function saveQuotaNote(left: number) {
+		quotaNote = { left, at: Date.now() };
+		const key = scopedKey(QUOTA_NOTE_KEY, quotaUserSub());
+		if (!key) return;
+		try {
+			localStorage.setItem(key, JSON.stringify(quotaNote));
+		} catch {
+			// Private-mode storage can refuse writes; never fail a sent collage
+			// because a note could not be remembered.
+		}
+	}
+
+	function clearQuotaNote() {
+		quotaNote = null;
+		const key = scopedKey(QUOTA_NOTE_KEY, quotaUserSub());
+		if (key) localStorage.removeItem(key);
+	}
+
+	function saveQuotaBlocked(until: number) {
+		quotaBlockedUntil = until;
+		const key = scopedKey(QUOTA_BLOCKED_KEY, quotaUserSub());
+		if (!key) return;
+		try {
+			localStorage.setItem(key, String(until));
+		} catch {
+			// Remembering the block is a best-effort cache, not the source of truth.
+		}
+	}
+
+	function clearQuotaBlocked() {
+		quotaBlockedUntil = null;
+		const key = scopedKey(QUOTA_BLOCKED_KEY, quotaUserSub());
+		if (key) localStorage.removeItem(key);
+	}
+
+	$effect(() => {
+		const sub = quotaUserSub();
+		if (!sub) return;
+		const noteKey = scopedKey(QUOTA_NOTE_KEY, sub);
+		const blockedKey = scopedKey(QUOTA_BLOCKED_KEY, sub);
+		if (!noteKey || !blockedKey) return;
+
+		const raw = localStorage.getItem(noteKey);
+		if (raw) {
+			let note: { left: number; at: number } | null = null;
+			try {
+				note = freshQuotaNote(JSON.parse(raw));
+			} catch {
+				// A half-written value must not break the studio.
+			}
+			// Anything older than the window is dropped rather than shown as current.
+			if (note) quotaNote = note;
+			else localStorage.removeItem(noteKey);
+		}
+
+		const until = Number(localStorage.getItem(blockedKey));
+		if (Number.isFinite(until) && until > Date.now()) quotaBlockedUntil = until;
+		else localStorage.removeItem(blockedKey);
+	});
+
+	// Hide the note once the window it counted has passed, without a reload.
+	$effect(() => {
+		const note = quotaNote;
+		if (!note) return;
+		const timer = setTimeout(clearQuotaNote, Math.max(0, note.at + UPLOAD_QUOTA.windowMs - Date.now()));
+		return () => clearTimeout(timer);
+	});
+
+	// Drop a cached 429 block the moment it expires so the next attempt can go through.
+	$effect(() => {
+		const until = quotaBlockedUntil;
+		if (!until) return;
+		const timer = setTimeout(() => {
+			if (quotaBlockedUntil === until) clearQuotaBlocked();
+		}, Math.max(0, until - Date.now()));
+		return () => clearTimeout(timer);
+	});
 
 	$effect(() => {
 		const saved = localStorage.getItem('collage_name');
@@ -74,7 +188,15 @@
 			status = { text: 'เลือกรูปอย่างน้อย 1 รูปก่อน', kind: 'error' };
 			return;
 		}
+		const blockedUntil = quotaBlockedUntil;
+		if (blockedUntil && blockedUntil > Date.now()) {
+			status = { text: quotaWaitText(String(Math.ceil((blockedUntil - Date.now()) / 1000))), kind: 'error' };
+			return;
+		}
 		busy = true;
+		// Uploads left in the quota window, as of the last send — shown so the
+		// limit is visible before it bites, not only in the 429.
+		let left: number | null = null;
 		status = { text: 'กำลังสร้างภาพ...', kind: 'loading' };
 		try {
 			await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -87,17 +209,39 @@
 			imageUrl = resultUrl;
 
 			if (upload) {
+				const token = getIdToken?.() ?? null;
+				if (!token) throw new Error('เซสชัน LINE หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+
 				const fd = new FormData();
 				fd.append('image', blob, 'collage.jpg');
 				fd.append('preview', await canvasToBlob(await makePreview(canvas), 0.92), 'collage-preview.jpg');
-				const res = await fetch('/api/collage', { method: 'POST', body: fd });
+				const res = await fetch('/api/collage', {
+					method: 'POST',
+					body: fd,
+					headers: { authorization: `Bearer ${token}` },
+				});
+				if (res.status === 401) throw new Error('เซสชัน LINE หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+				// the quota is per user, so tell them how long until their next slot
+				if (res.status === 429) {
+					const retryAfter = res.headers.get('retry-after');
+					const seconds = Number(retryAfter);
+					if (Number.isFinite(seconds) && seconds > 0) {
+						saveQuotaBlocked(Date.now() + Math.ceil(seconds) * 1000);
+					}
+					clearQuotaNote();
+					throw new Error(quotaWaitText(retryAfter));
+				}
 				const data = await res.json().catch(() => ({ success: false, error: 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง' }));
 				if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด ไม่ทราบสาเหตุ');
 				imageUrl = data.imageUrl;
 				previewUrl = data.previewUrl ?? imageUrl;
+				if (typeof data.remaining === 'number') {
+					left = data.remaining;
+					saveQuotaNote(data.remaining);
+				}
 			}
 
-			status = { text: 'สำเร็จแล้ว', kind: 'success' };
+			status = { text: left === null ? 'สำเร็จแล้ว' : quotaLeftText(left), kind: 'success' };
 			await onresult?.({ imageUrl, previewUrl, blob });
 		} catch (err) {
 			status = { text: err instanceof Error ? err.message : String(err), kind: 'error' };
@@ -167,6 +311,9 @@
 				</button>
 				{#if status}
 					<div class="status {status.kind}" role="status" aria-live="polite">{status.text}</div>
+				{/if}
+				{#if quotaNote}
+					<p class="quota-note">{quotaRemainingText(quotaNote.left)}</p>
 				{/if}
 			</div>
 		</section>

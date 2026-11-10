@@ -1,14 +1,16 @@
 /* =============================================================================
    server/r2.ts — Cloudflare R2 over the S3 API
    -----------------------------------------------------------------------------
-   Only three operations are needed (put / list / delete), so this uses
-   aws4fetch (65 KB, one dependency) instead of @aws-sdk/client-s3 (18 MB).
-   Reads are deliberately absent: the bucket is public and LINE fetches the
-   objects from R2_PUBLIC_URL directly.
+   Only a handful of operations are needed (put / get / list / delete), so this
+   uses aws4fetch (65 KB, one dependency) instead of @aws-sdk/client-s3 (18 MB).
+   Reads of collages are deliberately absent: the bucket is public and LINE
+   fetches those from R2_PUBLIC_URL directly. The one read here is the upload
+   quota document (`quota/`), which is never public.
    Lives under lib/server/ so SvelteKit refuses to bundle it into the client.
    ============================================================================= */
 
 import { AwsClient } from 'aws4fetch';
+import { QuotaConflictError, type QuotaStore } from './quota';
 import {
 	R2_ACCESS_KEY_ID,
 	R2_BUCKET_NAME,
@@ -66,6 +68,62 @@ export async function uploadCollage(body: Uint8Array, filename: string): Promise
 	}
 }
 
+export class R2PreconditionError extends Error {
+	constructor() {
+		super('conditional write lost the race');
+		this.name = 'R2PreconditionError';
+	}
+}
+
+/** Read a text object plus its ETag, or null when the key is absent. */
+export async function getObject(key: string): Promise<{ body: string; etag: string | null } | null> {
+	const res = await getClient().fetch(bucketUrl(key));
+	if (res.status === 404) return null;
+	if (!res.ok) throw new Error(`R2 GET failed: ${res.status} ${await res.text()}`);
+	return { body: await res.text(), etag: res.headers.get('etag') };
+}
+
+interface PutCondition {
+	/** Only write if the object still has this ETag (optimistic concurrency). */
+	ifMatch?: string;
+	/** Only write if the key does not exist yet. */
+	onlyIfAbsent?: boolean;
+}
+
+/**
+ * PUT with a precondition. R2 evaluates these atomically at the commit point and
+ * answers 412 when another writer got there first.
+ */
+async function putObject(key: string, body: string, condition: PutCondition): Promise<void> {
+	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+	if (condition.ifMatch) headers['If-Match'] = condition.ifMatch;
+	else if (condition.onlyIfAbsent) headers['If-None-Match'] = '*';
+
+	const res = await getClient().fetch(bucketUrl(key), {
+		method: 'PUT',
+		body: new TextEncoder().encode(body) as BodyInit,
+		headers,
+	});
+	if (res.status === 412) throw new R2PreconditionError();
+	if (!res.ok) throw new Error(`R2 PUT failed: ${res.status} ${await res.text()}`);
+}
+
+/** The upload quota, stored beside the collages so it needs no extra service. */
+export const r2QuotaStore: QuotaStore = {
+	async get(key) {
+		const object = await getObject(key);
+		return object ? { value: object.body, version: object.etag } : null;
+	},
+	async put(key, value, version) {
+		try {
+			await putObject(key, value, version ? { ifMatch: version } : { onlyIfAbsent: true });
+		} catch (err) {
+			if (err instanceof R2PreconditionError) throw new QuotaConflictError();
+			throw err;
+		}
+	},
+};
+
 interface S3Object {
 	Key: string;
 	LastModified: string;
@@ -105,28 +163,15 @@ async function listAll(prefix: string): Promise<S3Object[]> {
 	return found;
 }
 
-/** Delete collages older than `maxAgeDays`. Returns how many went. */
-export async function cleanupOldCollages(maxAgeDays = 7): Promise<{ deleted: number }> {
-	const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
-	const stale: S3Object[] = [];
-
-	for (const prefix of CLEANUP_PREFIXES) {
-		for (const object of await listAll(prefix)) {
-			if (new Date(object.LastModified).getTime() < cutoff) stale.push(object);
-		}
-	}
-
-	if (!stale.length) {
-		console.log(`Cleanup: no collages older than ${maxAgeDays} days`);
-		return { deleted: 0 };
-	}
-
-	// DeleteObjects takes at most 1000 keys per call, and the payload must be a
-	// single <Delete> document — R2 rejects bare <Object> fragments as MalformedXML.
-	for (let i = 0; i < stale.length; i += 1000) {
-		const batch = stale.slice(i, i + 1000);
-		const body = `<Delete>${batch
-			.map((o) => `<Object><Key>${escapeXml(o.Key)}</Key></Object>`)
+/**
+ * DeleteObjects takes at most 1000 keys per call, and the payload must be a
+ * single <Delete> document — R2 rejects bare <Object> fragments as MalformedXML.
+ */
+async function deleteKeys(keys: string[]): Promise<void> {
+	for (let i = 0; i < keys.length; i += 1000) {
+		const body = `<Delete>${keys
+			.slice(i, i + 1000)
+			.map((key) => `<Object><Key>${escapeXml(key)}</Key></Object>`)
 			.join('')}</Delete>`;
 		const res = await getClient().fetch(`${bucketUrl()}?delete`, {
 			method: 'POST',
@@ -135,7 +180,39 @@ export async function cleanupOldCollages(maxAgeDays = 7): Promise<{ deleted: num
 		});
 		if (!res.ok) throw new Error(`R2 delete failed: ${res.status} ${await res.text()}`);
 	}
+}
 
-	console.log(`Cleanup: deleted ${stale.length} collages older than ${maxAgeDays} days`);
-	return { deleted: stale.length };
+/** Keys under any of `prefixes` that were last written more than `maxAgeDays` ago. */
+async function sweep(prefixes: string[], maxAgeDays: number): Promise<number> {
+	const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+	const stale: string[] = [];
+
+	for (const prefix of prefixes) {
+		for (const object of await listAll(prefix)) {
+			if (new Date(object.LastModified).getTime() < cutoff) stale.push(object.Key);
+		}
+	}
+
+	if (stale.length) await deleteKeys(stale);
+	return stale.length;
+}
+
+/** Delete collages older than `maxAgeDays`. Returns how many went. */
+export async function cleanupOldCollages(maxAgeDays = 7): Promise<{ deleted: number }> {
+	const deleted = await sweep(CLEANUP_PREFIXES, maxAgeDays);
+	console.log(
+		deleted
+			? `Cleanup: deleted ${deleted} collages older than ${maxAgeDays} days`
+			: `Cleanup: no collages older than ${maxAgeDays} days`,
+	);
+	return { deleted };
+}
+
+/**
+ * Quota documents are one tiny object per user and are never deleted by the
+ * upload path, so the daily cron sweeps the ones nobody has touched in a month.
+ * A returning user just starts from an empty (already expired) window.
+ */
+export async function cleanupStaleQuotas(maxAgeDays = 30): Promise<{ deleted: number }> {
+	return { deleted: await sweep(['quota/'], maxAgeDays) };
 }

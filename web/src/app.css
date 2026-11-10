@@ -390,6 +390,7 @@ button { background: none; border: 0; cursor: pointer; touch-action: manipulatio
 .status.loading { color: var(--ink-soft); }
 .status.success { color: var(--acc-ink); }
 .status.error { color: var(--danger); }
+.quota-note { margin-top: 8px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; letter-spacing: .02em; color: var(--ink-faint); }
 .result-area { margin-top: 18px; padding: 16px; }
 .result-title { font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: var(--acc-ink); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .result-img { width: 100%; height: auto; border-radius: var(--r2); border: var(--border-w) solid var(--hard); box-shadow: var(--shadow-pop); display: block; background: var(--paper-2); }

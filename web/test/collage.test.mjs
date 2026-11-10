@@ -13,7 +13,10 @@ import {
 	masonry,
 	parseColor,
 	parseCssGradient,
+	sheetScale,
 	toRgba,
+	HEADER_H,
+	MAX_CANVAS_AREA,
 	W,
 } from '../src/lib/collage/layout.ts';
 import { DAY_PRESETS, DAYS, THEME_IDS, THEMES } from '../src/lib/collage/themes.ts';
@@ -85,6 +88,34 @@ test('masonry drops the next image into the shortest column', () => {
 	);
 	assert.equal(L.placements[0].colIdx, 0);
 	assert.equal(L.placements[1].colIdx, 1);
+});
+
+test('sheetScale leaves a normal sheet alone', () => {
+	const L = masonry(
+		Array.from({ length: 6 }, () => ({ w: 3000, h: 2000 })),
+		{ headerH: HEADER_H, hasBoth: true },
+	);
+	assert.ok(W * L.totalH < MAX_CANVAS_AREA, 'fixture is under the canvas area limit');
+	assert.equal(sheetScale(W, L.totalH), 1);
+});
+
+test('sheetScale keeps a 20-photo portrait sheet inside the iOS canvas area limit', () => {
+	// 9:16 phone photos in three columns is the tallest realistic sheet, and it
+	// used to come out completely blank on iOS Safari before 18.
+	const L = masonry(
+		Array.from({ length: 20 }, () => ({ w: 1080, h: 1920 })),
+		{ headerH: HEADER_H + 90, hasBoth: true },
+	);
+	assert.ok(W * L.totalH > MAX_CANVAS_AREA, 'fixture really is over the limit');
+
+	const scale = sheetScale(W, L.totalH);
+	const w = Math.round(W * scale);
+	const h = Math.round(L.totalH * scale);
+	assert.ok(scale > 0 && scale < 1, 'the sheet is scaled down, not dropped');
+	assert.ok(w * h <= MAX_CANVAS_AREA, 'scaled sheet fits the area budget');
+	assert.ok(w > 1000 && h > 3000, 'the scaled sheet is still a usable size');
+	// Both edges shrink by the same factor, so the collage keeps its proportions.
+	assert.ok(Math.abs(w / h - W / L.totalH) < 0.001);
 });
 
 test('fmtDate renders the Thai Buddhist year', () => {

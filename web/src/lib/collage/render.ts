@@ -13,7 +13,7 @@
 
 import {
 	W, HEADER_H, PS, PB, G, CP,
-	masonry, fmtDate, makeGradient, toRgba, parseCssGradient,
+	masonry, fmtDate, makeGradient, toRgba, parseCssGradient, sheetScale,
 } from './layout';
 import {
 	THEMES, DAY_PRESETS, DAYS, DAY_SHORT,
@@ -209,22 +209,41 @@ function fillBackground(ctx: CanvasRenderingContext2D, bg: ThemeManifest['canvas
 
 /* ---------- image loading ---------- */
 
-/* Decoded photos are cached per File: regenerating with the same photos (the
-   common case when only the name, date or style changed) must not decode
-   20 megapixel JPEGs again. */
-const decodedImages = new WeakMap<File, HTMLImageElement>();
+/** A photo ready to draw, plus the dimensions the layout math needs.
+ *
+ *  `source` is deliberately not the full decode. A 12 MP phone photo is
+ *  ~48 MB of RGBA once decoded, and the upload limit is 20 photos — close to
+ *  a gigabyte, which is why a full-res sheet used to blank the tab on iOS.
+ *  Photos are decoded one at a time here and immediately shrunk to roughly
+ *  the size the sheet draws them at, so only small bitmaps stay alive. */
+export interface LoadedPhoto {
+	source: CanvasImageSource;
+	/** Original pixel size. `masonry()` must see exactly these — decoding at a
+	 *  smaller size must never change the output geometry. */
+	width: number;
+	height: number;
+	/** Longest edge of `source`, so a later render can tell if it is sharp enough. */
+	longEdge: number;
+}
 
-export function loadImage(file: File | Blob): Promise<HTMLImageElement> {
-	if (file instanceof File) {
-		const hit = decodedImages.get(file);
-		if (hit) return Promise.resolve(hit);
-	}
+/** Long edge each photo is decoded at. The sheet never draws a photo wider
+ *  than its cell — 1920 px for one photo, 984 px for two, 576 px for three or
+ *  more — so anything past 2× the cell is only memory. 2560 is the ceiling for
+ *  the single-photo sheet, where the photo is the whole collage. */
+function decodeLongEdge(count: number): number {
+	const cell = count === 1 ? 1920 : count === 2 ? 984 : 576;
+	return Math.min(2560, cell * 2);
+}
+
+const decodedPhotos = new WeakMap<File, LoadedPhoto>();
+
+/** The <img> path, kept for engines without createImageBitmap. */
+function loadImageElement(file: File | Blob): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		const url = URL.createObjectURL(file);
 		const img = new Image();
 		const done = () => {
 			URL.revokeObjectURL(url);
-			if (file instanceof File) decodedImages.set(file, img);
 			resolve(img);
 		};
 		img.onload = () => {
@@ -244,8 +263,96 @@ export function loadImage(file: File | Blob): Promise<HTMLImageElement> {
 	});
 }
 
-export async function loadImages(files: Array<File | Blob>): Promise<HTMLImageElement[]> {
-	return Promise.all(files.map(loadImage));
+/** Decode through <img>, for engines or formats createImageBitmap refuses
+ *  (HEIC in some Safari versions). The element is drawn once into a scratch
+ *  canvas so the retained source is still the small copy. */
+async function decodeViaElement(file: File | Blob, longEdge: number): Promise<LoadedPhoto> {
+	const img = await loadImageElement(file);
+	const width = img.naturalWidth || img.width;
+	const height = img.naturalHeight || img.height;
+	const edge = Math.max(width, height);
+	const scale = Math.min(1, longEdge / edge);
+	const fullSize: LoadedPhoto = { source: img, width, height, longEdge: edge };
+
+	if (scale >= 1 || typeof createImageBitmap !== 'function') return fullSize;
+
+	const scratch = document.createElement('canvas');
+	scratch.width = Math.max(1, Math.round(width * scale));
+	scratch.height = Math.max(1, Math.round(height * scale));
+	const ctx = scratch.getContext('2d');
+	if (!ctx) return fullSize;
+	ctx.imageSmoothingQuality = 'high';
+	ctx.drawImage(img, 0, 0, scratch.width, scratch.height);
+
+	try {
+		return {
+			source: await createImageBitmap(scratch),
+			width,
+			height,
+			longEdge: Math.round(edge * scale),
+		};
+	} catch {
+		return fullSize;
+	}
+}
+
+/** Decode one photo at (at most) `longEdge`, keeping its original dimensions.
+ *  The full-size bitmap lives only for the length of this call. */
+async function decodePhoto(file: File | Blob, longEdge: number): Promise<LoadedPhoto> {
+	if (typeof createImageBitmap !== 'function') return decodeViaElement(file, longEdge);
+
+	let full: ImageBitmap;
+	try {
+		// 'from-image' matches how <img> applied EXIF rotation before this
+		// change, so a sideways phone photo still lands the same way round.
+		full = await createImageBitmap(file, { imageOrientation: 'from-image' });
+	} catch {
+		return decodeViaElement(file, longEdge);
+	}
+
+	const width = full.width;
+	const height = full.height;
+	const edge = Math.max(width, height);
+	const scale = Math.min(1, longEdge / edge);
+
+	// Already small enough — keep the decode we have instead of copying it.
+	if (scale >= 1) return { source: full, width, height, longEdge: edge };
+
+	let small: ImageBitmap | null = null;
+	try {
+		small = await createImageBitmap(full, {
+			resizeWidth: Math.max(1, Math.round(width * scale)),
+			resizeHeight: Math.max(1, Math.round(height * scale)),
+			resizeQuality: 'high',
+		});
+	} catch {
+		small = null;
+	} finally {
+		full.close();
+	}
+
+	if (!small) return decodeViaElement(file, longEdge);
+	return { source: small, width, height, longEdge: Math.round(edge * scale) };
+}
+
+async function loadPhoto(file: File | Blob, longEdge: number): Promise<LoadedPhoto> {
+	const cached = file instanceof File ? decodedPhotos.get(file) : undefined;
+	// Reuse a cached decode only when it is at least as big as this render
+	// wants; a smaller one would be visibly soft.
+	if (cached && cached.longEdge >= longEdge) return cached;
+
+	const photo = await decodePhoto(file, longEdge);
+	if (file instanceof File) decodedPhotos.set(file, photo);
+	return photo;
+}
+
+/** Decode every photo — one at a time on purpose, see `LoadedPhoto`. Cached
+ *  photos are reused, so changing only the name, date or theme is free. */
+export async function loadImages(files: Array<File | Blob>): Promise<LoadedPhoto[]> {
+	const longEdge = decodeLongEdge(files.length);
+	const photos: LoadedPhoto[] = [];
+	for (const file of files) photos.push(await loadPhoto(file, longEdge));
+	return photos;
 }
 
 /** Draw a photo into a card cell, clipped to a rounded rect. */
@@ -314,6 +421,29 @@ function nextFrame(): Promise<void> {
 	return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+/** Create the sheet that everything is drawn onto.
+ *
+ *  A very tall collage (20 portrait photos is 2160×8345, 18 Mpx) passes the
+ *  area limit of older iOS Safari, which then renders a completely blank
+ *  canvas. When that would happen the surface is scaled down; the drawing
+ *  code below keeps using sheet coordinates and the context transform does the
+ *  shrinking, so the output is the same collage, just at a slightly smaller
+ *  resolution. */
+function createSheet(width: number, height: number): {
+	canvas: HTMLCanvasElement;
+	ctx: CanvasRenderingContext2D;
+} {
+	const scale = sheetScale(width, height);
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.max(1, Math.round(width * scale));
+	canvas.height = Math.max(1, Math.round(height * scale));
+
+	const ctx = canvas.getContext('2d');
+	if (!ctx) throw new Error('Could not create canvas context');
+	if (scale < 1) ctx.scale(scale, scale);
+	return { canvas, ctx };
+}
+
 export interface RenderOpts {
 	name: string;
 	date: string;
@@ -321,10 +451,10 @@ export interface RenderOpts {
 	theme: ThemeId;
 }
 
-export async function renderCollage(images: HTMLImageElement[], opts: RenderOpts): Promise<HTMLCanvasElement> {
+export async function renderCollage(photos: LoadedPhoto[], opts: RenderOpts): Promise<HTMLCanvasElement> {
 	const manifest = THEMES[opts.theme] ?? THEMES['7days'];
 	await ensureFonts(faceGroupsFor(manifest));
-	return renderThemed(images, opts, manifest);
+	return renderThemed(photos, opts, manifest);
 }
 
 export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.95): Promise<Blob> {
@@ -377,7 +507,7 @@ export async function makePreview(canvas: HTMLCanvasElement, width = PREVIEW_WID
    Manifest renderer — one pass for every theme
    ============================================================================= */
 async function renderThemed(
-	images: HTMLImageElement[],
+	photos: LoadedPhoto[],
 	opts: RenderOpts,
 	manifest: ThemeManifest,
 ): Promise<HTMLCanvasElement> {
@@ -386,7 +516,7 @@ async function renderThemed(
 	const cell = c.cell ?? {};
 	const topPad = CP;
 
-	const sizes = images.map((im) => ({ w: im.naturalWidth || im.width, h: im.naturalHeight || im.height }));
+	const sizes = photos.map((p) => ({ w: p.width, h: p.height }));
 	const hasBoth = !!opts.name;
 	// 7days V5: sticker chips sit below the name/date, so push the canvas down.
 	const hd = c.header ?? {};
@@ -395,10 +525,7 @@ async function renderThemed(
 	const L = masonry(sizes, { headerH: headerHForLayout, hasBoth });
 
 	const H = L.totalH;
-	const canvas = document.createElement('canvas');
-	canvas.width = W;
-	canvas.height = H;
-	const ctx = canvas.getContext('2d')!;
+	const { canvas, ctx } = createSheet(W, H);
 
 	const cards = L.placements.map((p) => ({ x: p.x, y: L.contentY + p.y, w: L.cardW, h: p.ch }));
 	const preset = c.dayStrip ? opts.preset : null;
@@ -589,7 +716,7 @@ async function renderThemed(
 		for (let i = 0; i < cards.length; i++) {
 			const p = L.placements[i];
 			const card = cards[i];
-			drawPhoto(ctx, images[i], card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius);
+			drawPhoto(ctx, photos[i].source, card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius);
 		}
 		ctx.filter = 'none';
 	} else if (fx) {
@@ -597,13 +724,13 @@ async function renderThemed(
 		for (let i = 0; i < cards.length; i++) {
 			const p = L.placements[i];
 			const card = cards[i];
-			drawPhotoFx(ctx, images[i], card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius, saturation, brightness);
+			drawPhotoFx(ctx, photos[i].source, card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius, saturation, brightness);
 		}
 	} else {
 		for (let i = 0; i < cards.length; i++) {
 			const p = L.placements[i];
 			const card = cards[i];
-			drawPhoto(ctx, images[i], card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius);
+			drawPhoto(ctx, photos[i].source, card.x + CP, card.y + topPad, p.iw, p.ih, photoRadius);
 		}
 	}
 
