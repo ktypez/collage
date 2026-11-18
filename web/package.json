@@ -10,7 +10,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "node --experimental-strip-types --test test/*.test.mjs"
+		"test": "tsx --test test/*.test.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-vercel": "^7.0.0",
@@ -18,6 +18,7 @@
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.6.0",
+		"tsx": "^4.23.15",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0"
 	},
@@ -26,6 +27,7 @@
 	},
 	"dependencies": {
 		"@line/bot-sdk": "^11.3.0",
+		"@mcky/ui": "https://codeload.github.com/ktypez/mcky-ui/tar.gz/36c994fe2fb019669ecf0033a94ac9148c8f4e2b",
 		"aws4fetch": "^1.0.20"
 	}
 }
