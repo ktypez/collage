@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { MAX_FILES } from '#lib/config';
+	import { Button as SharedButton } from '@mcky/ui/svelte';
 	import { loadImages, renderCollage, canvasToBlob, makePreview } from '#lib/collage/render';
 	import { defaultPreset, type DayPreset, type ThemeId } from '#lib/collage/themes';
 	import { quotaLeftText, quotaRemainingText, quotaWaitText, UPLOAD_QUOTA } from '#lib/quota';
@@ -305,10 +306,10 @@
 			</div>
 
 			<div class="create-bar">
-				<button type="button" class="btn btn-acc btn-primary" disabled={busy} class:loading={busy} onclick={generate}>
+				<SharedButton type="button" variant="primary" class={busy ? 'btn btn-acc btn-primary loading' : 'btn btn-acc btn-primary'} disabled={busy} onclick={generate}>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6"/><path d="M12 19h9"/></svg>
 					{cta}
-				</button>
+				</SharedButton>
 				{#if status}
 					<div class="status {status.kind}" role="status" aria-live="polite">{status.text}</div>
 				{/if}
