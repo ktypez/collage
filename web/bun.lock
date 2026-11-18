@@ -6,7 +6,7 @@
       "name": "web",
       "dependencies": {
         "@line/bot-sdk": "^11.3.0",
-        "@mcky/ui": "https://codeload.github.com/ktypez/mcky-ui/tar.gz/36c994fe2fb019669ecf0033a94ac9148c8f4e2b",
+        "@mcky/ui": "https://codeload.github.com/ktypez/mcky-ui/tar.gz/5a72d95b7c64e0d3eb7f320f44da9c36b0896f0c",
         "aws4fetch": "^1.0.20",
       },
       "devDependencies": {
@@ -90,7 +90,7 @@
 
     "@mapbox/node-pre-gyp": ["@mapbox/node-pre-gyp@2.0.3", "", { "dependencies": { "consola": "^3.2.3", "detect-libc": "^2.0.0", "https-proxy-agent": "^7.0.5", "node-fetch": "^2.6.7", "nopt": "^8.0.0", "semver": "^7.5.3", "tar": "^7.4.0" }, "bin": { "node-pre-gyp": "bin/node-pre-gyp" } }, "sha512-uwPAhccfFJlsfCxMYTwOdVfOz3xqyj8xYL3zJj8f0pb30tLohnnFPhLuqp4/qoEz8sNxe4SESZedcBojRefIzg=="],
 
-    "@mcky/ui": ["@mcky/ui@https://codeload.github.com/ktypez/mcky-ui/tar.gz/36c994fe2fb019669ecf0033a94ac9148c8f4e2b", { "peerDependencies": { "svelte": "^5.0.0" } }, "sha512-ZeAfbFtLa6OMNKnWdyWKBLNFsekcOrpAfBhNdoP29N36WyMsSaEEqnOj7Z7wdt9CawZrbgX6q/eu5q6GMMJr3A=="],
+    "@mcky/ui": ["@mcky/ui@https://codeload.github.com/ktypez/mcky-ui/tar.gz/5a72d95b7c64e0d3eb7f320f44da9c36b0896f0c", { "peerDependencies": { "svelte": "^5.0.0" }, "optionalPeers": ["svelte"] }, "sha512-EtRRbvTiDrcw57EKPKB9KZqMgWH7dN1uWAGkeFgwZxqyM7AdRf8hNLjxOp8y1q/rX7dtg2R8qcq/otixdKS3HQ=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.154.0", "", {}, "sha512-KYOUGQFlLWR+s4QMV2Q9ko38TZm7EdO87Qm7rvZLqk/webse/cDjtyxKhg/47l0byCbs/k46LT8qc4PKjAikzA=="],
 

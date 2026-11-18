@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@line/bot-sdk": "^11.3.0",
-    "@mcky/ui": "https://codeload.github.com/ktypez/mcky-ui/tar.gz/712d2d3054dc21bbcc09472d4ced32ac32d48212",
+    "@mcky/ui": "https://codeload.github.com/ktypez/mcky-ui/tar.gz/5a72d95b7c64e0d3eb7f320f44da9c36b0896f0c",
     "aws4fetch": "^1.0.20"
   }
 }
