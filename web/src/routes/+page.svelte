@@ -2,7 +2,7 @@
 	import { fly, fade } from 'svelte/transition';
 	import { CONFIG } from '#lib/config';
 	import Studio from '#lib/components/Studio.svelte';
-	import { Button as SharedButton } from '@mcky/ui/svelte';
+	import SharedButton from '@mcky/ui/button';
 
 	let result = $state<{ imageUrl: string; blob: Blob } | null>(null);
 

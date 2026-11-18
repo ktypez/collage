@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MAX_FILES } from '#lib/config';
-	import { Button as SharedButton } from '@mcky/ui/svelte';
+	import SharedButton from '@mcky/ui/button';
 	import { loadImages, renderCollage, canvasToBlob, makePreview } from '#lib/collage/render';
 	import { defaultPreset, type DayPreset, type ThemeId } from '#lib/collage/themes';
 	import { quotaLeftText, quotaRemainingText, quotaWaitText, UPLOAD_QUOTA } from '#lib/quota';

@@ -35,8 +35,18 @@ test('the collage output theme registry remains independent of application palet
 test('primary Studio and download actions use the shared Button component', async () => {
   const studio = await read('../src/lib/components/Studio.svelte');
   const page = await read('../src/routes/+page.svelte');
-  assert.ok(studio.includes("Button as SharedButton"));
+  assert.ok(studio.includes("SharedButton from '@mcky/ui/button'"));
   assert.ok(studio.includes('<SharedButton type="button" variant="primary"'));
-  assert.ok(page.includes("Button as SharedButton"));
+  assert.ok(page.includes("SharedButton from '@mcky/ui/button'"));
   assert.ok(page.includes('<SharedButton type="button" variant="primary"'));
+});
+
+
+test('Collage imports the shared Button through its direct component export', async () => {
+  const page = await read('../src/routes/+page.svelte');
+  const studio = await read('../src/lib/components/Studio.svelte');
+  assert.ok(page.includes("SharedButton from '@mcky/ui/button'"));
+  assert.ok(studio.includes("SharedButton from '@mcky/ui/button'"));
+  assert.ok(!page.includes("@mcky/ui/svelte"));
+  assert.ok(!studio.includes("@mcky/ui/svelte"));
 });
