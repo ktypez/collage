@@ -1,3 +1,5 @@
+@import '@mcky/ui/v5-tokens.css';
+
 /* Collage — V5 "Paper Pop" (shared mcky skin), adapted for SvelteKit + canvas renderer.
    Preserves collage-specific behavior/styles (upload, preview grid, calendar, LIFF states)
    while adopting V5 tokens, typography, surfaces, controls and motion. */
@@ -15,32 +17,13 @@
 @font-face { font-family: 'Source Serif 4'; src: url('/fonts/SourceSerif4.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Noto Serif Thai'; src: url('/fonts/NotoSerifThai.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 
-/* ========== V5 tokens ========== */
+/* ========== App compatibility tokens ========== */
 :root {
+  /* Shared palette, surfaces, type scale and density come from mcky-ui. */
   --font-ui: "Sora", "Noto Sans Thai", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Noto Sans Thai", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --r1: 10px; --r2: 14px; --r3: 20px; --r4: 28px;
-  --rowh: 58px; --pad-card: 20px;
-  --banana: #f2b63d; --sky: #57a7e0;
-  --border-w: 1.5px;
-  --shadow-pop: 3px 3px 0 0 var(--hard);
 
-  /* light · warm paper (matcha default) */
-  --paper: #f6f2e9; --paper-2: #eee9db; --card: #fffdf6;
-  --ink: #28251d; --ink-soft: #6f685b; --ink-faint: #a29a89;
-  --rule: #e6dfcc; --rule-2: #cfc5a9;
-  --acc: #158068; --acc-strong: #0f6652; --acc-tint: #e2f2e8; --acc-ink: #0c5b44;
-  --pop: #f2593f; --pop-tint: #fde6e0; --pop-ink: #b23a24;
-  --credit: #3e63dd; --credit-tint: #e8edfb; --credit-ink: #2b49ae;
-  --penpay: #c77e0a; --penpay-tint: #f7ecd2; --penpay-ink: #8f5a08;
-  --danger: #d9453a; --danger-tint: #fbe7e4; --danger-ink: #a52c23;
-
-  --sh-sm: 0 1px 0 rgb(40 35 22 / 0.04), 0 1px 2px rgb(40 35 22 / 0.07);
-  --sh-md: 0 22px 48px -26px rgb(40 35 22 / 0.28), 0 2px 6px rgb(40 35 22 / 0.05);
-  --hard: var(--ink);
-  --ring: color-mix(in srgb, var(--acc) 28%, transparent);
-
-  /* app aliases (kept for existing component hooks) */
+  /* Collage's existing component vocabulary maps to V5 semantic tokens. */
   --bg: var(--paper);
   --surface: var(--card);
   --border: var(--rule);
@@ -56,24 +39,9 @@
   --radius-sm: var(--r2);
   --radius-xs: var(--r1);
 
-  /* swatches for 7days picker */
+  /* Collage output theme swatches are domain data, not application palettes. */
   --swatch-red: #E5484D; --swatch-gold: #D9A400; --swatch-pink: #D6336C;
   --swatch-green: #12A07A; --swatch-orange: #E8681A; --swatch-blue: #3B6FE0; --swatch-purple: #7C5CE6;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #17181d; --paper-2: #131419; --card: #1f2128;
-    --ink: #ede9dd; --ink-soft: #a4aab6; --ink-faint: #6c727f;
-    --rule: #2e313b; --rule-2: #3c404c;
-    --acc: #35c49c; --acc-strong: #4ad3ac; --acc-tint: #163c31; --acc-ink: #8ae0c2;
-    --pop: #ff7a63; --pop-tint: #42241f; --pop-ink: #ffa695;
-    --credit: #8aa2f6; --credit-tint: #222c4c; --credit-ink: #b3c3fa;
-    --penpay: #e8a93f; --penpay-tint: #3b3018; --penpay-ink: #f2c879;
-    --danger: #f26d60; --danger-tint: #421f1d; --danger-ink: #ff9d92;
-    --sh-sm: 0 1px 0 rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.4);
-    --sh-md: 0 22px 48px -24px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.4);
-  }
 }
 
 /* ========== Base ========== */
