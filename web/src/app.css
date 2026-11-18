@@ -1,5 +1,3 @@
-@import '@mcky/ui/v5-tokens.css';
-
 /* Collage — V5 "Paper Pop" (shared mcky skin), adapted for SvelteKit + canvas renderer.
    Preserves collage-specific behavior/styles (upload, preview grid, calendar, LIFF states)
    while adopting V5 tokens, typography, surfaces, controls and motion. */

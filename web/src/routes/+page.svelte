@@ -2,6 +2,7 @@
 	import { fly, fade } from 'svelte/transition';
 	import { CONFIG } from '#lib/config';
 	import Studio from '#lib/components/Studio.svelte';
+	import { Button as SharedButton } from '@mcky/ui/svelte';
 
 	let result = $state<{ imageUrl: string; blob: Blob } | null>(null);
 
@@ -64,10 +65,10 @@
 				<span>ภาพคอลลาจพร้อมใช้งาน</span>
 			</div>
 			<img class="result-img" src={result.imageUrl} alt="ภาพคอลลาจที่สร้างเสร็จ" />
-			<button type="button" class="btn btn-acc result-download" onclick={download}>
+			<SharedButton type="button" variant="primary" class="btn btn-acc result-download" onclick={download}>
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 				ดาวน์โหลดรูป
-			</button>
+			</SharedButton>
 		</section>
 	{/if}
 
